@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/joint-activity-graph.iml" filepath="$PROJECT_DIR$/.idea/joint-activity-graph.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/jag-backend.iml" filepath="$PROJECT_DIR$/.idea/jag-backend.iml" />
     </modules>
   </component>
 </project>

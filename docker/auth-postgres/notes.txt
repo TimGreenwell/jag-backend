@@ -1,2 +1,2 @@
-The postgres docker for Keycloak Auth does not need any prior setup.
+Docker-Compose handles all the required setup for Keycloak's Postgres.
 Runs off vanilla postgres docker.
