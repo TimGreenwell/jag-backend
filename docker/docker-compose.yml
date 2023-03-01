@@ -40,11 +40,9 @@ services:
         target: /var/log/postgresql
 
   auth-postgres:
+    image: postgres:15.1-alpine3.17
     container_name: auth-postgres
     hostname: auth-postgres
-    build:
-      context: ..
-      dockerfile: docker/auth-postgres/Dockerfile
     # CONFIG
     environment:
       NGINX_PROXY_CONTAINER: "reverse-proxy"

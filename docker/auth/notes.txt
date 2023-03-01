@@ -1,7 +1,9 @@
-The json's loaded in this directory are used to configure and populate Keycloak IF there
-is nothing loaded for that realm in the database.  If no json and no db, then a very basic
-default master realm is used.
 
+The json loaded by Dockerfile is to configure and populate Keycloak IF Keycloak's configuartion
+DB is empty (ie. after Docker Volume purge or initial deploy).  Without this json, Keycloak will still
+set up a Master realm but all Identity Providers, Clients and Users are gone.
+
+Any changes to the configuration will need to be updated manually in order to persist after a volume loss.
 The manual method to update this json to current keycloak config:
 1) docker compose up
 2) docker exec -it auth bash
@@ -10,15 +12,15 @@ for all realms:  (use 'bat' instead of 'sh' for windows)
 4) bin/kc.sh export --file <filename>.json --users realm_file
 for specific realm:
 4) bin/kc.sh export --file <filename>.json --users realm_file --realm <realm_name>
-5) copy into this docker/auth/config/ directory. (copy-paste was easiest)
+5) copy into this docker/auth/config/ directory. (copy-paste content was easiest)
   -or- a) cd to docker/auth/config/
        b) docker cp auth:/opt/keycloak/data/import/<filename>.json .
 done) This json will then be used to rebuild the keycloak realm if not in the db.
 
 
 ----------------------------------------------------------------------------------------------------
-***!!  If it screws up after clicking google - then good chance (pretty certainly) that the import messed up
-the google identity provider secret got messed up.  Go to:
+***!!  If errors occur after clicking the Google OAuth button - then good chance (pretty certainly) that the
+import messed up the google identity provider secret got messed up.  Go to:
 https://console.cloud.google.com/apis/credentials/oauthclient
 and 'reset secret' and update it in the jag.baby/auth - realm - identity providers - client secret.
 
@@ -26,4 +28,7 @@ Error is:
  ERROR [org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider]
   Failed to make identity provider oauth callback: org.keycloak.broker.provider.IdentityBrokerException:
   No access_token from server. error='invalid_client', error_description='Unauthorized', error_uri='null'
-x) Copying the secret into the json does not work.  No further ideas.. (prolly related to keycloak export/import)
+
+Permanent solution is unknown:
+x) Copying the secret into the json does not work.  (related to keycloak export/import)
+x) There is chatter about this problem on boards - hopefully a fix in near future.

@@ -1,17 +1,2 @@
-The json's loaded in this directory are used to configure and populate Keycloak IF there
-is nothing loaded for that realm in the database.  If no json and no db, then a very basic
-default master realm is used.
-
-The manual method to update this json to current keycloak config:
-1) docker compose up
-2) docker exec -it auth bash
-3) cd /opt/keycloak/
-for all realms:  (use 'bat' instead of 'sh' for windows)
-4) bin/kc.sh export --file <filename>.json --users realm_file
-for specific realm:
-4) bin/kc.sh export --file <filename>.json --users realm_file --realm <realm_name>
-5) copy into this docker/auth/config/ directory. (copy-paste was easiest)
-  -or- a) cd to docker/auth/config/
-       b) docker cp auth:/opt/keycloak/data/import/<filename>.json .
-done) This json will then be used to rebuild the keycloak realm if not in the db.
-
+The postgres docker for Keycloak Auth does not need any prior setup.
+Runs off vanilla postgres docker.
