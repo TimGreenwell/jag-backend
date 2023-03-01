@@ -1,23 +1,23 @@
 version: '3.9'
 
 services:
-  jag-postgres:
-    container_name: jag-postgres
-    hostname: jag-postgres
+  api-postgres:
+    container_name: api-postgres
+    hostname: api-postgres
     build:
       context: ..
-      dockerfile: docker/jag-postgres/Dockerfile
+      dockerfile: docker/api-postgres/Dockerfile
     # CONFIG
     environment:
       NGINX_PROXY_CONTAINER: "reverse-proxy"
-      POSTGRES_DB: ${JAG_POSTGRES_DB}
-      POSTGRES_USER: ${JAG_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${JAG_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${API_POSTGRES_DB}
+      POSTGRES_USER: ${API_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${API_POSTGRES_PASSWORD}
       POSTGRES_HOST_AUTH_METHOD: 'trust'
     expose:
       - 5432
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d ${JAG_POSTGRES_DB} -U ${JAG_POSTGRES_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -d ${API_POSTGRES_DB} -U ${API_POSTGRES_USER}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,17 +26,17 @@ services:
     networks:
       - jagnet
     volumes:
+#      - type: volume
+#        source: api-postgres-setup
+#        target: /docker-entrypoint-initdb.d
       - type: volume
-        source: jag-postgres-setup
-        target: /docker-entrypoint-initdb.d
-      - type: volume
-        source: jag-postgres-data
+        source: api-postgres-data
         target: /var/lib/postgresql/data
       - type: volume
-        source: jag-postgres-config
+        source: api-postgres-config
         target: /etc/postgresql
       - type: volume
-        source: jag-postgres-log
+        source: api-postgres-log
         target: /var/log/postgresql
 
   auth-postgres:
@@ -123,7 +123,6 @@ services:
     networks:
       - jagnet
 
-
   jag-server:
     container_name: jag-server
     hostname: jag-server
@@ -134,14 +133,15 @@ services:
     depends_on:
       auth:
         condition: "service_healthy"
-      jag-postgres:
+      api-postgres:
         condition: "service_healthy"
-    env_file:
-      - .env
+    environment:
+      XXX: ${AUTH_ADMIN}
+      YYY: ${AUTH_ADMIN_PASSWORD}
     ports:
       - '8888:8888'
     healthcheck:
-      test: "curl -f jag-server:8888/jag"
+      test: "curl -f jag-server:8888/api/v1"
       interval: 5s
       timeout: 5s
       retries: 20
@@ -149,6 +149,32 @@ services:
     # RESOURCES
     networks:
       - jagnet
+
+#  jag-server:
+#    container_name: jag-server
+#    hostname: jag-server
+#    # CONFIG
+#    build:
+#      context: ..
+#      dockerfile: docker/jag-server/Dockerfile
+#    depends_on:
+#      auth:
+#        condition: "service_healthy"
+#      api-postgres:
+#        condition: "service_healthy"
+#    env_file:
+#      - .env
+#    ports:
+#      - '8888:8888'
+#    healthcheck:
+#      test: "curl -f jag-server:8888/jag"
+#      interval: 5s
+#      timeout: 5s
+#      retries: 2000
+#    restart: unless-stopped
+#    # RESOURCES
+#    networks:
+#      - jagnet
 
   pgadmin:
 #    image: dpage/pgadmin4
@@ -159,7 +185,7 @@ services:
       dockerfile: docker/pgadmin/Dockerfile
     # CONFIG
     depends_on:
-      jag-postgres:
+      api-postgres:
         condition: "service_healthy"
       auth-postgres:
         condition: "service_healthy"
@@ -240,40 +266,11 @@ services:
       && while :; do sleep 6h & wait $${!}; nginx -s reload; done
       && echo 'ALL DONE'"
 
-
-  certbot:
-#    image: certbot/certbot
-    build:
-      context: ..
-      dockerfile: docker/certbot/Dockerfile
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-#    volumes:
-#      - ./certbot/conf:/etc/letsencrypt
-#      - ./certbot/www:/var/www/certbot
-
-#  letsencrypt:
-#    image: "jrcs/letsencrypt-nginx-proxy-companion:latest"
-#    container_name: "letsencrypt-helper"
-#    volumes:
-#      - "html:/usr/share/nginx/html"
-#      - "dhparam:/etc/nginx/dhparam"
-#      - "vhost:/etc/nginx/vhost.d"
-#      - "certs:/etc/nginx/certs"
-#      - "/run/docker.sock:/var/run/docker.sock:ro"
-#    environment:
-#      NGINX_PROXY_CONTAINER: "reverse-proxy"
-#      DEFAULT_EMAIL: "tim@greenwell.de"
-#    restart: "always"
-#    depends_on:
-#      - "reverse-proxy"
-#    networks:
-#      - "jagnet"
-
 volumes:
-  jag-postgres-setup:
-  jag-postgres-data:
-  jag-postgres-config:
-  jag-postgres-log:
+  api-postgres-setup:
+  api-postgres-data:
+  api-postgres-config:
+  api-postgres-log:
   auth-postgres-setup:
   auth-postgres-data:
   auth-postgres-config:
@@ -293,7 +290,6 @@ volumes:
   proxy_logs:
     name: "proxy_logs"
   auth-realm-import:
-
 
 networks:
   jagnet:

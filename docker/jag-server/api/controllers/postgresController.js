@@ -57,8 +57,13 @@ const updateAnalysis = async (request, response) => {
 
 
 const getAllActivities = async (request, response) => {
-    let includeShared = request.query.includeShared.toLowerCase() === "true";
-    console.log(`getAllActivities  getAllActivities getAllActivities getAllActivities`)
+    let includeShared;
+    if (request.query.includeShared) {
+        includeShared = request.query.includeShared.toLowerCase() === `true`;
+    } else {
+        includeShared = false;
+    }
+    console.log(`getAllActivities  getAllActivities getAllActivities getAllActivities`);
     const activitiesReply = await queries.getAllActivities(includeShared, request.user.email);
     const activities = activitiesReply.rows;
 
@@ -167,8 +172,8 @@ const getJagByProjectId = async (request, response) => {
 const getAllAgents = async (request, response) => {
     const agentsReply = await queries.getAllAgents();
     const agents = agentsReply.rows;
-    console.log(`curious-->> ${agentsReply}`)
-    console.log(agentsReply)
+    console.log(`curious-->> ${agentsReply}`);
+    console.log(agentsReply);
     response.status(200).json(agents);
 };
 
@@ -181,11 +186,10 @@ const getAllTeams = async (request, response) => {
 const getAllAnalyses = async (request, response) => {
     const analysesReply = await queries.getAllAnalyses();
     const analyses = analysesReply.rows;
-    console.log(`curious-->> ${analysesReply}`)
-    console.log(analysesReply)
+    console.log(`curious-->> ${analysesReply}`);
+    console.log(analysesReply);
     response.status(200).json(analyses);
 };
-
 
 
 const deleteJagByProjectId = async (request, response) => {

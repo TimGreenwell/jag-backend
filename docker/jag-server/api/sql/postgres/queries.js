@@ -1,7 +1,5 @@
 import * as pool from "../../db/postgres-config.js";
 import fs from "fs";
-import {request} from "express";
-import UserPrefs from "../../../public/scripts/utils/user-prefs.js";
 
 const getAllActivities = async (includeShared = false, author) => {
     console.log(`Query> getAllActivities`);

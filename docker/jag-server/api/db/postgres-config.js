@@ -4,7 +4,7 @@ const {Pool} = pkg;
 // or --  const { Pool } = require('pg')
 
 const pool = new Pool({
-    host: `jag-postgres`,
+    host: `api-postgres`,
     database: `teamworks`,
     user: `teamworks`,
     password: `teamworks`,

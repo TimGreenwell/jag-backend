@@ -3,7 +3,7 @@
     "1": {
       "Name": "jag",
       "Group": "Servers",
-      "Host": "jag-postgres",
+      "Host": "api-postgres",
       "Port": 5432,
       "MaintenanceDB": "teamworks",
       "Username": "teamworks",

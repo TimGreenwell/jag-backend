@@ -2,10 +2,8 @@ FROM node:16
 
 WORKDIR /app
 
-COPY . .
+COPY docker/jag-server/ .
 
-RUN ls -lsa /app/
 RUN npm install
-
 
 CMD ["npm", "start"]

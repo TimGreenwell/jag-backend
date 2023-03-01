@@ -12,11 +12,9 @@
 'use strict';
 
 // Import configuration
-// const PREFERRED_SOURCE = process.env.PREFERRED_SOURCE || "postgresdb";
-// console.log(`Preferred source set as :> ${PREFERRED_SOURCE}`);
 const port = process.env.PORT || 8888;
 const root = process.argv[2] || `.`;
-import path from "path";
+// import path from "path";
 import dotenv from "dotenv";
 dotenv.config({path: `./.env`});
 
@@ -34,39 +32,35 @@ import {Issuer, Strategy} from "openid-client";
 
 const memoryStore = new expressSession.MemoryStore();
 const session = {
-    secret: `another_long_secret`,      //used to sign the session ID cookie,
+    secret: `another_long_secret`,      // used to sign the session ID cookie,
     cookie: {},
     resave: false,                      // forces session to be saved back to session store (unwanted)
     saveUninitialized: true,            // something about uninitialized sessions being saved (bots & tourists)
     store: memoryStore                  // not exist in one demo
 };
 app.use(expressSession(session));
-
-
-// I think here the req.session object is added.
+// request.session object is added to request.
 
 const keycloakIssuer = await Issuer.discover(`http://auth:8080/auth/realms/realm1`);
-// console.log(`Discovered issuer %s %O`, keycloakIssuer.issuer, keycloakIssuer.metadata);
-// console.log(`------------------------------------------------------------------------`);
 const client = new keycloakIssuer.Client({
-    client_id: `client1`,
+    client_id: `jag-api-postgres`,
     client_secret: `long_secret-here`,
-    redirect_uris: [`https://jag.baby/jag/auth/callback`],
-    post_logout_redirect_uris: [`https://jag.baby/jag/logout/callback`],
+    redirect_uris: [`https://jag.baby/api/v1/auth/callback`],
+    post_logout_redirect_uris: [`https://jag.baby/api/v1/logout/callback`],
     response_types: [`code`]
 });
 passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
     return done(null, tokenSet.claims());
 }));
-// I think here the req.session.passport object is added.
+// request.session.passport object is added to request
 app.use(passport.initialize());
-app.use(passport.authenticate(`session`));         // ? app.use(passport.session())
+app.use(passport.authenticate(`session`));
 
 passport.serializeUser(function (user, done) {
-    console.log('-----------------------------');
-    console.log('serialize user');
+    console.log(`-----------------------------`);
+    console.log(`serialize user`);
     console.log(user);
-    console.log('-----------------------------');
+    console.log(`-----------------------------`);
     done(null, user);
 });
 // Called (once) by Strategy to add authenticated user to req.session.passport.user.{..}
@@ -77,26 +71,21 @@ passport.deserializeUser(function (user, done) {
 // Populates (constantly) 'user' with req.session.passport.user.{..}
 // Calling done(null,user) will attach this to req.user => req.user..{..}
 
-// app.use(express.urlencoded({extended: true}));
-// app.use(express.json({limit: `15mb`}));
-// app.use(express.json());             // added
-// app.use(morgan(`dev`));              // added
-
-app.get(`/jag/auth/callback`, (req, res, next) => {
+app.get(`/api/v1/auth/callback`, (req, res, next) => {
     console.log(`About to authenticate2`);
     passport.authenticate(`oidc`, {
-        successRedirect: `/jag`,
-        failureRedirect: `/`
+        successRedirect: `/api/v1`,
+        failureRedirect: `https://www.greenwell.de`
     })(req, res, next);
 });
 
 // start logout request
-app.get(`/jag/logout`, (req, res) => {
+app.get(`/api/v1/logout`, (req, res) => {
     res.redirect(client.endSessionUrl());
 });
 
 // logout callback
-app.get(`/jag/logout/callback`, (req, res) => {
+app.get(`/api/v1/logout/callback`, (req, res) => {
     console.log(`Calling logout`);
     // clears the persisted user from the local storage
     req.logout();
@@ -106,6 +95,7 @@ app.get(`/jag/logout/callback`, (req, res) => {
 
 const checkAuthenticated = (req, res, next) => {
     console.log(`Check if Authenticated`);
+    console.log(req.originalUrn)
     if (req.isAuthenticated()) {
         console.log(`It was...`);
         return next();
@@ -113,25 +103,21 @@ const checkAuthenticated = (req, res, next) => {
     console.log(`It was not...`);
     passport.authenticate(`oidc`)(req, res, next);
 };
-// app.get('/jag', (req, res, next) => {
-//
-// })
 
 function myMiddleware1(req, res, next) {
     if (req.user) {
         req.newProperty = req.user;
         res.newProperty = req.user;
         res.set({
-            'whoami': req.user,
+            whoami: req.user
         });
-
     }
     next();
 }
 
 app.use(myMiddleware1);
 
-app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
+// app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
 app.use(`/api/v1`, checkAuthenticated, postgresRouter);
 
 
@@ -161,11 +147,3 @@ process.on(`SIGINT`, () => {
  *
  * Dotenv useful as dev for setting environment variables... used by node's process and docker-compose
  */
-
-
-// https://github.com/austincunningham/keycloak-express-openid-client/blob/master/index.js
-
-
-
-
-
