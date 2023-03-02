@@ -1,49 +1,43 @@
 version: '3.9'
 
 services:
-  api-postgres:
-    container_name: api-postgres
-    hostname: api-postgres
-    build:
-      context: ..
-      dockerfile: docker/api-postgres/Dockerfile
-    # CONFIG
-    environment:
-      NGINX_PROXY_CONTAINER: "reverse-proxy"
-      POSTGRES_DB: ${API_POSTGRES_DB}
-      POSTGRES_USER: ${API_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${API_POSTGRES_PASSWORD}
-      POSTGRES_HOST_AUTH_METHOD: 'trust'
-    expose:
-      - 5432
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d ${API_POSTGRES_DB} -U ${API_POSTGRES_USER}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-    # RESOURCES
-    networks:
-      - jagnet
-    volumes:
+#  api-postgres:
+#    container_name: api-postgres
+#    hostname: api-postgres
+#    build:
+#      context: ..
+#      dockerfile: docker/api-postgres/Dockerfile
+#    environment:
+#      NGINX_PROXY_CONTAINER: "reverse-proxy"
+#      POSTGRES_DB: ${API_POSTGRES_DB}
+#      POSTGRES_USER: ${API_POSTGRES_USER}
+#      POSTGRES_PASSWORD: ${API_POSTGRES_PASSWORD}
+#      POSTGRES_HOST_AUTH_METHOD: 'trust'
+#    expose:
+#      - 5432
+#    healthcheck:
+#      test: [ "CMD-SHELL", "pg_isready -d ${API_POSTGRES_DB} -U ${API_POSTGRES_USER}" ]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    restart: unless-stopped
+#    networks:
+#      - jagnet
+#    volumes:
 #      - type: volume
-#        source: api-postgres-setup
-#        target: /docker-entrypoint-initdb.d
-      - type: volume
-        source: api-postgres-data
-        target: /var/lib/postgresql/data
-      - type: volume
-        source: api-postgres-config
-        target: /etc/postgresql
-      - type: volume
-        source: api-postgres-log
-        target: /var/log/postgresql
+#        source: api-postgres-data
+#        target: /var/lib/postgresql/data
+#      - type: volume
+#        source: api-postgres-config
+#        target: /etc/postgresql
+#      - type: volume
+#        source: api-postgres-log
+#        target: /var/log/postgresql
 
   auth-postgres:
     image: postgres:15.1-alpine3.17
     container_name: auth-postgres
     hostname: auth-postgres
-    # CONFIG
     environment:
       NGINX_PROXY_CONTAINER: "reverse-proxy"
       POSTGRES_DB: ${AUTH_POSTGRES_DB}
@@ -58,13 +52,9 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    # RESOURCES
     networks:
       - jagnet
     volumes:
-      - type: volume
-        source: auth-postgres-setup
-        target: /docker-entrypoint-initdb.d
       - type: volume
         source: auth-postgres-data
         target: /var/lib/postgresql/data
@@ -82,7 +72,6 @@ services:
     build:
       context: ..
       dockerfile: docker/auth-keycloak/Dockerfile
-    # CONFIG
     command:
       - start-dev
       - --import-realm
@@ -98,13 +87,13 @@ services:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://auth-postgres:5432/${AUTH_POSTGRES_DB}
       KC_HTTP_RELATIVE_PATH: /auth
-      KC_HOSTNAME_ADMIN_URL: https://${DOMAIN}/auth   # not req'd but more clear. (can use to move admin later)
+      KC_HOSTNAME_ADMIN_URL: https://jag.baby/auth   # not req'd but more clear. (can use to move admin later)
       KC_HTTP_ENABLED: true
       KC_HOSTNAME_STRICT: false
       KC_PROXY: edge
       KC_PROXY_ADDRESS_FORWARDING: true
       KC_HOSTNAME_STRICT_HTTPS: false                # good
-      KC_HOSTNAME_URL: https://${DOMAIN}/auth         # not req'd but more clear.
+      KC_HOSTNAME_URL: https://jag.baby/auth         # not req'd but more clear.
       KC_HOSTNAME_STRICT_BACKCHANNEL: false          # allow back channel for comms between containers.
       KC_HOSTNAME_PORT: 80
     expose:
@@ -115,45 +104,41 @@ services:
       timeout: 5s
       retries: 60
     restart: unless-stopped
-    # RESOURCES
     volumes:
       - type: volume
-        source: auth-keycloak-realm-import
+        source: auth-keycloak-config
         target: /opt/keycloak/data/import
     networks:
       - jagnet
 
-  jag-server:
-    container_name: jag-server
-    hostname: jag-server
-    # CONFIG
-    build:
-      context: ..
-      dockerfile: docker/jag-server/Dockerfile
-    depends_on:
-      auth-keycloak:
-        condition: "service_healthy"
-      api-postgres:
-        condition: "service_healthy"
-    environment:
-      XXX: ${AUTH_ADMIN}
-      YYY: ${AUTH_ADMIN_PASSWORD}
-    ports:
-      - '8888:8888'
-    healthcheck:
-      test: "curl -f jag-server:8888/api/v1"
-      interval: 5s
-      timeout: 5s
-      retries: 20
-    restart: unless-stopped
-    # RESOURCES
-    networks:
-      - jagnet
-
+#  api-server:
+#    container_name: api-server
+#    hostname: api-server
+#    build:
+#      context: ..
+#      dockerfile: docker/api-server/Dockerfile
+#    depends_on:
+#      auth-keycloak:
+#        condition: "service_healthy"
+#      api-postgres:
+#        condition: "service_healthy"
+#    environment:
+#      XXX: ${AUTH_ADMIN}
+#      YYY: ${AUTH_ADMIN_PASSWORD}
+#    ports:
+#      - '8888'
+#    healthcheck:
+#      test: "curl -f api-server:8888/api/v1"
+#      interval: 5s
+#      timeout: 5s
+#      retries: 2000
+#    restart: unless-stopped
+#    networks:
+#      - jagnet
+#
 #  jag-server:
 #    container_name: jag-server
 #    hostname: jag-server
-#    # CONFIG
 #    build:
 #      context: ..
 #      dockerfile: docker/jag-server/Dockerfile
@@ -170,65 +155,60 @@ services:
 #      test: "curl -f jag-server:8888/jag"
 #      interval: 5s
 #      timeout: 5s
-#      retries: 2000
+#      retries: 20
 #    restart: unless-stopped
-#    # RESOURCES
 #    networks:
 #      - jagnet
-
-  pgadmin:
-#    image: dpage/pgadmin4
-    container_name: pgadmin
-    hostname: pgadmin
-    build:
-      context: ..
-      dockerfile: docker/pgadmin/Dockerfile
-    # CONFIG
-    depends_on:
-      api-postgres:
-        condition: "service_healthy"
-      auth-postgres:
-        condition: "service_healthy"
-    environment:
-      NGINX_PROXY_CONTAINER: "reverse-proxy"
-      PGADMIN_DEFAULT_EMAIL: admin@ihmc.moc
-      PGADMIN_DEFAULT_PASSWORD: abc123
-      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: 40
-      GUNICORN_ACCESS_LOGFILE: '/var/lib/pgadmin/access.log'
-      PGADMIN_SERVER_JSON_FILE: config.json
-    expose:
-      - 80
-    healthcheck:
-      test: ["CMD", "wget", "-O", "-", "http://pgadmin:80/misc/ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-    logging:
-      driver: none
-    # RESOURCES
-    networks:
-      - jagnet
-    volumes:
-      - type: volume
-        source: pgadmin-data
-        target: /var/lib/pgadmin
+#
+#  pgadmin:
+#    container_name: pgadmin
+#    hostname: pgadmin
+#    build:
+#      context: ..
+#      dockerfile: docker/pgadmin/Dockerfile
+#    depends_on:
+#      api-postgres:
+#        condition: "service_healthy"
+#      auth-postgres:
+#        condition: "service_healthy"
+#    environment:
+#      NGINX_PROXY_CONTAINER: "reverse-proxy"
+#      PGADMIN_DEFAULT_EMAIL: admin@ihmc.moc
+#      PGADMIN_DEFAULT_PASSWORD: abc123
+#      PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: 40
+#      GUNICORN_ACCESS_LOGFILE: '/var/lib/pgadmin/access.log'
+#      PGADMIN_SERVER_JSON_FILE: config.json
+#    expose:
+#      - 80
+#    healthcheck:
+#      test: ["CMD", "wget", "-O", "-", "http://pgadmin:80/misc/ping"]
+#      interval: 5s
+#      timeout: 5s
+#      retries: 20
+#    logging:
+#      driver: none
+#    networks:
+#      - jagnet
+#    volumes:
+#      - type: volume
+#        source: pgadmin-data
+#        target: /var/lib/pgadmin
 
   reverse-proxy:
-#    image: nginx:latest
     container_name: reverse-proxy
     hostname: reverse-proxy
-    # CONFIG
     build:
       context: ..
       dockerfile: docker/reverse-proxy/Dockerfile
-    # CONFIG
     depends_on:
-      jag-server:
-        condition: "service_healthy"
+#      api-server:
+#        condition: "service_healthy"
+#      jag-server:
+#        condition: "service_healthy"
       auth-keycloak:
         condition: "service_healthy"
-      pgadmin:
-        condition: "service_healthy"
+#      pgadmin:
+#        condition: "service_healthy"
     environment:
       PROXY_IP: ${PROXY_IP}
       PUBLIC_NAME: ${PUBLIC_NAME}
@@ -237,26 +217,25 @@ services:
       REPLACE_VARS: ${REPLACE_VARS}
     healthcheck:
       test: "curl -k https://reverse-proxy:${PROXY_HTTPS_PORT}/jag"
-      interval: 5s
-      timeout: 5s
-      retries: 20
+      interval: 30s
+      timeout: 10s
+      retries: 3
     ports:
       - "80:8080"
-      - "443:8082"
+      - "443:8443"
     restart: unless-stopped
-    # RESOURCES
-    volumes:
+#    volumes:
 #?      - ./config:/config
 #      - ./nginx-proxy/templates:/etc/nginx/templates
 #      - ./certbot/conf:/etc/letsencrypt
 #      - ./certbot/www:/var/www/certbot
 #?      - /tmp/acme_challenge:/tmp/acme_challenge
-      - "html:/usr/share/nginx/html"
-      - "dhparam:/etc/nginx/dhparam"
-      - "vhost:/etc/nginx/vhost.d"
-      - "certs:/etc/nginx/certs"
-      - "proxy_logs:/var/log/nginx"
-      - "/run/docker.sock:/tmp/docker.sock:ro"
+#      - "html:/usr/share/nginx/html"
+#      - "dhparam:/etc/nginx/dhparam"
+#      - "vhost:/etc/nginx/vhost.d"
+#      - "certs:/etc/nginx/certs"
+#      - "proxy_logs:/var/log/nginx"
+#      - "/run/docker.sock:/tmp/docker.sock:ro"
     networks:
       - jagnet
     command: /bin/bash -c "
@@ -265,13 +244,6 @@ services:
       && nginx -g \'daemon off;\'
       && while :; do sleep 6h & wait $${!}; nginx -s reload; done
       && echo 'ALL DONE'"
-
-
-#https://mindsers.blog/post/https-using-nginx-certbot-docker/:
-
-
-
-
 
 volumes:
   api-postgres-setup:
@@ -286,17 +258,17 @@ volumes:
     name: "pgadmin-data"
   html:
     name: "html"
-  dhparam:
-    name: "dhparam"
+#  dhparam:
+#    name: "dhparam"
   vhost:
     name: "vhost"
-  certs:
-    name: "certs"
+#  certs:
+#    name: "certs"
   auth-volume:
     name: "auth-volume"
   proxy_logs:
     name: "proxy_logs"
-  auth-keycloak-realm-import:
+  auth-keycloak-config:
 
 networks:
   jagnet:

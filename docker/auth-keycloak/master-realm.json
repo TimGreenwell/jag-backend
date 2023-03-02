@@ -683,7 +683,7 @@
         "oidc.ciba.grant.enabled": "false",
         "client.secret.creation.time": "1676060328",
         "backchannel.logout.session.required": "true",
-        "backchannel.logout.url": "http://jag-server:8080/logout",
+        "backchannel.logout.url": "http://api-server:8080/logout",
         "login_theme": "keycloak",
         "frontchannel.logout.url": "https://jag.baby/jag/logout",
         "post.logout.redirect.uris": "https://work.greenwell.de/",

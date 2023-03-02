@@ -2,8 +2,8 @@ FROM node:16
 
 WORKDIR /app
 
-COPY docker/jag-server/ .
-COPY public .
+COPY docker/api-server/ .
+
 
 RUN npm install
 

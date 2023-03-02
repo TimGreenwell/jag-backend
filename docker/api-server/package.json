@@ -1,0 +1,39 @@
+{
+    "name": "jag",
+    "version": "2.0.2",
+    "type": "module",
+    "description": "",
+    "main": "",
+    "dependencies": {
+        "@types/express": "^4.17.13",
+        "body-parser": "^1.20.1",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
+        "dotenv": "^16.0.3",
+        "express": "^4.18.2",
+        "express-session": "^1.17.3",
+        "jsonwebtoken": "^9.0.0",
+        "morgan": "^1.10.0",
+        "openid-client": "^5.4.0",
+        "passport": "^0.6.0",
+        "pg": "^8.8.0"
+    },
+    "devDependencies": {
+        "eslint": "^8.15.0",
+        "esm": "^3.2.25",
+        "nodemon": "^2.0.20"
+    },
+    "scripts": {
+        "start": "node ./bin/app.js ./public",
+        "dev": "nodemon ./bin/app.js ./public",
+        "test": "export PORT=8889 && node ./bin/app.js ./test",
+        "docs": "jsdoc --destination ./docs/ --recurse public/*"
+    },
+    "repository": {
+        "type": "git",
+        "url": "ssh://git@git.ihmc.us:22000/mvignati/joint-activity-graph.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "private": true
+}

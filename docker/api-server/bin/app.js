@@ -14,9 +14,12 @@
 // Import configuration
 const port = process.env.PORT || 8888;
 const root = process.argv[2] || `.`;
-import path from "path";
+// import path from "path";
 import dotenv from "dotenv";
 dotenv.config({path: `./.env`});
+
+// Import Api Routes
+import {postgresRouter} from "../api/routes/postgresRoutes.js";
 
 // Import Express
 import express from "express";
@@ -40,10 +43,10 @@ app.use(expressSession(session));
 
 const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
 const client = new keycloakIssuer.Client({
-    client_id: `client1`,
+    client_id: `jag-api-postgres`,
     client_secret: `long_secret-here`,
-    redirect_uris: [`https://jag.baby/jag/auth/callback`],
-    post_logout_redirect_uris: [`https://jag.baby/jag/logout/callback`],
+    redirect_uris: [`https://jag.baby/api/v1/auth/callback`],
+    post_logout_redirect_uris: [`https://jag.baby/api/v1/logout/callback`],
     response_types: [`code`]
 });
 passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
@@ -68,21 +71,21 @@ passport.deserializeUser(function (user, done) {
 // Populates (constantly) 'user' with req.session.passport.user.{..}
 // Calling done(null,user) will attach this to req.user => req.user..{..}
 
-app.get(`/jag/auth/callback`, (req, res, next) => {
+app.get(`/api/v1/auth/callback`, (req, res, next) => {
     console.log(`About to authenticate2`);
     passport.authenticate(`oidc`, {
-        successRedirect: `/jag`,
+        successRedirect: `/api/v1`,
         failureRedirect: `https://www.greenwell.de`
     })(req, res, next);
 });
 
 // start logout request
-app.get(`/jag/logout`, (req, res) => {
+app.get(`/api/v1/logout`, (req, res) => {
     res.redirect(client.endSessionUrl());
 });
 
 // logout callback
-app.get(`/jag/logout/callback`, (req, res) => {
+app.get(`/api/v1/logout/callback`, (req, res) => {
     console.log(`Calling logout`);
     // clears the persisted user from the local storage
     req.logout();
@@ -97,27 +100,27 @@ const checkAuthenticated = (req, res, next) => {
     passport.authenticate(`oidc`)(req, res, next);
 };
 
-function myMiddleware1(req, res, next) {
-    if (req.user) {
-        req.newProperty = req.user;
-        res.newProperty = req.user;
-        res.set({
-            whoami: req.user
-        });
-    }
-    next();
-}
+// function myMiddleware1(req, res, next) {
+//     if (req.user) {
+//         req.newProperty = req.user;
+//         res.newProperty = req.user;
+//         res.set({
+//             whoami: req.user
+//         });
+//     }
+//     next();
+// }
+//
+// app.use(myMiddleware1);
 
-app.use(myMiddleware1);
-
-app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
-// app.use(`/api/v1`, checkAuthenticated, postgresRouter);
+// app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
+app.use(`/api/v1`, checkAuthenticated, postgresRouter);
 
 
 const server = app.listen(port);
 
 server.on(`listening`, () => {
-    return console.log(`JAG server started on ${port}`);
+    return console.log(`API server started on ${port}`);
 });
 
 process.on(`SIGTERM`, () => {
