@@ -76,12 +76,12 @@ services:
         target: /var/log/postgresql
 
 
-  auth:
-    container_name: auth
-    hostname: auth
+  auth-keycloak:
+    container_name: auth-keycloak
+    hostname: auth-keycloak
     build:
       context: ..
-      dockerfile: docker/auth/Dockerfile
+      dockerfile: docker/auth-keycloak/Dockerfile
     # CONFIG
     command:
       - start-dev
@@ -98,19 +98,19 @@ services:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://auth-postgres:5432/${AUTH_POSTGRES_DB}
       KC_HTTP_RELATIVE_PATH: /auth
-      KC_HOSTNAME_ADMIN_URL: https://jag.baby/auth   # not req'd but more clear. (can use to move admin later)
+      KC_HOSTNAME_ADMIN_URL: https://${DOMAIN}/auth   # not req'd but more clear. (can use to move admin later)
       KC_HTTP_ENABLED: true
       KC_HOSTNAME_STRICT: false
       KC_PROXY: edge
       KC_PROXY_ADDRESS_FORWARDING: true
       KC_HOSTNAME_STRICT_HTTPS: false                # good
-      KC_HOSTNAME_URL: https://jag.baby/auth         # not req'd but more clear.
+      KC_HOSTNAME_URL: https://${DOMAIN}/auth         # not req'd but more clear.
       KC_HOSTNAME_STRICT_BACKCHANNEL: false          # allow back channel for comms between containers.
       KC_HOSTNAME_PORT: 80
     expose:
       - 8080
     healthcheck:
-      test: "curl -f auth:8080/auth/realms/master"
+      test: "curl -f auth-keycloak:8080/auth/realms/master"
       interval: 5s
       timeout: 5s
       retries: 60
@@ -118,7 +118,7 @@ services:
     # RESOURCES
     volumes:
       - type: volume
-        source: auth-realm-import
+        source: auth-keycloak-realm-import
         target: /opt/keycloak/data/import
     networks:
       - jagnet
@@ -131,7 +131,7 @@ services:
       context: ..
       dockerfile: docker/jag-server/Dockerfile
     depends_on:
-      auth:
+      auth-keycloak:
         condition: "service_healthy"
       api-postgres:
         condition: "service_healthy"
@@ -158,7 +158,7 @@ services:
 #      context: ..
 #      dockerfile: docker/jag-server/Dockerfile
 #    depends_on:
-#      auth:
+#      auth-keycloak:
 #        condition: "service_healthy"
 #      api-postgres:
 #        condition: "service_healthy"
@@ -225,7 +225,7 @@ services:
     depends_on:
       jag-server:
         condition: "service_healthy"
-      auth:
+      auth-keycloak:
         condition: "service_healthy"
       pgadmin:
         condition: "service_healthy"
@@ -266,6 +266,13 @@ services:
       && while :; do sleep 6h & wait $${!}; nginx -s reload; done
       && echo 'ALL DONE'"
 
+
+#https://mindsers.blog/post/https-using-nginx-certbot-docker/:
+
+
+
+
+
 volumes:
   api-postgres-setup:
   api-postgres-data:
@@ -289,7 +296,7 @@ volumes:
     name: "auth-volume"
   proxy_logs:
     name: "proxy_logs"
-  auth-realm-import:
+  auth-keycloak-realm-import:
 
 networks:
   jagnet:

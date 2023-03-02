@@ -12,8 +12,8 @@ for all realms:  (use 'bat' instead of 'sh' for windows)
 4) bin/kc.sh export --file <filename>.json --users realm_file
 for specific realm:
 4) bin/kc.sh export --file <filename>.json --users realm_file --realm <realm_name>
-5) copy into this docker/auth/config/ directory. (copy-paste content was easiest)
-  -or- a) cd to docker/auth/config/
+5) copy into this docker/auth-keycloak/config/ directory. (copy-paste content was easiest)
+  -or- a) cd to docker/auth-keycloak/config/
        b) docker cp auth:/opt/keycloak/data/import/<filename>.json .
 done) This json will then be used to rebuild the keycloak realm if not in the db.
 

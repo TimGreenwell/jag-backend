@@ -41,7 +41,7 @@ const session = {
 app.use(expressSession(session));
 // request.session object is added to request.
 
-const keycloakIssuer = await Issuer.discover(`http://auth:8080/auth/realms/realm1`);
+const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
 const client = new keycloakIssuer.Client({
     client_id: `jag-api-postgres`,
     client_secret: `long_secret-here`,
