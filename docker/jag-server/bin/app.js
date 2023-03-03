@@ -12,7 +12,7 @@
 'use strict';
 
 // Import configuration
-const port = process.env.PORT || 8888;
+const port = 8888;
 const root = process.argv[2] || `.`;
 import path from "path";
 import dotenv from "dotenv";
@@ -35,6 +35,11 @@ const session = {
     saveUninitialized: true,            // something about uninitialized sessions being saved (bots & tourists)
     store: memoryStore                  // not exist in one demo
 };
+
+// authenticate a stratergy -> serialize user to storage
+// authenticate a session -> deserialize user ! this adds req.user
+
+
 app.use(expressSession(session));
 // request.session object is added to request.
 
@@ -50,8 +55,11 @@ passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
     return done(null, tokenSet.claims());
 }));
 // request.session.passport object is added to request
+console.log("aaa")
 app.use(passport.initialize());
 app.use(passport.authenticate(`session`));
+// alias app.use(passport.session());
+console.log("zzz")
 
 passport.serializeUser(function (user, done) {
     console.log(`-----------------------------`);
@@ -69,11 +77,14 @@ passport.deserializeUser(function (user, done) {
 // Calling done(null,user) will attach this to req.user => req.user..{..}
 
 app.get(`/jag/auth/callback`, (req, res, next) => {
-    console.log(`About to authenticate2`);
+    console.log(`in /jag/auth/callback -- passport.authenticate`);
     passport.authenticate(`oidc`, {
         successRedirect: `/jag`,
         failureRedirect: `https://www.greenwell.de`
     })(req, res, next);
+    console.log("#--#")
+    console.log(req.user)
+    console.log("#--#")
 });
 
 // start logout request
@@ -95,20 +106,28 @@ const checkAuthenticated = (req, res, next) => {
         return next();
     }
     passport.authenticate(`oidc`)(req, res, next);
+    console.log("##")
+    console.log(req.user)
+    console.log("##")
+    // passport.authenticate() is middleware which will authenticate the request. By default, when authentication succeeds,
+    //     1) the req.user property is set to the authenticated user,
+    //     2) login session is established,
 };
 
-function myMiddleware1(req, res, next) {
-    if (req.user) {
-        req.newProperty = req.user;
-        res.newProperty = req.user;
-        res.set({
-            whoami: req.user
-        });
-    }
-    next();
-}
+// function myMiddleware1(req, res, next) {
+//     if (req.user) {
+//         req.newProperty = req.user;
+//         res.newProperty = req.user;
+//         res.set({
+//             whoami: req.user
+//         });
+//     }
+//     next();
+// }
+//
+// app.use(myMiddleware1);
 
-app.use(myMiddleware1);
+
 
 app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
 // app.use(`/api/v1`, checkAuthenticated, postgresRouter);

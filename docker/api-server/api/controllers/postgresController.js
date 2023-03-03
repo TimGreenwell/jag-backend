@@ -213,6 +213,10 @@ const dropTables = async (request, response) => {
     response.json({message: `Dropped all tables`});
 };
 
+const healthCheck = async (request, response) => {
+    response.status(200).send(`{}`);
+};
+
 export {
     updateActivity,
     updateJag,
@@ -229,5 +233,6 @@ export {
     deleteActivityById,
     deleteJagByProjectId,
     createTables,
-    dropTables
+    dropTables,
+    healthCheck
 };
