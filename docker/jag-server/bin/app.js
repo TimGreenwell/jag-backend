@@ -11,7 +11,7 @@
 
 'use strict';
 
-// Import configuration
+// App configuration
 const port = 8888;
 const root = process.argv[2] || `.`;
 import path from "path";
@@ -20,28 +20,21 @@ dotenv.config({path: `./.env`});
 
 // Import Express
 import express from "express";
+import bodyParser from 'body-parser';
 const app = express();
 
-// Import Express Session Authentication
+// Import Session Configuration
 import expressSession from 'express-session';
 import passport from 'passport';
 import {Issuer, Strategy} from "openid-client";
-
 const memoryStore = new expressSession.MemoryStore();
 const session = {
-    secret: `another_long_secret`,      // used to sign the session ID cookie,
+    secret: process.env.SECRET,         // used to sign the session ID cookie,
     cookie: {},
     resave: false,                      // forces session to be saved back to session store (unwanted)
     saveUninitialized: true,            // something about uninitialized sessions being saved (bots & tourists)
     store: memoryStore                  // not exist in one demo
 };
-
-// authenticate a stratergy -> serialize user to storage
-// authenticate a session -> deserialize user ! this adds req.user
-
-
-app.use(expressSession(session));
-// request.session object is added to request.
 
 const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
 const client = new keycloakIssuer.Client({
@@ -51,16 +44,34 @@ const client = new keycloakIssuer.Client({
     post_logout_redirect_uris: [`https://jag.baby/jag/logout/callback`],
     response_types: [`code`]
 });
+const checkAuthenticated = (req, res, next) => {
+    if (req.isAuthenticated()) {
+        return next();
+    }
+    passport.authenticate(`oidc`)(req, res, next);
+    console.log(`## ${req.user} ##`);
+    // passport.authenticate() is middleware which will authenticate the request. By default, when authentication succeeds,
+    //     1) the req.user property is set to the authenticated user,
+    //     2) login session is established,
+};
+
+
+app.use(expressSession(session));
+// request.session object is added to request.
+
+app.use(bodyParser.json());
+// initializing Passport and the session authentication middleware
+app.use(passport.initialize());
+app.use(passport.authenticate(`session`));
+
+//google this-> app.use(passport.authenticate  jwt session
+// alias app.use(passport.session());
+// request.session.passport object is added to request
+
 passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
     return done(null, tokenSet.claims());
 }));
-// request.session.passport object is added to request
-console.log("aaa")
-app.use(passport.initialize());
-app.use(passport.authenticate(`session`));
-// alias app.use(passport.session());
-console.log("zzz")
-
+// authenticate a strategy (one-time) -> serialize user to storage
 passport.serializeUser(function (user, done) {
     console.log(`-----------------------------`);
     console.log(`serialize user`);
@@ -68,13 +79,13 @@ passport.serializeUser(function (user, done) {
     console.log(`-----------------------------`);
     done(null, user);
 });
-// Called (once) by Strategy to add authenticated user to req.session.passport.user.{..}
+// Populates (constantly) 'user' with req.session.passport.user.{..}
+
+// authenticate a session  (everytime) -> deserialize user ! this adds req.user
 // The user is now attached to the session.
 passport.deserializeUser(function (user, done) {
     done(null, user);
 });
-// Populates (constantly) 'user' with req.session.passport.user.{..}
-// Calling done(null,user) will attach this to req.user => req.user..{..}
 
 app.get(`/jag/auth/callback`, (req, res, next) => {
     console.log(`in /jag/auth/callback -- passport.authenticate`);
@@ -82,9 +93,10 @@ app.get(`/jag/auth/callback`, (req, res, next) => {
         successRedirect: `/jag`,
         failureRedirect: `https://www.greenwell.de`
     })(req, res, next);
-    console.log("#--#")
-    console.log(req.user)
-    console.log("#--#")
+    console.log(`--> ${JSON.stringify(req.body)}`);
+    console.log(`#--#`);
+    console.log(req.user);
+    console.log(`#--#`);
 });
 
 // start logout request
@@ -101,37 +113,13 @@ app.get(`/jag/logout/callback`, (req, res) => {
     res.redirect(`https://work.greenwell.de`);
 });
 
-const checkAuthenticated = (req, res, next) => {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    passport.authenticate(`oidc`)(req, res, next);
-    console.log("##")
-    console.log(req.user)
-    console.log("##")
-    // passport.authenticate() is middleware which will authenticate the request. By default, when authentication succeeds,
-    //     1) the req.user property is set to the authenticated user,
-    //     2) login session is established,
-};
+app.use(`/jag`, (req, res, next) => {
+    console.log(`--> ${req.headers["authorization"]}`);
 
-// function myMiddleware1(req, res, next) {
-//     if (req.user) {
-//         req.newProperty = req.user;
-//         res.newProperty = req.user;
-//         res.set({
-//             whoami: req.user
-//         });
-//     }
-//     next();
-// }
-//
-// app.use(myMiddleware1);
-
-
+    next();
+});
 
 app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
-// app.use(`/api/v1`, checkAuthenticated, postgresRouter);
-
 
 const server = app.listen(port);
 
@@ -159,3 +147,19 @@ process.on(`SIGINT`, () => {
  *
  * Dotenv useful as dev for setting environment variables... used by node's process and docker-compose
  */
+
+//
+// 1) The user submits login credentials to the backend server.
+//
+// 2) Upon the request, the server verifies the credentials before generating an encrypted
+// JWT with a secret key and sends it back to the client.
+//
+// 3) On the client-side, the browser stores the token locally using the -local storage-,
+// -session storage-, or -cookie storage-.
+//
+// 4) On future requests, the JWT is added to the authorization header prefixed by the bearer,
+// and the server will validate its signature by decoding the token before proceeding to send a
+// response. The content of the header would look like this: Authorization: Bearer <token>.
+//
+// 5) On the logout operation, the token on the client-side is destroyed without server interaction.
+//

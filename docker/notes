@@ -1,0 +1,1 @@
+alias rmijag='docker rmi $(docker images --filter "reference=jag*" -aq)'

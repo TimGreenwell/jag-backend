@@ -154,7 +154,7 @@ services:
       test: "curl -f jag-server:8888/jag"
       interval: 5s
       timeout: 5s
-      retries: 20
+      retries: 10
     restart: unless-stopped
     networks:
       - jagnet
