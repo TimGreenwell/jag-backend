@@ -21,7 +21,7 @@ import dotenv from "dotenv";
 dotenv.config({path: `./.env`});
 
 // Import Express
-import express from "express";
+import express, {response} from "express";
 import bodyParser from 'body-parser';
 import jwt from "jsonwebtoken";
 const app = express();
@@ -72,12 +72,12 @@ app.use(passport.authenticate(`session`));
 // request.session.passport object is added to request
 
 passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
-    console.log(`Token Set`);
-    console.log(tokenSet);
     console.log(`User Info`);
     console.log(userinfo);
-    accessToken=tokenSet.access_token;   // ugly - plesae fix, use passport somehow.
-    return done(null, tokenSet.claims());
+    console.log(`-----------------------------`);
+    accessToken = tokenSet.access_token;
+    console.log(accessToken);
+    return done(null, tokenSet.claims());     // returns tokenSet.claims() to serializeUser
 }));
 
 // authenticate a strategy (one-time) -> serialize user to storage
@@ -87,6 +87,10 @@ passport.serializeUser(function (user, done) {
     console.log(user);
     console.log(`-----------------------------`);
     done(null, user);
+    // So in effect during "serializeUser", the PassportJS library adds the authenticated user
+    // to end of the "req.session.passport" object. This allows the authenticated user to be
+    // "attached" to a unique session. Directly maintains authenticated users for each session
+    // within the "req.session.passport.user.{..}"
 });
 // Populates (constantly) 'user' with req.session.passport.user.{..}
 
@@ -96,9 +100,37 @@ passport.deserializeUser(function (user, done) {
     done(null, user);
 });
 
+// Middleware to see how the params are populated by Passport
+let count = 1;
+
+let printData = (req, res, next) => {
+    console.log(`\n==============================`);
+    console.log(`------------>  ${count++}`);
+
+    console.log(`req.body.username -------> ${req.body.username}`);
+    console.log(`req.body.password -------> ${req.body.password}`);
+
+    console.log(`\n req.session.passport -------> `);
+    console.log(req.session.passport);
+
+    console.log(`\n req.user -------> `);
+    console.log(req.user);
+
+    console.log(`\n Session and Cookie`);
+    console.log(`req.session.id -------> ${req.session.id}`);
+    console.log(`req.session.cookie -------> `);
+    console.log(req.session.cookie);
+
+    console.log(`===========================================\n`);
+
+    next();
+};
+
+app.use(printData);
 app.get(`/jag/auth/callback`, (req, res, next) => {
     console.log(`in /jag/auth/callback -- passport.authenticate`);
     // Two kinds of passport.authenticate.  This authenticates and routes.
+    // (accessToken is not defined here)
     passport.authenticate(`oidc`, {
         successRedirect: `/jag`,
         failureRedirect: `https://www.greenwell.de`
@@ -120,11 +152,13 @@ app.get(`/jag/logout/callback`, (req, res) => {
 });
 
 app.use(`/jag`, (req, res, next) => {
-     res.setHeader('AUGGIE', `bearer ${accessToken}` );
+    console.log(`##########>  ${accessToken}`);
+    // res.header(`Authorization`, `Bearer ${accessToken}`);
     res.cookie(`access_token`, accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === `development`
+        secure: false
     });
+    // res.setHeader(`Authorization`, `Bearer ${accessToken}`);
     next();
 });
 
@@ -199,3 +233,7 @@ process.on(`SIGINT`, () => {
 //
 // 5) On the logout operation, the token on the client-side is destroyed without server interaction.
 //
+
+
+// https://medium.com/devops-dudes/secure-nestjs-rest-api-with-keycloak-745ef32a2370
+// https://access.redhat.com/documentation/en-us/red_hat_single_sign-on_continuous_delivery/5/html-single/securing_applications_and_services_guide/index#nodejs_adapter
