@@ -25,6 +25,13 @@ import {postgresRouter} from "../api/routes/postgresRoutes.js";
 import express from "express";
 const app = express();
 
+// google this-> app.use(passport.authenticate  jwt session
+/*
+ * additional express app config
+ * app.use(bodyParser.json());
+ * app.use(bodyParser.urlencoded({ extended: false }));
+ */
+
 app.use(`/api/v1`,  postgresRouter);
 
 

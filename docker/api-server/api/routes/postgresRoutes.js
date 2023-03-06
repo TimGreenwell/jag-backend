@@ -15,7 +15,7 @@ postgresRouter.use((req, res, next) => {
 
 postgresRouter.get(`/activities`, pgController.getAllActivities);
 postgresRouter.get(`/activities/:activityId`, pgController.getActivityById);
-postgresRouter.get(`/jags`, checkAuthenticated, pgController.getAllJags);
+postgresRouter.get(`/jags`,  pgController.getAllJags);
 postgresRouter.get(`/agents`, pgController.getAllAgents);
 postgresRouter.get(`/teams`, pgController.getAllTeams);
 postgresRouter.get(`/analyses`, pgController.getAllAnalyses);

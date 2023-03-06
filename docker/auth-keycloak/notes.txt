@@ -32,3 +32,33 @@ Error is:
 Permanent solution is unknown:
 x) Copying the secret into the json does not work.  (related to keycloak export/import)
 x) There is chatter about this problem on boards - hopefully a fix in near future.
+
+-------------------------------------------------------------------------------------------------------
+Getting auth-keycloak's public cert (needed for verification with jwt.io, for example)
+Use: https://jag.baby/auth/realms/realm1/protocol/openid-connect/certs
+extract entire key -- {.....}
+
+[ALT]To curl it:
+1) login to one of the containers: eg. docker exec -it reverse-proxy /bin/bash
+2) (convenient)  apt-get update
+3) (convenient) apt-get install jq
+4) curl -v http://auth-keycloak:8080/auth/realms/<realm name>/protocol/openid-connect/certs | jq
+
+
+Endpoints
+https://jag.baby/auth/realms/realm1/.well-known/openid-configuration
+https://jag.baby/auth/realms/realm1/
+
+  issuer: 'https://jag.baby/auth/realms/realm1',
+ jwks_uri: 'http://auth-keycloak:8080/auth/realms/realm1/protocol/openid-connect/certs',
+revocation_endpoint: 'https://jag.baby/auth/realms/realm1/protocol/openid-connect/revoke',
+   token_endpoint: 'http://auth-keycloak:8080/auth/realms/realm1/protocol/openid-connect/token',
+    userinfo_endpoint: 'http://auth-keycloak:8080/auth/realms/realm1/protocol/openid-connect/userinfo',
+    authorization_endpoint: 'https://jag.baby/auth/realms/realm1/protocol/openid-connect/auth',
+   backchannel_authentication_endpoint: 'http://auth-keycloak:8080/auth/realms/realm1/protocol/openid-connect/ext/ciba/auth',
+     check_session_iframe: 'https://jag.baby/auth/realms/realm1/protocol/openid-connect/login-status-iframe.html',
+  device_authorization_endpoint: 'https://jag.baby/auth/realms/realm1/protocol/openid-connect/auth/device',
+  end_session_endpoint: 'https://jag.baby/auth/realms/realm1/protocol/openid-connect/logout',
+      introspection_endpoint: 'http://auth-keycloak:8080/auth/realms/realm1/protocol/openid-connect/token/introspect',
+  pushed_authorization_request_endpoint: 'http://auth-keycloak:8080/auth/realms/realm1/protocol/openid-connect/ext/par/request',
+    registration_endpoint: 'http://auth-keycloak:8080/auth/realms/realm1/clients-registrations/openid-connect',

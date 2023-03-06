@@ -7,31 +7,15 @@
  * @version 0.59
  */
 
-// var myHeaders =  new Headers()
-// /**you need to get the token and put it in myToken var.
-//  Where to store the token is the real question, you need
-//  to take care about the storage you choose beacause of
-//  the security risks*/
-// myHeaders.append('Content-Type','application/json; charset=utf-8');
-// myHeaders.append('Authorization', 'Bearer ' + myToken);
-// fetch( '/myurl', {
-//     credentials: 'include',
-//     headers: myHeaders,
-//     method: 'GET'
-// }).then( res => {
-//     return res.json();
-// }).then( res => {
-//     /**your stuff*/
-// });
-
-
 export default class RESTUtils {
 
     static async request(url, details, error_prefix = `Error`, ok_fallback = undefined, bad_fallback = undefined) {
+
+        console.log(document.cookie)
+
+        details.headers = {...details.headers, 'Authorization': 'Bearer ' + document.cookie.token_access};
         console.log("---- Details -----")
         console.log(details)
-        console.log("crdentials? headers? methods? ")
-        console.log("---- End Details -----")
         const response = await fetch(url, details).catch((error_message) => {
             throw new Error(`${error_prefix}: ${error_message}`);
         });

@@ -7,7 +7,7 @@
 
 'use strict';
 
-import RouteEndpoint from "./endpoint";
+import RouteEndpoint from "./endpoint.js";
 
 export default class RouteLeg extends EventTarget {
 

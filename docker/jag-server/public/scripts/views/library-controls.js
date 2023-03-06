@@ -7,7 +7,7 @@
 
 'use strict';
 
-import {functionFactory} from "../utils/function-factory";
+import {functionFactory} from "../utils/function-factory.js";
 
 class LibraryControls extends HTMLElement {
 

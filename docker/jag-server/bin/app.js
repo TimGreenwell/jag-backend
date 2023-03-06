@@ -11,7 +11,9 @@
 
 'use strict';
 
+
 // App configuration
+
 const port = 8888;
 const root = process.argv[2] || `.`;
 import path from "path";
@@ -21,20 +23,16 @@ dotenv.config({path: `./.env`});
 // Import Express
 import express from "express";
 import bodyParser from 'body-parser';
+import jwt from "jsonwebtoken";
 const app = express();
 
 // Import Session Configuration
+let accessToken;
 import expressSession from 'express-session';
 import passport from 'passport';
 import {Issuer, Strategy} from "openid-client";
 const memoryStore = new expressSession.MemoryStore();
-const session = {
-    secret: process.env.SECRET,         // used to sign the session ID cookie,
-    cookie: {},
-    resave: false,                      // forces session to be saved back to session store (unwanted)
-    saveUninitialized: true,            // something about uninitialized sessions being saved (bots & tourists)
-    store: memoryStore                  // not exist in one demo
-};
+
 
 const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
 const client = new keycloakIssuer.Client({
@@ -44,33 +42,44 @@ const client = new keycloakIssuer.Client({
     post_logout_redirect_uris: [`https://jag.baby/jag/logout/callback`],
     response_types: [`code`]
 });
+
 const checkAuthenticated = (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
     }
-    passport.authenticate(`oidc`)(req, res, next);
-    console.log(`## ${req.user} ##`);
     // passport.authenticate() is middleware which will authenticate the request. By default, when authentication succeeds,
     //     1) the req.user property is set to the authenticated user,
     //     2) login session is established,
+    // Two kinds of passport.authenticate.  This sets up the authenticator
+    passport.authenticate(`oidc`)(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/jag/auth/callback
 };
 
-
+const session = {
+    secret: process.env.SECRET,         // used to sign the session ID cookie,
+    cookie: {},
+    resave: false,                      // forces session to be saved back to session store (unwanted)
+    saveUninitialized: true,            // something about uninitialized sessions being saved (bots & tourists)
+    store: memoryStore                  // not exist in one demo
+};
 app.use(expressSession(session));
 // request.session object is added to request.
 
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 // initializing Passport and the session authentication middleware
 app.use(passport.initialize());
 app.use(passport.authenticate(`session`));
-
-//google this-> app.use(passport.authenticate  jwt session
 // alias app.use(passport.session());
 // request.session.passport object is added to request
 
 passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
+    console.log(`Token Set`);
+    console.log(tokenSet);
+    console.log(`User Info`);
+    console.log(userinfo);
+    accessToken=tokenSet.access_token;   // ugly - plesae fix, use passport somehow.
     return done(null, tokenSet.claims());
 }));
+
 // authenticate a strategy (one-time) -> serialize user to storage
 passport.serializeUser(function (user, done) {
     console.log(`-----------------------------`);
@@ -82,21 +91,18 @@ passport.serializeUser(function (user, done) {
 // Populates (constantly) 'user' with req.session.passport.user.{..}
 
 // authenticate a session  (everytime) -> deserialize user ! this adds req.user
-// The user is now attached to the session.
+// The .user is now attached to the session.
 passport.deserializeUser(function (user, done) {
     done(null, user);
 });
 
 app.get(`/jag/auth/callback`, (req, res, next) => {
     console.log(`in /jag/auth/callback -- passport.authenticate`);
+    // Two kinds of passport.authenticate.  This authenticates and routes.
     passport.authenticate(`oidc`, {
         successRedirect: `/jag`,
         failureRedirect: `https://www.greenwell.de`
     })(req, res, next);
-    console.log(`--> ${JSON.stringify(req.body)}`);
-    console.log(`#--#`);
-    console.log(req.user);
-    console.log(`#--#`);
 });
 
 // start logout request
@@ -114,10 +120,40 @@ app.get(`/jag/logout/callback`, (req, res) => {
 });
 
 app.use(`/jag`, (req, res, next) => {
-    console.log(`--> ${req.headers["authorization"]}`);
-
+     res.setHeader('AUGGIE', `bearer ${accessToken}` );
+    res.cookie(`access_token`, accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === `development`
+    });
     next();
 });
+
+//  The hard way -- goodbye weekend
+// app.use(cookieParser());
+// app.use(`/jag`, (req, res, next) => {
+//     if (req.session && req.session.passport && req.session.passport.user) {
+//         console.log(`GOT A PASSPORT USER`);
+//         const privateKEY = process.env.JWT_KEY;
+//         const signOptions = {
+//             issuer: `https://jag.baby/auth/realms/realm1`,
+//             subject: `ed981ea7-2a11-4d3d-bdbf-8e1bb5c4b0eb`,
+//             audience: `client1`,
+//             expiresIn: `12h`,
+//             algorithm: `RS256`
+//         };
+//         console.log(privateKEY);
+//         const token = jwt.sign(req.session.passport.user, privateKEY, signOptions);
+//         console.log("Token - " + token)
+//         res.cookie(`access_token`, token, {
+// //             httpOnly: true,
+// //             secure: process.env.NODE_ENV === `production`
+// //         });
+//     } else {
+//         console.log(`NO PASSPORT USER NOW`);
+//     }
+//     next();
+// });
+
 
 app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
 
@@ -155,7 +191,7 @@ process.on(`SIGINT`, () => {
 // JWT with a secret key and sends it back to the client.
 //
 // 3) On the client-side, the browser stores the token locally using the -local storage-,
-// -session storage-, or -cookie storage-.
+// -session storage-, or -(cookie storage)-.
 //
 // 4) On future requests, the JWT is added to the authorization header prefixed by the bearer,
 // and the server will validate its signature by decoding the token before proceeding to send a

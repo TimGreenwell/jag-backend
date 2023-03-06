@@ -2,6 +2,8 @@ import * as queries from "../sql/postgres/queries.js";
 
 const updateActivity = async (request, response) => {
     const activity = request.body;
+
+    if (request.user) {
     await queries.updateActivity(activity, request.user.email);
 
     const children = activity.children;
@@ -18,7 +20,10 @@ const updateActivity = async (request, response) => {
     for (const binding of bindings) {
         await queries.updateBinding(binding, activity.urn);
     }
-    response.status(204).send(`{}`);
+    response.status(204).send(`{}`); }
+    else {
+        response.status(204).send(`{}`);   // @TODO remove once authentication ok.
+    }
 };
 
 const updateJag = async (request, response) => {
@@ -64,7 +69,15 @@ const getAllActivities = async (request, response) => {
         includeShared = false;
     }
     console.log(`getAllActivities  getAllActivities getAllActivities getAllActivities`);
-    const activitiesReply = await queries.getAllActivities(includeShared, request.user.email);
+
+    let ownerFilter = "";
+    if (request.user) {
+       ownerFilter = request.user.email }
+    else {
+        ownerFilter = "";
+    }
+
+    const activitiesReply = await queries.getAllActivities(includeShared, ownerFilter);
     const activities = activitiesReply.rows;
 
     for (const activity of activities) {

@@ -1,7 +1,1 @@
-.idea/
-BUCKET/
-docker/
-nGinxServer/
 node_modules/
-.eslintrc.json
-.gitignore
