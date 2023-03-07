@@ -10,12 +10,6 @@
 export default class RESTUtils {
 
     static async request(url, details, error_prefix = `Error`, ok_fallback = undefined, bad_fallback = undefined) {
-
-        console.log(document.cookie)
-        //
-        details.headers = {...details.headers, 'Authorization': 'Bearer ' + document.cookie.token_access};
-        // console.log("---- Details -----")
-        // console.log(details)
         const response = await fetch(url, details).catch((error_message) => {
             throw new Error(`${error_prefix}: ${error_message}`);
         });

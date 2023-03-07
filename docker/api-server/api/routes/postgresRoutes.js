@@ -13,7 +13,7 @@ postgresRouter.use((req, res, next) => {
     next();
 });
 
-postgresRouter.get(`/activities`, pgController.getAllActivities);
+postgresRouter.get(`/activities`, checkAuthenticated, pgController.getAllActivities);
 postgresRouter.get(`/activities/:activityId`, pgController.getActivityById);
 postgresRouter.get(`/jags`,  pgController.getAllJags);
 postgresRouter.get(`/agents`, pgController.getAllAgents);

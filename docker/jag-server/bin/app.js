@@ -14,11 +14,13 @@
 
 // App configuration
 
-const port = 8888;
+const port = process.env.PORT || 8888;
 const root = process.argv[2] || `.`;
 import path from "path";
 import dotenv from "dotenv";
 dotenv.config({path: `./.env`});
+
+import fetch from "node-fetch";
 
 // Import Express
 import express, {response} from "express";
@@ -33,7 +35,8 @@ import passport from 'passport';
 import {Issuer, Strategy} from "openid-client";
 const memoryStore = new expressSession.MemoryStore();
 
-
+// Authorization flow
+// Step 1) - get instantiated Issuer/IdP/Auth Server -- in our case -> keycloak
 const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
 const client = new keycloakIssuer.Client({
     client_id: `client1`,
@@ -62,6 +65,7 @@ const session = {
     store: memoryStore                  // not exist in one demo
 };
 app.use(expressSession(session));
+app.use(express.json());
 // request.session object is added to request.
 
 // app.use(bodyParser.json());
@@ -101,32 +105,9 @@ passport.deserializeUser(function (user, done) {
 });
 
 // Middleware to see how the params are populated by Passport
-let count = 1;
+const count = 1;
 
-let printData = (req, res, next) => {
-    console.log(`\n==============================`);
-    console.log(`------------>  ${count++}`);
 
-    console.log(`req.body.username -------> ${req.body.username}`);
-    console.log(`req.body.password -------> ${req.body.password}`);
-
-    console.log(`\n req.session.passport -------> `);
-    console.log(req.session.passport);
-
-    console.log(`\n req.user -------> `);
-    console.log(req.user);
-
-    console.log(`\n Session and Cookie`);
-    console.log(`req.session.id -------> ${req.session.id}`);
-    console.log(`req.session.cookie -------> `);
-    console.log(req.session.cookie);
-
-    console.log(`===========================================\n`);
-
-    next();
-};
-
-app.use(printData);
 app.get(`/jag/auth/callback`, (req, res, next) => {
     console.log(`in /jag/auth/callback -- passport.authenticate`);
     // Two kinds of passport.authenticate.  This authenticates and routes.
@@ -142,25 +123,59 @@ app.get(`/jag/logout`, (req, res) => {
     res.redirect(client.endSessionUrl());
 });
 
+app.get([`/jag/api/v1`, `/jag/api/v1*`], (req, res) => {
+    console.log(`ABOUT TO REDIRECT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!`);
+    const newUrl = req.url.replace(`/jag`, ``);
+    console.log(newUrl);
+    fetch(`http://api-server:8888${newUrl}`, {
+        method: req.method,
+        headers: {
+            "Content-Type": `application/json`,
+            Authorization: `Bearer ${accessToken}`
+        }
+    }).then((response) => {
+        return response.json();
+    }).then((data) => {
+        console.log(data);
+    });
+});
+
 // logout callback
 app.get(`/jag/logout/callback`, (req, res) => {
     console.log(`Calling logout`);
     // clears the persisted user from the local storage
     req.logout();
-    // redirects the user to a public route
     res.redirect(`https://work.greenwell.de`);
 });
 
-app.use(`/jag`, (req, res, next) => {
-    console.log(`##########>  ${accessToken}`);
-    // res.header(`Authorization`, `Bearer ${accessToken}`);
-    res.cookie(`access_token`, accessToken, {
-        httpOnly: true,
-        secure: false
-    });
-    // res.setHeader(`Authorization`, `Bearer ${accessToken}`);
-    next();
+// app.use(`/jag`, (req, res, next) => {
+//     res.cookie(`access_token`, accessToken, {
+//         httpOnly: true,  // now the backend cannot see this :(
+//         secure: false
+//     });
+//     // res.setHeader(`Authorization`, `Bearer ${accessToken}`);  // this is what the backend does for the api
+//     next();
+// });
+
+
+app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
+
+const server = app.listen(port);
+
+server.on(`listening`, () => {
+    return console.log(`JAG server started on ${port}`);
 });
+
+process.on(`SIGTERM`, () => {
+    console.error(`\nTerminating server.`);
+    server.close();
+});
+
+process.on(`SIGINT`, () => {
+    console.error(`\nInterrupting server.`);
+    server.close();
+});
+
 
 //  The hard way -- goodbye weekend
 // app.use(cookieParser());
@@ -187,25 +202,6 @@ app.use(`/jag`, (req, res, next) => {
 //     }
 //     next();
 // });
-
-
-app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
-
-const server = app.listen(port);
-
-server.on(`listening`, () => {
-    return console.log(`JAG server started on ${port}`);
-});
-
-process.on(`SIGTERM`, () => {
-    console.error(`\nTerminating server.`);
-    server.close();
-});
-
-process.on(`SIGINT`, () => {
-    console.error(`\nInterrupting server.`);
-    server.close();
-});
 
 /**
  * To run -
