@@ -27,50 +27,50 @@ import passport_jwt from "passport-jwt";
 const app = express();
 
 // Import Session Configuration
-let accessToken;
-import expressSession from 'express-session';
-import passport from 'passport';
-import {Issuer, Strategy} from "openid-client";
-const memoryStore = new expressSession.MemoryStore();
+// let accessToken;
+// import expressSession from 'express-session';
+// import passport from 'passport';
+// import {Issuer, Strategy} from "openid-client";
+// const memoryStore = new expressSession.MemoryStore();
 
-
-
-let JwtStrategy = passport_jwt.Strategy;
-let ExtractJwt = passport_jwt.ExtractJwt;
-let opts = {}
-opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-opts.secretOrKey = 'secret';
-opts.issuer = 'https://jag.baby/auth/realms/realm1';
-opts.algorithms = ["HS256", "HS384"];
+//
+//
+// let JwtStrategy = passport_jwt.Strategy;
+// let ExtractJwt = passport_jwt.ExtractJwt;
+// let opts = {}
+// opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+// opts.secretOrKey = 'secret';
+// opts.issuer = 'https://jag.baby/auth/realms/realm1';
+// opts.algorithms = ["HS256", "HS384"];
 // opts.audience = 'client1';
-passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
-    console.log('PassportJwt Strategy being processed');
-    console.log(User)
-
-    User.findOne({id: jwt_payload.sub}, function(err, user) {
-        if (err) {
-            return done(err, false);
-        }
-        if (user) {
-            return done(null, user);
-        } else {
-            return done(null, false);
-            // or you could create a new account
-        }
-    });
-
-    // User.findById(jwtPayload.sub)
-    //     .then((user) => {
-    //         if (user) {
-    //             done(null, user);
-    //         } else {
-    //             done(null, false);
-    //         }
-    //     })
-    //     .catch((error) => {
-    //         done(error, false);
-    //     })
-}));
+// passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
+//     console.log('PassportJwt Strategy being processed');
+//     console.log(User)
+//
+//     User.findOne({id: jwt_payload.sub}, function(err, user) {
+//         if (err) {
+//             return done(err, false);
+//         }
+//         if (user) {
+//             return done(null, user);
+//         } else {
+//             return done(null, false);
+//             // or you could create a new account
+//         }
+//     });
+//
+//     // User.findById(jwtPayload.sub)
+//     //     .then((user) => {
+//     //         if (user) {
+//     //             done(null, user);
+//     //         } else {
+//     //             done(null, false);
+//     //         }
+//     //     })
+//     //     .catch((error) => {
+//     //         done(error, false);
+//     //     })
+// }));
 
 
 
@@ -90,32 +90,26 @@ passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
 //     response_types: [`code`]
 // });
 
-const checkAuthenticated = (req, res, next) => {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    // passport.authenticate() is middleware which will authenticate the request. By default, when authentication succeeds,
-    //     1) the req.user property is set to the authenticated user,
-    //     2) login session is established,
-    // Two kinds of passport.authenticate.  This sets up the authenticator
-    passport.authenticate(`jwt`, {session: false})(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/api/v1/auth/callback
-};
 
-const session = {
-    secret: process.env.SECRET,         // used to sign the session ID cookie,
-    cookie: {},
-    resave: false,                      // forces session to be saved back to session store (unwanted)
-    saveUninitialized: true,            // something about uninitialized sessions being saved (bots & tourists)
-    store: memoryStore                  // not exist in one demo
-};
-app.use(expressSession(session));
-app.use(express.json());
+// const session = {
+//     secret: process.env.SECRET,         // used to sign the session ID cookie,
+//     cookie: {},
+//     resave: false,                      // forces session to be saved back to session store (unwanted)
+//     saveUninitialized: true,            // something about uninitialized sessions being saved (bots & tourists)
+//     store: memoryStore                  // not exist in one demo
+// };
+// app.use(expressSession(session));
+// app.use(express.json());
 // request.session object is added to request.
 
 // app.use(bodyParser.json());
 // initializing Passport and the session authentication middleware
-app.use(passport.initialize());
-app.use(passport.authenticate(`session`));
+
+
+// app.use(passport.initialize());
+// app.use(passport.authenticate(`session`));
+
+
 // alias app.use(passport.session());
 // request.session.passport object is added to request
 
@@ -128,49 +122,53 @@ app.use(passport.authenticate(`session`));
 //     return done(null, tokenSet.claims());     // returns tokenSet.claims() to serializeUser
 // }));
 
-passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
-    console.log(`User Info`);
-    console.log(userinfo);
-    console.log(`-----------------------------`);
-    accessToken = tokenSet.access_token;
-    console.log(accessToken);
-    return done(null, tokenSet.claims());     // returns tokenSet.claims() to serializeUser
-}));
-passport.serializeUser(function (user, done) {
-    console.log(`-----------------------------`);
-    console.log(`serialize user`);
-    console.log(user);
-    console.log(`-----------------------------`);
-    done(null, user);
-    // So in effect during "serializeUser", the PassportJS library adds the authenticated user
-    // to end of the "req.session.passport" object. This allows the authenticated user to be
-    // "attached" to a unique session. Directly maintains authenticated users for each session
-    // within the "req.session.passport.user.{..}"
-});
-passport.deserializeUser(function (user, done) {
-    done(null, user);
-});
+// passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
+//     console.log(`User Info`);
+//     console.log(userinfo);
+//     console.log(`-----------------------------`);
+//     accessToken = tokenSet.access_token;
+//     console.log(accessToken);
+//     return done(null, tokenSet.claims());     // returns tokenSet.claims() to serializeUser
+// }));
 
-app.get(`/api/v1/auth/callback`, (req, res, next) => {
-    console.log(`in /api/v1/auth/callback -- passport.authenticate`);
-    // Two kinds of passport.authenticate.  This authenticates and routes.
-    // (accessToken is not defined here)
-    passport.authenticate(`oidc`, {
-        successRedirect: `/api/v1`,
-        failureRedirect: `https://www.greenwell.de`
-    })(req, res, next);
-});
 
-app.get(`/api/v1/logout`, (req, res) => {
-    res.redirect(client.endSessionUrl());
-});
+// passport.serializeUser(function (user, done) {
+//     console.log(`-----------------------------`);
+//     console.log(`serialize user`);
+//     console.log(user);
+//     console.log(`-----------------------------`);
+//     done(null, user);
+//     // So in effect during "serializeUser", the PassportJS library adds the authenticated user
+//     // to end of the "req.session.passport" object. This allows the authenticated user to be
+//     // "attached" to a unique session. Directly maintains authenticated users for each session
+//     // within the "req.session.passport.user.{..}"
+// });
 
-app.get(`/api/v1/logout/callback`, (req, res) => {
-    console.log(`Calling logout`);
-    // clears the persisted user from the local storage
-    req.logout();
-    res.redirect(`https://work.greenwell.de`);
-});
+
+// passport.deserializeUser(function (user, done) {
+//     done(null, user);
+// });
+//
+// app.get(`/api/v1/auth/callback`, (req, res, next) => {
+//     console.log(`in /api/v1/auth/callback -- passport.authenticate`);
+//     // Two kinds of passport.authenticate.  This authenticates and routes.
+//     // (accessToken is not defined here)
+//     passport.authenticate(`oidc`, {
+//         successRedirect: `/api/v1`,
+//         failureRedirect: `https://www.greenwell.de`
+//     })(req, res, next);
+// });
+
+// app.get(`/api/v1/logout`, (req, res) => {
+//     res.redirect(client.endSessionUrl());
+// });
+//
+// app.get(`/api/v1/logout/callback`, (req, res) => {
+//     console.log(`Calling logout`);
+//     // clears the persisted user from the local storage
+//     req.logout();
+//     res.redirect(`https://work.greenwell.de`);
+// });
 
 
 

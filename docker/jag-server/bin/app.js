@@ -131,7 +131,7 @@ app.get([`/jag/api/v1`, `/jag/api/v1*`], (req, res) => {
         method: req.method,
         headers: {
             "Content-Type": `application/json`,
-            Authorization: `Bearer ${accessToken}`
+            "Authorization": `Bearer ${accessToken}`
         }
     }).then((response) => {
         return response.json();

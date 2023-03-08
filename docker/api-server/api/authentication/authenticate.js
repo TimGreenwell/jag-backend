@@ -6,7 +6,9 @@ const app = express();
 // Import Express Session Authentication
 import expressSession from 'express-session';
 import passport from 'passport';
-import {Issuer, Strategy} from "openid-client";
+// import {Issuer, Strategy} from "openid-client";
+
+import { ExtractJwt, Strategy } from 'passport-jwt';
 
 const memoryStore = new expressSession.MemoryStore();
 const session = {
@@ -19,63 +21,108 @@ const session = {
 app.use(expressSession(session));
 // request.session object is added to request.
 
-const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
-const client = new keycloakIssuer.Client({
-    client_id: `jag-api-postgres`,
-    client_secret: `long_secret-here`,
-    redirect_uris: [`https://jag.baby/api/v1/auth/callback`],
-    post_logout_redirect_uris: [`https://jag.baby/api/v1/logout/callback`],
-    response_types: [`code`]
-});
-passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
-    return done(null, tokenSet.claims());
-}));
+// const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
+// const client = new keycloakIssuer.Client({
+//     client_id: `jag-api-postgres`,
+//     client_secret: `long_secret-here`,
+//     redirect_uris: [`https://jag.baby/api/v1/auth/callback`],
+//     post_logout_redirect_uris: [`https://jag.baby/api/v1/logout/callback`],
+//     response_types: [`code`]
+// });
+// passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
+//     return done(null, tokenSet.claims());
+// }));
 // request.session.passport object is added to request
-app.use(passport.initialize());
-app.use(passport.authenticate(`session`));
-
-passport.serializeUser(function (user, done) {
-    console.log(`-----------------------------`);
-    console.log(`serialize user`);
-    console.log(user);
-    console.log(`-----------------------------`);
-    done(null, user);
-});
+// app.use(passport.initialize());
+// app.use(passport.authenticate(`session`));
+//
+// passport.serializeUser(function (user, done) {
+//     console.log(`-----------------------------`);
+//     console.log(`serialize user`);
+//     console.log(user);
+//     console.log(`-----------------------------`);
+//     done(null, user);
+// });
 // Called (once) by Strategy to add authenticated user to req.session.passport.user.{..}
 // The user is now attached to the session.
-passport.deserializeUser(function (user, done) {
-    done(null, user);
-});
+// passport.deserializeUser(function (user, done) {
+//     done(null, user);
+// });
 // Populates (constantly) 'user' with req.session.passport.user.{..}
 // Calling done(null,user) will attach this to req.user => req.user..{..}
 
-app.get(`/api/v1/auth/callback`, (req, res, next) => {
-    console.log(`About to authenticate2`);
-    passport.authenticate(`oidc`, {
-        successRedirect: `/api/v1`,
-        failureRedirect: `https://www.greenwell.de`
-    })(req, res, next);
-});
+// app.get(`/api/v1/auth/callback`, (req, res, next) => {
+//     console.log(`About to authenticate2`);
+//     passport.authenticate(`oidc`, {
+//         successRedirect: `/api/v1`,
+//         failureRedirect: `https://www.greenwell.de`
+//     })(req, res, next);
+// });
 
 // start logout request
-app.get(`/api/v1/logout`, (req, res) => {
-    res.redirect(client.endSessionUrl());
-});
+// app.get(`/api/v1/logout`, (req, res) => {
+//     res.redirect(client.endSessionUrl());
+// });
+//
+// // logout callback
+// app.get(`/api/v1/logout/callback`, (req, res) => {
+//     console.log(`Calling logout`);
+//     // clears the persisted user from the local storage
+//     req.logout();
+//     // redirects the user to a public route
+//     res.redirect(`https://work.greenwell.de`);
+// });
 
-// logout callback
-app.get(`/api/v1/logout/callback`, (req, res) => {
-    console.log(`Calling logout`);
-    // clears the persisted user from the local storage
-    req.logout();
-    // redirects the user to a public route
-    res.redirect(`https://work.greenwell.de`);
-});
+// const checkAuthenticated = (req, res, next) => {
+//     if (req.isAuthenticated()) {
+//         return next();
+//     }
+//     passport.authenticate(`oidc`)(req, res, next);
+// };
+
+const opts = {};
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = `long_secret-here`;
+opts.issuer = `https://jag.baby/auth/realms/realm1`;
+// opts.audience = `yoursite.net`;
+
+passport.use(new Strategy(opts, async (token, done) => {
+    try {
+        console.log(`---------> token = `);
+        console.log(token);
+        return done(null, token.user);
+    } catch (error) {
+        done(error);
+    }
+}));
+
+//
+// passport.use(new JwtStrategy(opts, function (jwt_payload, done) {
+//     User.findOne({id: jwt_payload.sub}, function (err, user) {
+//         if (err) {
+//             return done(err, false);
+//         }
+//         if (user) {
+//             return done(null, user);
+//         } else {
+//             return done(null, false);
+//             // or you could create a new account
+//         }
+//     });
+// }));
+
 
 const checkAuthenticated = (req, res, next) => {
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    passport.authenticate(`oidc`)(req, res, next);
+    // if (req.isAuthenticated()) {
+    //     return next();
+    // }
+    console.log("checking authenticated...")
+    // passport.authenticate() is middleware which will authenticate the request. By default, when authentication succeeds,
+    //     1) the req.user property is set to the authenticated user,
+    //     2) login session is established,
+    // Two kinds of passport.authenticate.  This sets up the authenticator
+    passport.authenticate(`jwt`, {session: false})(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/api/v1/auth/callback
 };
+
 
 export {checkAuthenticated};
