@@ -1,0 +1,2 @@
+ Error: did not find expected authorization request details in session, req.session["oidc:jag.baby"] is undefined
+--- client_secret does not match keycloak client credentials

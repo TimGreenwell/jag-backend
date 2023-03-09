@@ -12,74 +12,76 @@
 'use strict';
 
 // Import configuration
+import * as pgController from "../api/controllers/postgresController.js";
+import fetch from "node-fetch";
 const port = process.env.PORT || 8888;
 const root = process.argv[2] || `.`;
 import path from "path";
 import dotenv from "dotenv";
 dotenv.config({path: `./.env`});
 
-// Import Api Routes
-import {postgresRouter} from "../api/routes/postgresRoutes.js";
-
 // Import Express
+import jwt from "jsonwebtoken";
+import parser from 'body-parser';
+import passport from "passport";
+const {json} = parser;
 import express from "express";
-import passport_jwt from "passport-jwt";
+const postgresRouter = express.Router();
+const bodyParser = json();
 const app = express();
 
-// Import Session Configuration
-// let accessToken;
-// import expressSession from 'express-session';
-// import passport from 'passport';
-// import {Issuer, Strategy} from "openid-client";
-// const memoryStore = new expressSession.MemoryStore();
+import {ExtractJwt, Strategy} from 'passport-jwt';
 
-//
-//
-// let JwtStrategy = passport_jwt.Strategy;
-// let ExtractJwt = passport_jwt.ExtractJwt;
-// let opts = {}
-// opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-// opts.secretOrKey = 'secret';
-// opts.issuer = 'https://jag.baby/auth/realms/realm1';
+
+// ///////////////////
+
+const keyCache = new Map();
+// ////////////////////////////////
+const fetchPublicKeys = async ({realm, authServerUrl, useCache}) => {
+    const url = `${authServerUrl}/auth/realms/${realm}/protocol/openid-connect/certs`;
+    if (useCache && keyCache[url]) {
+        return keyCache.get(url);
+    } else {
+        const jsonwebtoken = await fetch(url, {method: `GET`,
+            headers: {"Content-Type": `application/json`}});
+        const jwt = await jsonwebtoken.json();
+
+        const keys = jwt ? jwt.keys : `No Keys`;
+        let rsaKey;
+        keys.forEach((key) => {
+            if (key.kty === `RSA`) {
+                rsaKey = key;
+            }
+        });
+        keyCache.set(url, rsaKey);
+        return rsaKey;
+    }
+};
+
+
+// ////////////////
+
+
+const opts = {};
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = `long_secret-here`;
+opts.issuer = `https://jag.baby/auth/realms/realm1`;
 // opts.algorithms = ["HS256", "HS384"];
 // opts.audience = 'client1';
-// passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
-//     console.log('PassportJwt Strategy being processed');
-//     console.log(User)
-//
-//     User.findOne({id: jwt_payload.sub}, function(err, user) {
-//         if (err) {
-//             return done(err, false);
-//         }
-//         if (user) {
-//             return done(null, user);
-//         } else {
-//             return done(null, false);
-//             // or you could create a new account
-//         }
-//     });
-//
-//     // User.findById(jwtPayload.sub)
-//     //     .then((user) => {
-//     //         if (user) {
-//     //             done(null, user);
-//     //         } else {
-//     //             done(null, false);
-//     //         }
-//     //     })
-//     //     .catch((error) => {
-//     //         done(error, false);
-//     //     })
-// }));
+
+passport.use(new Strategy(opts, async (token, done) => {
+    try {
+        console.log(`---------> token = `);
+        console.log(token);
+        return done(null, token.user);
+    } catch (error) {
+        console.log(`---------> error = `);
+        done(error);
+    }
+}));
 
 
-
-
-
-
-
-
-// Authorization flow
+// Authorization flow   ??????????????  needed -- how else know client?
 // Step 1) - get instantiated Issuer/IdP/Auth Server -- in our case -> keycloak
 // const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
 // const client = new keycloakIssuer.Client({
@@ -90,86 +92,8 @@ const app = express();
 //     response_types: [`code`]
 // });
 
-
-// const session = {
-//     secret: process.env.SECRET,         // used to sign the session ID cookie,
-//     cookie: {},
-//     resave: false,                      // forces session to be saved back to session store (unwanted)
-//     saveUninitialized: true,            // something about uninitialized sessions being saved (bots & tourists)
-//     store: memoryStore                  // not exist in one demo
-// };
-// app.use(expressSession(session));
-// app.use(express.json());
-// request.session object is added to request.
-
-// app.use(bodyParser.json());
-// initializing Passport and the session authentication middleware
-
-
 // app.use(passport.initialize());
 // app.use(passport.authenticate(`session`));
-
-
-// alias app.use(passport.session());
-// request.session.passport object is added to request
-
-// passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
-//     console.log(`User Info`);
-//     console.log(userinfo);
-//     console.log(`-----------------------------`);
-//     accessToken = tokenSet.access_token;
-//     console.log(accessToken);
-//     return done(null, tokenSet.claims());     // returns tokenSet.claims() to serializeUser
-// }));
-
-// passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
-//     console.log(`User Info`);
-//     console.log(userinfo);
-//     console.log(`-----------------------------`);
-//     accessToken = tokenSet.access_token;
-//     console.log(accessToken);
-//     return done(null, tokenSet.claims());     // returns tokenSet.claims() to serializeUser
-// }));
-
-
-// passport.serializeUser(function (user, done) {
-//     console.log(`-----------------------------`);
-//     console.log(`serialize user`);
-//     console.log(user);
-//     console.log(`-----------------------------`);
-//     done(null, user);
-//     // So in effect during "serializeUser", the PassportJS library adds the authenticated user
-//     // to end of the "req.session.passport" object. This allows the authenticated user to be
-//     // "attached" to a unique session. Directly maintains authenticated users for each session
-//     // within the "req.session.passport.user.{..}"
-// });
-
-
-// passport.deserializeUser(function (user, done) {
-//     done(null, user);
-// });
-//
-// app.get(`/api/v1/auth/callback`, (req, res, next) => {
-//     console.log(`in /api/v1/auth/callback -- passport.authenticate`);
-//     // Two kinds of passport.authenticate.  This authenticates and routes.
-//     // (accessToken is not defined here)
-//     passport.authenticate(`oidc`, {
-//         successRedirect: `/api/v1`,
-//         failureRedirect: `https://www.greenwell.de`
-//     })(req, res, next);
-// });
-
-// app.get(`/api/v1/logout`, (req, res) => {
-//     res.redirect(client.endSessionUrl());
-// });
-//
-// app.get(`/api/v1/logout/callback`, (req, res) => {
-//     console.log(`Calling logout`);
-//     // clears the persisted user from the local storage
-//     req.logout();
-//     res.redirect(`https://work.greenwell.de`);
-// });
-
 
 
 // google this-> app.use(passport.authenticate  jwt session
@@ -179,9 +103,58 @@ const app = express();
  * app.use(bodyParser.urlencoded({ extended: false }));
  */
 
+passport.use(new Strategy(opts, async (token, done) => {
+    try {
+        console.log(`---------> token = `);
+        console.log(token);
+        return done(null, token.user);
+    } catch (error) {
+        console.log(`---------> error = `);
+        done(error);
+    }
+}));
+
+const checkAuthenticated = async (req, res, next) => {
+    console.log(`Pulling Public Keys - RSA`);
+    const rsaKey = await fetchPublicKeys({realm: `realm1`,
+        authServerUrl: `http://auth-keycloak:8080`});
+    console.log(`checking authenticated...`);
+
+    // (req.get("Authorization"));      <--- get jwt
+    // req.headers.authorization         <--- get jwt
+    const token = req.headers.authorization.split(` `)[1];
+    // const x5c = `-----BEGIN PUBLIC KEY-----${rsaKey.x5c[0]} -----END PUBLIC KEY-----`
+    const x5c = rsaKey.x5c.pop();
+    console.log(`x5c- > ${JSON.stringify(x5c)}`)
+    jwt.verify(token, x5c.replace(/\\n/g, '\n'), {algorithms: [`RS256`]}, (err, decoded) => {
+        console.log(`-1-`);
+        console.log(err);
+        console.log(`-2-`);
+        console.log(decoded);
+    });
+    console.log(`.3.`);
+    passport.authenticate(`jwt`, {session: false})(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/api/v1/auth/callback
+};
+
 app.use(`/api/v1`, postgresRouter);
 
-
+postgresRouter.get(`/activities`, await checkAuthenticated, pgController.getAllActivities);
+postgresRouter.get(`/activities/:activityId`, pgController.getActivityById);
+postgresRouter.get(`/jags`, pgController.getAllJags);
+postgresRouter.get(`/agents`, pgController.getAllAgents);
+postgresRouter.get(`/teams`, pgController.getAllTeams);
+postgresRouter.get(`/analyses`, pgController.getAllAnalyses);
+postgresRouter.get(`/jags/:projectId`, pgController.getJagByProjectId);
+postgresRouter.put(`/activities`, bodyParser, pgController.updateActivity);
+postgresRouter.put(`/jags`, bodyParser, pgController.updateJag);
+postgresRouter.put(`/agents`, bodyParser, pgController.updateAgent);
+postgresRouter.put(`/teams`, bodyParser, pgController.updateTeam);
+postgresRouter.put(`/analyses`, bodyParser, pgController.updateAnalysis);
+postgresRouter.delete(`/activities/:activityId`, pgController.deleteActivityById);
+postgresRouter.delete(`/jags/:projectId`, pgController.deleteJagByProjectId);
+postgresRouter.get(`/createTables`, pgController.createTables);
+postgresRouter.get(`/dropTables`, pgController.dropTables);
+postgresRouter.get(`/healthCheck`, pgController.healthCheck);
 
 // app.get('/accessResource', (req, res)=>{
 //     const token = req.headers.authorization.split(' ')[1];

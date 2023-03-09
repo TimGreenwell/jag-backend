@@ -151,7 +151,7 @@ services:
     ports:
       - '8888'
     healthcheck:
-      test: "curl -f jag-server:8888/jag"
+      test: "curl -f jag-server:8888/jag/healthCheck"
       interval: 5s
       timeout: 5s
       retries: 10
