@@ -30,26 +30,7 @@ const app = express();
 
 
 // ////////////////////////////////
-const fetchPublicKeys = async ({realm, authServerUrl, useCache}) => {
-    const url = `${authServerUrl}/auth/realms/${realm}/protocol/openid-connect/certs`;
-    if (useCache && keyCache[url]) {
-        return keyCache.get(url);
-    } else {
-        const jsonwebtoken = await fetch(url, {method: `GET`,
-            headers: {"Content-Type": `application/json`}});
-        const jwt = await jsonwebtoken.json();
 
-        const keys = jwt ? jwt.keys : `No Keys`;
-        let rsaKey;
-        keys.forEach((key) => {
-            if (key.kty === `RSA`) {
-                rsaKey = key;
-            }
-        });
-        keyCache.set(url, rsaKey);
-        return rsaKey;
-    }
-};
 
 // Import Session Configuration
 let accessToken;
@@ -78,6 +59,27 @@ const checkAuthenticated = async (req, res, next) => {
     //     2) login session is established,
     // Two kinds of passport.authenticate.  This sets up the authenticator
     passport.authenticate(`oidc`)(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/jag/auth/callback
+};
+
+const fetchPublicKeys = async ({realm, authServerUrl, useCache}) => {
+    const url = `${authServerUrl}/auth/realms/${realm}/protocol/openid-connect/certs`;
+    if (useCache && keyCache[url]) {
+        return keyCache.get(url);
+    } else {
+        const jsonwebtoken = await fetch(url, {method: `GET`,
+            headers: {"Content-Type": `application/json`}});
+        const jwt = await jsonwebtoken.json();
+
+        const keys = jwt ? jwt.keys : `No Keys`;
+        let rsaKey;
+        keys.forEach((key) => {
+            if (key.kty === `RSA`) {
+                rsaKey = key;
+            }
+        });
+        keyCache.set(url, rsaKey);
+        return rsaKey;
+    }
 };
 
 const session = {
@@ -143,21 +145,30 @@ app.get(`/jag/logout/callback`, (req, res) => {
     res.redirect(`https://work.greenwell.de`);
 });
 
-
-app.get([`/jag/api/v1`, `/jag/api/v1*`], async (req, res) => {
+const jsonParser = bodyParser.json();
+app.all([`/jag/api/v1`, `/jag/api/v1*`], jsonParser , async (req, res) => {
     const newUrl = req.url.replace(`/jag`, ``);
-    fetch(`http://api-server:8888${newUrl}`, {
-        method: req.method,
+    console.log(`req outgoing to http://api-server:8888${newUrl}`);
+    let options = {method: req.method,
         headers: {
             "Content-Type": `application/json`,
             Authorization: `Bearer ${accessToken}`
-        }
-    }).then((response) => {
-        return response.json();
-    }).then((data) => {
-        console.log(`data...`);
-        console.log(data);
-    });
+        }};
+    console.log("++++++")
+    console.log(req.body);
+    if ((req.method === `POST`) || (req.method === `PUT`)) {
+        options = {...options,
+            body: JSON.stringify(req.body)};
+    }
+    console.log(options);
+
+    const remoteResponse = await fetch(`http://api-server:8888${newUrl}`, options);
+    // const remoteResponseJson = await remoteResponse.json();
+    const remoteResponseJson = await remoteResponse.text();
+    console.log(`remoteResponse`);
+    console.log(remoteResponseJson);
+    res.status(200).send(remoteResponseJson);
+    ////       ITS IN HERE SOMEWHERE   - TEXT VS JSON
 });
 
 

@@ -130,7 +130,7 @@ services:
       test: "curl -f api-server:8888/api/v1/healthCheck"
       interval: 5s
       timeout: 5s
-      retries: 200
+      retries: 10
     restart: unless-stopped
     networks:
       - jagnet
@@ -154,7 +154,7 @@ services:
       test: "curl -f jag-server:8888/jag/healthCheck"
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 5
     restart: unless-stopped
     networks:
       - jagnet

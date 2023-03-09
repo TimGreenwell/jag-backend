@@ -2,26 +2,28 @@ import * as queries from "../sql/postgres/queries.js";
 
 const updateActivity = async (request, response) => {
     const activity = request.body;
+    console.log(`IN API`);
+    console.log(activity);
 
     if (request.user) {
-    await queries.updateActivity(activity, request.user.email);
+        await queries.updateActivity(activity, request.user.email);
 
-    const children = activity.children;
-    for (const child of children) {
-        await queries.updateSubactivity(child, activity.urn);
-    }
+        const children = activity.children;
+        for (const child of children) {
+            await queries.updateSubactivity(child, activity.urn);
+        }
 
-    const endpoints = activity.endpoints;
-    for (const endpoint of endpoints) {
-        await queries.updateEndpoint(endpoint, activity.urn);
-    }
+        const endpoints = activity.endpoints;
+        for (const endpoint of endpoints) {
+            await queries.updateEndpoint(endpoint, activity.urn);
+        }
 
-    const bindings = activity.bindings;
-    for (const binding of bindings) {
-        await queries.updateBinding(binding, activity.urn);
-    }
-    response.status(204).send(`{}`); }
-    else {
+        const bindings = activity.bindings;
+        for (const binding of bindings) {
+            await queries.updateBinding(binding, activity.urn);
+        }
+        response.status(204).send(`{}`);
+    } else {
         response.status(204).send(`{}`);   // @TODO remove once authentication ok.
     }
 };
@@ -70,11 +72,11 @@ const getAllActivities = async (request, response) => {
     }
     console.log(`getAllActivities  getAllActivities getAllActivities getAllActivities`);
 
-    let ownerFilter = "";
+    let ownerFilter = ``;
     if (request.user) {
-       ownerFilter = request.user.email }
-    else {
-        ownerFilter = "";
+        ownerFilter = request.user.email;
+    } else {
+        ownerFilter = ``;
     }
 
     const activitiesReply = await queries.getAllActivities(includeShared, ownerFilter);

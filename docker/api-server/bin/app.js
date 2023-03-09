@@ -22,39 +22,46 @@ dotenv.config({path: `./.env`});
 
 // Import Express
 import jwt from "jsonwebtoken";
-import parser from 'body-parser';
+import bodyParser from 'body-parser';
 import passport from "passport";
-const {json} = parser;
+
 import express from "express";
 const postgresRouter = express.Router();
-const bodyParser = json();
+
 const app = express();
 
 import {ExtractJwt, Strategy} from 'passport-jwt';
-
-
+import fs from "fs";
+const pub = fs.readFileSync(path.join(process.cwd(), `pub2.pem`));
+console.log(`-->`);
+console.log(pub);
 // ///////////////////
+
+app.get(`/api/v1/healthCheck`, (req, res, next) => {
+    res.status(200).send(`{YUM}`);
+});
 
 const keyCache = new Map();
 // ////////////////////////////////
-const fetchPublicKeys = async ({realm, authServerUrl, useCache}) => {
+const fetchPublicRsaKey = async ({realm, authServerUrl, useCache}) => {
     const url = `${authServerUrl}/auth/realms/${realm}/protocol/openid-connect/certs`;
     if (useCache && keyCache[url]) {
         return keyCache.get(url);
     } else {
-        const jsonwebtoken = await fetch(url, {method: `GET`,
+        const publicCertsString = await fetch(url, {method: `GET`,
             headers: {"Content-Type": `application/json`}});
-        const jwt = await jsonwebtoken.json();
-
-        const keys = jwt ? jwt.keys : `No Keys`;
+        const publicCertsJson = await publicCertsString.json();
+        const keys = publicCertsJson.keys;
         let rsaKey;
         keys.forEach((key) => {
             if (key.kty === `RSA`) {
                 rsaKey = key;
             }
         });
-        keyCache.set(url, rsaKey);
-        return rsaKey;
+        const rsaKeyString = JSON.stringify(rsaKey);
+        keyCache.set(url, rsaKeyString);
+        console.log(rsaKeyString);
+        return rsaKeyString;
     }
 };
 
@@ -105,51 +112,70 @@ passport.use(new Strategy(opts, async (token, done) => {
 
 passport.use(new Strategy(opts, async (token, done) => {
     try {
-        console.log(`---------> token = `);
+        console.log(`--2-------> token = `);
         console.log(token);
         return done(null, token.user);
     } catch (error) {
-        console.log(`---------> error = `);
+        console.log(`-2--------> error = `);
         done(error);
     }
 }));
 
 const checkAuthenticated = async (req, res, next) => {
-    console.log(`Pulling Public Keys - RSA`);
-    const rsaKey = await fetchPublicKeys({realm: `realm1`,
-        authServerUrl: `http://auth-keycloak:8080`});
-    console.log(`checking authenticated...`);
-
     // (req.get("Authorization"));      <--- get jwt
     // req.headers.authorization         <--- get jwt
     const token = req.headers.authorization.split(` `)[1];
-    // const x5c = `-----BEGIN PUBLIC KEY-----${rsaKey.x5c[0]} -----END PUBLIC KEY-----`
-    const x5c = rsaKey.x5c.pop();
-    console.log(`x5c- > ${JSON.stringify(x5c)}`)
-    jwt.verify(token, x5c.replace(/\\n/g, '\n'), {algorithms: [`RS256`]}, (err, decoded) => {
-        console.log(`-1-`);
-        console.log(err);
-        console.log(`-2-`);
-        console.log(decoded);
+    console.log(`Pulling Public Keys - RSA`);
+    const rsaKey = await fetchPublicRsaKey({realm: `realm1`,
+        authServerUrl: `http://auth-keycloak:8080`});
+
+    jwt.verify(token, pub, {algorithms: [`RS256`]}, (err, decoded) => {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log(`Valid`);
+            next();
+        }
     });
-    console.log(`.3.`);
-    passport.authenticate(`jwt`, {session: false})(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/api/v1/auth/callback
+//    passport.authenticate(`jwt`, {session: false})(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/api/v1/auth/callback
 };
 
-app.use(`/api/v1`, postgresRouter);
 
-postgresRouter.get(`/activities`, await checkAuthenticated, pgController.getAllActivities);
+
+// const jsonParser = bodyParser.json();
+// app.use(bodyParser.json())
+// app.use(`/api/v1`, jsonParser, (req, res, next) => {
+//     console.log(`in api = >>>>>>>`);
+//     console.log(req.data);
+//     if (req.body) {
+//         console.log(`HAS BODY`);
+//         console.log(req.body);
+//     }
+//     console.log(`ON TO NEXT`);
+//     next();
+// });
+
+app.use(bodyParser.json())
+
+app.use(`/api/v1`, postgresRouter);
+// checkAuthenticated,
+postgresRouter.get(`/activities`, pgController.getAllActivities);
 postgresRouter.get(`/activities/:activityId`, pgController.getActivityById);
 postgresRouter.get(`/jags`, pgController.getAllJags);
 postgresRouter.get(`/agents`, pgController.getAllAgents);
 postgresRouter.get(`/teams`, pgController.getAllTeams);
 postgresRouter.get(`/analyses`, pgController.getAllAnalyses);
 postgresRouter.get(`/jags/:projectId`, pgController.getJagByProjectId);
-postgresRouter.put(`/activities`, bodyParser, pgController.updateActivity);
-postgresRouter.put(`/jags`, bodyParser, pgController.updateJag);
-postgresRouter.put(`/agents`, bodyParser, pgController.updateAgent);
-postgresRouter.put(`/teams`, bodyParser, pgController.updateTeam);
-postgresRouter.put(`/analyses`, bodyParser, pgController.updateAnalysis);
+// postgresRouter.put(`/activities`, bodyParser, pgController.updateActivity);
+// postgresRouter.put(`/jags`, bodyParser, pgController.updateJag);
+// postgresRouter.put(`/agents`, bodyParser, pgController.updateAgent);
+// postgresRouter.put(`/teams`, bodyParser, pgController.updateTeam);
+// postgresRouter.put(`/analyses`, bodyParser, pgController.updateAnalysis);
+postgresRouter.put(`/activities`,  pgController.updateActivity);
+postgresRouter.put(`/jags`,  pgController.updateJag);
+postgresRouter.put(`/agents`,  pgController.updateAgent);
+postgresRouter.put(`/teams`,  pgController.updateTeam);
+postgresRouter.put(`/analyses`,  pgController.updateAnalysis);
 postgresRouter.delete(`/activities/:activityId`, pgController.deleteActivityById);
 postgresRouter.delete(`/jags/:projectId`, pgController.deleteJagByProjectId);
 postgresRouter.get(`/createTables`, pgController.createTables);
