@@ -2,12 +2,13 @@ import * as queries from "../sql/postgres/queries.js";
 
 const updateActivity = async (request, response) => {
     const activity = request.body;
-    console.log(`IN API`);
-    console.log(activity);
-
+    console.log(`IN Update Activity`);
+    console.log(`request body type = ${typeof activity}`);
+    console.log(`request body  = ${activity}`);
+    console.log(`stringify request body -- ${JSON.stringify(activity)}`);
+    console.log(`request.user = ${request.user}`);
     if (request.user) {
         await queries.updateActivity(activity, request.user.email);
-
         const children = activity.children;
         for (const child of children) {
             await queries.updateSubactivity(child, activity.urn);
@@ -22,9 +23,11 @@ const updateActivity = async (request, response) => {
         for (const binding of bindings) {
             await queries.updateBinding(binding, activity.urn);
         }
-        response.status(204).send(`{}`);
+        console.log(`1`);
+        response.status(200).json(`{"Message":"completed"}`);
     } else {
-        response.status(204).send(`{}`);   // @TODO remove once authentication ok.
+        console.log(`2`);
+        response.status(200).json(`{"Message":"completed"}`);   // @TODO remove once authentication ok.
     }
 };
 
@@ -39,27 +42,27 @@ const updateJag = async (request, response) => {
             workStack.push(child);
         });
     }
-    response.status(204).send(`{}`);
+    response.status(200).json(`{"Message":"completed"}`);
 };
 
 
 const updateAgent = async (request, response) => {
     const agent = request.body;
     await queries.updateAgent(agent);
-    response.status(204).send(`{}`);
+    response.status(200).json(`{"Message":"completed"}`);
 };
 
 
 const updateTeam = async (request, response) => {
     const team = request.body;
     await queries.updateTeam(team);
-    response.status(204).send(`{}`);
+    response.status(200).json(`{"Message":"completed"}`);
 };
 
 const updateAnalysis = async (request, response) => {
     const analysis = request.body;
     await queries.updateAnalysis(analysis);
-    response.status(204).send(`{}`);
+    response.status(200).json(`{"Message":"completed"}`);
 };
 
 
@@ -209,27 +212,27 @@ const getAllAnalyses = async (request, response) => {
 
 const deleteJagByProjectId = async (request, response) => {
     await queries.deleteJagByProjectId(request.params.projectId);
-    response.status(204).send(`{}`);
+    response.status(200).json(`{"Message":"completed"}`);
 };
 
 const deleteActivityById = async (request, response) => {
     await queries.deleteActivityById(request.params.activityId);
-    response.status(204).send(`{}`);
+    response.status(200).json(`{"Message":"completed"}`);
 };
 
 
 const createTables = async (request, response) => {
     await queries.createTables();
-    response.json({message: `Created all tables`});
+    response.status(200).json({message: `Created all tables`});
 };
 
 const dropTables = async (request, response) => {
     await queries.dropTables();
-    response.json({message: `Dropped all tables`});
+    response.status(200).json({message: `Dropped all tables`});
 };
 
 const healthCheck = async (request, response) => {
-    response.status(200).send(`{}`);
+    response.status(200).json(`{"Message":"completed"}`);
 };
 
 export {

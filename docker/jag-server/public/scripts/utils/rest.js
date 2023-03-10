@@ -10,6 +10,7 @@
 export default class RESTUtils {
 
     static async request(url, details, error_prefix = `Error`, ok_fallback = undefined, bad_fallback = undefined) {
+
         const response = await fetch(url, details).catch((error_message) => {
             throw new Error(`${error_prefix}: ${error_message}`);
         });
@@ -20,6 +21,10 @@ export default class RESTUtils {
 
             try {
                 const gg = await response.json();
+                console.log(`Final Response Type GG = ${typeof gg}`);
+                console.log(`Final Response GG = ${gg}`);
+                console.log(gg);
+                console.log(`GG stringified - ${JSON.stringify(gg)}`)
                 return gg;
             } catch {
                 throw new Error(`${error_prefix}: Response was not a valid JSON object.`);

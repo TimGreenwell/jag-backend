@@ -148,26 +148,29 @@ app.get(`/jag/logout/callback`, (req, res) => {
 const jsonParser = bodyParser.json();
 app.all([`/jag/api/v1`, `/jag/api/v1*`], jsonParser , async (req, res) => {
     const newUrl = req.url.replace(`/jag`, ``);
-    console.log(`req outgoing to http://api-server:8888${newUrl}`);
+    console.log(`1) req outgoing to http://api-server:8888${newUrl}`);
     let options = {method: req.method,
         headers: {
-            "Content-Type": `application/json`,
-            Authorization: `Bearer ${accessToken}`
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
         }};
-    console.log("++++++")
-    console.log(req.body);
+    let body = req.body;
+    console.log(`2) Request Body Type =  ${typeof body}`);
+    console.log(`3) Request Body =  ${body}`)
+    let bodyString = JSON.stringify(body);
+    console.log(`4) Stringified Request Body =  ${bodyString}`)
     if ((req.method === `POST`) || (req.method === `PUT`)) {
         options = {...options,
-            body: JSON.stringify(req.body)};
+            "body": bodyString};
     }
-    console.log(options);
-
     const remoteResponse = await fetch(`http://api-server:8888${newUrl}`, options);
+    console.log(`5) Remote response = ${remoteResponse}`)
+    const remoteResponseObj = await remoteResponse.json();
+    console.log(`6) Remote response.json object = ${remoteResponseObj}`)
+    console.log(`7) stringified: ${JSON.stringify(remoteResponseObj)}`)
     // const remoteResponseJson = await remoteResponse.json();
-    const remoteResponseJson = await remoteResponse.text();
-    console.log(`remoteResponse`);
-    console.log(remoteResponseJson);
-    res.status(200).send(remoteResponseJson);
+    res.status(200).json(remoteResponseObj);    // json->obj   //send->txt
+    console.log("8) ???? Why here")
     ////       ITS IN HERE SOMEWHERE   - TEXT VS JSON
 });
 

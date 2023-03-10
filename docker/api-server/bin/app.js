@@ -26,7 +26,7 @@ import bodyParser from 'body-parser';
 import passport from "passport";
 
 import express from "express";
-const postgresRouter = express.Router();
+
 
 const app = express();
 
@@ -40,6 +40,18 @@ console.log(pub);
 app.get(`/api/v1/healthCheck`, (req, res, next) => {
     res.status(200).send(`{YUM}`);
 });
+
+app.use(express.json())
+app.use(`/api/v1`, (req, res, next) => {
+    let body = req.body;
+    console.log(`in api = >>>>>>>`);
+    console.log(`Body type = ${typeof body}`);
+    console.log(`Body = ${body}`)
+    console.log(`Body stringified = ${JSON.stringify(body)}`)
+    console.log(`ON TO NEXT`);
+    next();
+});
+
 
 const keyCache = new Map();
 // ////////////////////////////////
@@ -129,11 +141,12 @@ const checkAuthenticated = async (req, res, next) => {
     const rsaKey = await fetchPublicRsaKey({realm: `realm1`,
         authServerUrl: `http://auth-keycloak:8080`});
 
-    jwt.verify(token, pub, {algorithms: [`RS256`]}, (err, decoded) => {
+    jwt.verify(token, pub, {algorithms: [`RS256`]}, (err, decodedToken) => {
         if (err) {
             console.log(err);
         } else {
             console.log(`Valid`);
+            req.user = decodedToken
             next();
         }
     });
@@ -142,45 +155,27 @@ const checkAuthenticated = async (req, res, next) => {
 
 
 
-// const jsonParser = bodyParser.json();
-// app.use(bodyParser.json())
-// app.use(`/api/v1`, jsonParser, (req, res, next) => {
-//     console.log(`in api = >>>>>>>`);
-//     console.log(req.data);
-//     if (req.body) {
-//         console.log(`HAS BODY`);
-//         console.log(req.body);
-//     }
-//     console.log(`ON TO NEXT`);
-//     next();
-// });
 
-app.use(bodyParser.json())
-
+const postgresRouter = express.Router();
 app.use(`/api/v1`, postgresRouter);
 // checkAuthenticated,
-postgresRouter.get(`/activities`, pgController.getAllActivities);
-postgresRouter.get(`/activities/:activityId`, pgController.getActivityById);
-postgresRouter.get(`/jags`, pgController.getAllJags);
-postgresRouter.get(`/agents`, pgController.getAllAgents);
-postgresRouter.get(`/teams`, pgController.getAllTeams);
-postgresRouter.get(`/analyses`, pgController.getAllAnalyses);
-postgresRouter.get(`/jags/:projectId`, pgController.getJagByProjectId);
-// postgresRouter.put(`/activities`, bodyParser, pgController.updateActivity);
-// postgresRouter.put(`/jags`, bodyParser, pgController.updateJag);
-// postgresRouter.put(`/agents`, bodyParser, pgController.updateAgent);
-// postgresRouter.put(`/teams`, bodyParser, pgController.updateTeam);
-// postgresRouter.put(`/analyses`, bodyParser, pgController.updateAnalysis);
-postgresRouter.put(`/activities`,  pgController.updateActivity);
-postgresRouter.put(`/jags`,  pgController.updateJag);
-postgresRouter.put(`/agents`,  pgController.updateAgent);
-postgresRouter.put(`/teams`,  pgController.updateTeam);
-postgresRouter.put(`/analyses`,  pgController.updateAnalysis);
-postgresRouter.delete(`/activities/:activityId`, pgController.deleteActivityById);
-postgresRouter.delete(`/jags/:projectId`, pgController.deleteJagByProjectId);
+postgresRouter.get(`/activities`, checkAuthenticated, pgController.getAllActivities);
+postgresRouter.get(`/activities/:activityId`, checkAuthenticated, pgController.getActivityById);
+postgresRouter.get(`/jags`, checkAuthenticated, pgController.getAllJags);
+postgresRouter.get(`/agents`, checkAuthenticated, pgController.getAllAgents);
+postgresRouter.get(`/teams`, checkAuthenticated, pgController.getAllTeams);
+postgresRouter.get(`/analyses`, checkAuthenticated, pgController.getAllAnalyses);
+postgresRouter.get(`/jags/:projectId`, checkAuthenticated, pgController.getJagByProjectId);
+postgresRouter.put(`/activities`,  checkAuthenticated, pgController.updateActivity);
+postgresRouter.put(`/jags`,  checkAuthenticated, pgController.updateJag);
+postgresRouter.put(`/agents`,  checkAuthenticated, pgController.updateAgent);
+postgresRouter.put(`/teams`,  checkAuthenticated, pgController.updateTeam);
+postgresRouter.put(`/analyses`,  checkAuthenticated, pgController.updateAnalysis);
+postgresRouter.delete(`/activities/:activityId`, checkAuthenticated, pgController.deleteActivityById);
+postgresRouter.delete(`/jags/:projectId`, checkAuthenticated, pgController.deleteJagByProjectId);
 postgresRouter.get(`/createTables`, pgController.createTables);
-postgresRouter.get(`/dropTables`, pgController.dropTables);
-postgresRouter.get(`/healthCheck`, pgController.healthCheck);
+postgresRouter.get(`/dropTables`, checkAuthenticated, pgController.dropTables);
+postgresRouter.get(`/healthCheck`, checkAuthenticated, pgController.healthCheck);
 
 // app.get('/accessResource', (req, res)=>{
 //     const token = req.headers.authorization.split(' ')[1];
