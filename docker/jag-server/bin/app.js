@@ -28,6 +28,8 @@ import bodyParser from 'body-parser';
 import jwt from "jsonwebtoken";
 const app = express();
 
+// app.use(bodyParser.json());
+app.use(express.json());
 
 // ////////////////////////////////
 
@@ -92,8 +94,9 @@ const session = {
 app.get(`/jag/healthCheck`, (req, res) => {
     res.status(200).send(`{}`);
 });
+
 app.use(expressSession(session));
-app.use(express.json());
+
 // +request.session object
 
 app.use(passport.initialize());
@@ -145,30 +148,49 @@ app.get(`/jag/logout/callback`, (req, res) => {
     res.redirect(`https://work.greenwell.de`);
 });
 
-const jsonParser = bodyParser.json();
-app.all([`/jag/api/v1`, `/jag/api/v1*`], jsonParser , async (req, res) => {
-    const newUrl = req.url.replace(`/jag`, ``);
-    console.log(`req outgoing to http://api-server:8888${newUrl}`);
-    let options = {method: req.method,
-        headers: {
-            "Content-Type": `application/json`,
-            Authorization: `Bearer ${accessToken}`
-        }};
-    console.log("++++++")
-    console.log(req.body);
-    if ((req.method === `POST`) || (req.method === `PUT`)) {
-        options = {...options,
-            body: JSON.stringify(req.body)};
-    }
-    console.log(options);
 
-    const remoteResponse = await fetch(`http://api-server:8888${newUrl}`, options);
-    // const remoteResponseJson = await remoteResponse.json();
-    const remoteResponseJson = await remoteResponse.text();
-    console.log(`remoteResponse`);
+
+app.all([`/jag/api/v1`, `/jag/api/v1*`], async (req, res) => {
+    const newUrl = req.url.replace(`/jag`, ``);
+
+    const fullUrl = `http://api-server:8888${newUrl}`
+    console.log(`req outgoing to ${fullUrl}`);
+    const method = req.method;
+    const headers = {
+        'Content-Type': `application/json`,
+        'Authorization': `Bearer ${accessToken}`
+    };
+    const body = JSON.stringify(req.body);
+    let remoteResponse;
+    console.log(`vvvvvvvvvvvv   FETCHING vvvvvvvvvvvv`);
+    if ((method === `POST`) || (method === `PUT`)) {
+        remoteResponse = await fetch(fullUrl, {method,
+            headers,
+            body});
+    } else {
+        remoteResponse = await fetch(fullUrl, {method,
+            headers});
+    }
+
+    const remoteResponseJson = await remoteResponse.json();
+    console.log(`^^^^^^^^^^   FETCHED  ^^^^^^^^^^`);
     console.log(remoteResponseJson);
-    res.status(200).send(remoteResponseJson);
-    ////       ITS IN HERE SOMEWHERE   - TEXT VS JSON
+    res.status(200).json(remoteResponseJson);
+
+    // if ((req.method === `POST`) || (req.method === `PUT`)) {
+    //     let bodyJson = JSON.parse(req.body);
+    //     options = {...options, body: bodyJson}
+    // }
+    // console.log(JSON.stringify(options)
+    // );
+
+    // const apiResponsePlaceHolder = await fetch(`http://api-server:8888${newUrl}`, JSON.options);
+    // // const remoteResponseJson = await remoteResponse.json();
+
+    // console.log(`remoteResponse`);
+    // console.log(apiResponse);
+
+    // //       ITS IN HERE SOMEWHERE   - TEXT VS JSON
 });
 
 

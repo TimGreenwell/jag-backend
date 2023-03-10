@@ -141,21 +141,19 @@ const checkAuthenticated = async (req, res, next) => {
 };
 
 
-
 // const jsonParser = bodyParser.json();
-// app.use(bodyParser.json())
-// app.use(`/api/v1`, jsonParser, (req, res, next) => {
-//     console.log(`in api = >>>>>>>`);
-//     console.log(req.data);
-//     if (req.body) {
-//         console.log(`HAS BODY`);
-//         console.log(req.body);
-//     }
-//     console.log(`ON TO NEXT`);
-//     next();
-// });
-
 app.use(bodyParser.json())
+app.use(`/api/v1`, (req, res, next) => {
+    console.log(`middleware`);
+    if (req.body) {
+        console.log(`HAS BODY`);
+        console.log(req.body);
+    }
+    console.log(`ON TO NEXT`);
+    next();
+});
+
+// app.use(bodyParser.json())
 
 app.use(`/api/v1`, postgresRouter);
 // checkAuthenticated,
@@ -166,16 +164,12 @@ postgresRouter.get(`/agents`, pgController.getAllAgents);
 postgresRouter.get(`/teams`, pgController.getAllTeams);
 postgresRouter.get(`/analyses`, pgController.getAllAnalyses);
 postgresRouter.get(`/jags/:projectId`, pgController.getJagByProjectId);
-// postgresRouter.put(`/activities`, bodyParser, pgController.updateActivity);
-// postgresRouter.put(`/jags`, bodyParser, pgController.updateJag);
-// postgresRouter.put(`/agents`, bodyParser, pgController.updateAgent);
-// postgresRouter.put(`/teams`, bodyParser, pgController.updateTeam);
-// postgresRouter.put(`/analyses`, bodyParser, pgController.updateAnalysis);
-postgresRouter.put(`/activities`,  pgController.updateActivity);
-postgresRouter.put(`/jags`,  pgController.updateJag);
-postgresRouter.put(`/agents`,  pgController.updateAgent);
-postgresRouter.put(`/teams`,  pgController.updateTeam);
-postgresRouter.put(`/analyses`,  pgController.updateAnalysis);
+
+postgresRouter.put(`/activities`, pgController.updateActivity);
+postgresRouter.put(`/jags`, pgController.updateJag);
+postgresRouter.put(`/agents`, pgController.updateAgent);
+postgresRouter.put(`/teams`, pgController.updateTeam);
+postgresRouter.put(`/analyses`, pgController.updateAnalysis);
 postgresRouter.delete(`/activities/:activityId`, pgController.deleteActivityById);
 postgresRouter.delete(`/jags/:projectId`, pgController.deleteJagByProjectId);
 postgresRouter.get(`/createTables`, pgController.createTables);

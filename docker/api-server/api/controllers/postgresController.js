@@ -3,6 +3,8 @@ import * as queries from "../sql/postgres/queries.js";
 const updateActivity = async (request, response) => {
     const activity = request.body;
     console.log(`IN API`);
+    console.log(request)
+    console.log("REQUEST.BODY")
     console.log(activity);
 
     if (request.user) {
@@ -70,7 +72,6 @@ const getAllActivities = async (request, response) => {
     } else {
         includeShared = false;
     }
-    console.log(`getAllActivities  getAllActivities getAllActivities getAllActivities`);
 
     let ownerFilter = ``;
     if (request.user) {
