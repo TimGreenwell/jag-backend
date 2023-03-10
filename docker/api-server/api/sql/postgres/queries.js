@@ -3,8 +3,6 @@ import fs from "fs";
 
 const getAllActivities = async (includeShared = false, author) => {
     console.log(`Query> getAllActivities`);
-    console.log(`Get shared activities: ${includeShared}`);
-    console.log(`Author: ${author}`);
     let queryResult;
     if (includeShared) {
         console.log(`Get em all`);
