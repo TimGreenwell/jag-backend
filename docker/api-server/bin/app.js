@@ -22,7 +22,6 @@ dotenv.config({path: `./.env`});
 
 // Import Express
 import jwt from "jsonwebtoken";
-import bodyParser from 'body-parser';
 import passport from "passport";
 
 import express from "express";
@@ -31,11 +30,8 @@ import express from "express";
 const app = express();
 
 import {ExtractJwt, Strategy} from 'passport-jwt';
-import fs from "fs";
-const pub = fs.readFileSync(path.join(process.cwd(), `pub2.pem`));
-console.log(`-->`);
-console.log(pub);
-// ///////////////////
+// import fs from "fs";
+// const pub = fs.readFileSync(path.join(process.cwd(), `pub2.pem`));
 
 app.get(`/api/v1/healthCheck`, (req, res, next) => {
     res.status(200).send(`{YUM}`);
@@ -64,21 +60,16 @@ const fetchPublicRsaKey = async ({realm, authServerUrl, useCache}) => {
             headers: {"Content-Type": `application/json`}});
         const publicCertsJson = await publicCertsString.json();
         const keys = publicCertsJson.keys;
-        let rsaKey;
+        let publicRsaKey;
         keys.forEach((key) => {
-            if (key.kty === `RSA`) {
-                rsaKey = key;
+            if (key.alg === `RS256`) {
+                publicRsaKey = key.x5c;
             }
         });
-        const rsaKeyString = JSON.stringify(rsaKey);
-        keyCache.set(url, rsaKeyString);
-        console.log(rsaKeyString);
-        return rsaKeyString;
+        const publicRsaKeyString = `-----BEGIN CERTIFICATE-----\n${publicRsaKey}\n-----END CERTIFICATE-----`;
+        return publicRsaKeyString;
     }
 };
-
-
-// ////////////////
 
 
 const opts = {};
@@ -140,12 +131,10 @@ const checkAuthenticated = async (req, res, next) => {
     console.log(`Pulling Public Keys - RSA`);
     const rsaKey = await fetchPublicRsaKey({realm: `realm1`,
         authServerUrl: `http://auth-keycloak:8080`});
-
-    jwt.verify(token, pub, {algorithms: [`RS256`]}, (err, decodedToken) => {
+    jwt.verify(token, rsaKey, {algorithms: [`RS256`]}, (err, decodedToken) => {
         if (err) {
             console.log(err);
         } else {
-            console.log(`Valid`);
             req.user = decodedToken
             next();
         }
