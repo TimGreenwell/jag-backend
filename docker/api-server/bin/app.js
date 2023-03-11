@@ -12,56 +12,54 @@
 'use strict';
 
 // Import configuration
+const keyCache = new Map();
+const port = process.env.PORT || 8888;
 import * as pgController from "../api/controllers/postgresController.js";
 import fetch from "node-fetch";
-const port = process.env.PORT || 8888;
-const root = process.argv[2] || `.`;
-import path from "path";
+// const root = process.argv[2] || `.`;
 import dotenv from "dotenv";
 dotenv.config({path: `./.env`});
 
-// Import Express
-import jwt from "jsonwebtoken";
-import passport from "passport";
-
-import express from "express";
-
-
-const app = express();
-
+// Authentication
+import jwt from "jsonwebtoken";    // for JWT verification
 import {ExtractJwt, Strategy} from 'passport-jwt';
-// import fs from "fs";
-// const pub = fs.readFileSync(path.join(process.cwd(), `pub2.pem`));
+
+// Import Express
+import passport from "passport";
+import express from "express";
+const app = express();
+const postgresRouter = express.Router();
+
+// Middleware
 
 app.get(`/api/v1/healthCheck`, (req, res, next) => {
-    res.status(200).send(`{YUM}`);
+    res.status(200).send(`{"Message" : "Running"}`);
 });
 
 app.use(express.json())
-app.use(`/api/v1`, (req, res, next) => {
-    let body = req.body;
-    console.log(`in api = >>>>>>>`);
-    console.log(`Body type = ${typeof body}`);
-    console.log(`Body = ${body}`)
-    console.log(`Body stringified = ${JSON.stringify(body)}`)
-    console.log(`ON TO NEXT`);
-    next();
-});
+
+// app.use(`/api/v1`, (req, res, next) => {
+//     let body = req.body;
+//     console.log(`in api = >>>>>>>`);
+//     console.log(`Body type = ${typeof body}`);
+//     console.log(`Body = ${body}`)
+//     console.log(`Body stringified = ${JSON.stringify(body)}`)
+//     console.log(`ON TO NEXT`);
+//     next();
+// });
 
 
-const keyCache = new Map();
 // ////////////////////////////////
 const fetchPublicRsaKey = async ({realm, authServerUrl, useCache}) => {
     const url = `${authServerUrl}/auth/realms/${realm}/protocol/openid-connect/certs`;
+    let publicRsaKey;
     if (useCache && keyCache[url]) {
         return keyCache.get(url);
     } else {
         const publicCertsString = await fetch(url, {method: `GET`,
             headers: {"Content-Type": `application/json`}});
         const publicCertsJson = await publicCertsString.json();
-        const keys = publicCertsJson.keys;
-        let publicRsaKey;
-        keys.forEach((key) => {
+        publicCertsJson.keys.forEach((key) => {
             if (key.alg === `RS256`) {
                 publicRsaKey = key.x5c;
             }
@@ -79,6 +77,7 @@ opts.issuer = `https://jag.baby/auth/realms/realm1`;
 // opts.algorithms = ["HS256", "HS384"];
 // opts.audience = 'client1';
 
+////?????????????????????????????????????????????????????????
 passport.use(new Strategy(opts, async (token, done) => {
     try {
         console.log(`---------> token = `);
@@ -90,43 +89,7 @@ passport.use(new Strategy(opts, async (token, done) => {
     }
 }));
 
-
-// Authorization flow   ??????????????  needed -- how else know client?
-// Step 1) - get instantiated Issuer/IdP/Auth Server -- in our case -> keycloak
-// const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
-// const client = new keycloakIssuer.Client({
-//     client_id: `api-server-postgres-jag`,
-//     client_secret: `long_secret-here`,
-//     redirect_uris: [`https://jag.baby/api/v1/auth/callback`],
-//     post_logout_redirect_uris: [`https://jag.baby/api/v1/logout/callback`],
-//     response_types: [`code`]
-// });
-
-// app.use(passport.initialize());
-// app.use(passport.authenticate(`session`));
-
-
-// google this-> app.use(passport.authenticate  jwt session
-/*
- * additional express app config
- * app.use(bodyParser.json());
- * app.use(bodyParser.urlencoded({ extended: false }));
- */
-
-passport.use(new Strategy(opts, async (token, done) => {
-    try {
-        console.log(`--2-------> token = `);
-        console.log(token);
-        return done(null, token.user);
-    } catch (error) {
-        console.log(`-2--------> error = `);
-        done(error);
-    }
-}));
-
 const checkAuthenticated = async (req, res, next) => {
-    // (req.get("Authorization"));      <--- get jwt
-    // req.headers.authorization         <--- get jwt
     const token = req.headers.authorization.split(` `)[1];
     console.log(`Pulling Public Keys - RSA`);
     const rsaKey = await fetchPublicRsaKey({realm: `realm1`,
@@ -139,16 +102,10 @@ const checkAuthenticated = async (req, res, next) => {
             next();
         }
     });
-//    passport.authenticate(`jwt`, {session: false})(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/api/v1/auth/callback
 };
 
-
-
-
-const postgresRouter = express.Router();
 app.use(`/api/v1`, postgresRouter);
-// checkAuthenticated,
-postgresRouter.get(`/activities`, checkAuthenticated, pgController.getAllActivities);
+postgresRouter.get(`/activities`, checkAuthenticated, checkAuthenticated, pgController.getAllActivities);
 postgresRouter.get(`/activities/:activityId`, checkAuthenticated, pgController.getActivityById);
 postgresRouter.get(`/jags`, checkAuthenticated, pgController.getAllJags);
 postgresRouter.get(`/agents`, checkAuthenticated, pgController.getAllAgents);
@@ -165,20 +122,6 @@ postgresRouter.delete(`/jags/:projectId`, checkAuthenticated, pgController.delet
 postgresRouter.get(`/createTables`, pgController.createTables);
 postgresRouter.get(`/dropTables`, checkAuthenticated, pgController.dropTables);
 postgresRouter.get(`/healthCheck`, checkAuthenticated, pgController.healthCheck);
-
-// app.get('/accessResource', (req, res)=>{
-//     const token = req.headers.authorization.split(' ')[1];
-//     //Authorization: 'Bearer TOKEN'
-//     if(!token)
-//     {
-//         res.status(200).json({success:false, message: "Error!
-//             Token was not provided."});
-//         }
-//         //Decoding the token
-//         const decodedToken = jwt.verify(token,"secretkeyappearshere" );
-//         res.status(200).json({success:true, data:{userId:decodedToken.userId,
-//                 email:decodedToken.email});
-//     })
 
 const server = app.listen(port);
 

@@ -11,36 +11,35 @@
 
 'use strict';
 
-
 // App configuration
-
 const port = process.env.PORT || 8888;
 const root = process.argv[2] || `.`;
 import path from "path";
 import dotenv from "dotenv";
 dotenv.config({path: `./.env`});
-const keyCache = new Map();
-import fetch from "node-fetch";
 
 // Import Express
 import express, {response} from "express";
 import bodyParser from 'body-parser';
-import jwt from "jsonwebtoken";
 const app = express();
-
-
-// ////////////////////////////////
-
-
-// Import Session Configuration
-let accessToken;
 import expressSession from 'express-session';
+
+// Authentication
+import fetch from "node-fetch";
+let accessToken;
 import passport from 'passport';
 import {Issuer, Strategy} from "openid-client";   // Keycloak-connect is deprecated
 const memoryStore = new expressSession.MemoryStore();
+const session = {
+    secret: process.env.SECRET,         // sign session ID cookie (prevent users from changing cookies?),
+    cookie: {},
+    resave: false,                      // forces session to be saved back to session store (unwanted)
+    saveUninitialized: false,            // something about uninitialized sessions being saved (bots & (healthchecks?))
+    store: memoryStore                  // not exist in one demo
+};
 
 // Authorization flow
-// Step 1) - get instantiated Issuer/IdP/Auth Server -- in our case -> keycloak
+// get instantiated Issuer/IdP/Auth Server (keycloak)
 const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
 const client = new keycloakIssuer.Client({
     client_id: `client1`,
@@ -54,41 +53,13 @@ const checkAuthenticated = async (req, res, next) => {
     if (req.isAuthenticated()) {
         return next();
     }
-    // passport.authenticate() is middleware which will authenticate the request. By default, when authentication succeeds,
     //     1) the req.user property is set to the authenticated user,
     //     2) login session is established,
     // Two kinds of passport.authenticate.  This sets up the authenticator
-    passport.authenticate(`oidc`)(req, res, next);  //  then to client's redirect_uris -> https://jag.baby/jag/auth/callback
+    passport.authenticate(`oidc`)(req, res, next);
+    //  then to client's redirect_uris -> https://jag.baby/jag/auth/callback
 };
 
-const fetchPublicKeys = async ({realm, authServerUrl, useCache}) => {
-    const url = `${authServerUrl}/auth/realms/${realm}/protocol/openid-connect/certs`;
-    if (useCache && keyCache[url]) {
-        return keyCache.get(url);
-    } else {
-        const jsonwebtoken = await fetch(url, {method: `GET`,
-            headers: {"Content-Type": `application/json`}});
-        const jwt = await jsonwebtoken.json();
-
-        const keys = jwt ? jwt.keys : `No Keys`;
-        let rsaKey;
-        keys.forEach((key) => {
-            if (key.kty === `RSA`) {
-                rsaKey = key;
-            }
-        });
-        keyCache.set(url, rsaKey);
-        return rsaKey;
-    }
-};
-
-const session = {
-    secret: process.env.SECRET,         // sign session ID cookie (prevent users from changing cookies?),
-    cookie: {},
-    resave: false,                      // forces session to be saved back to session store (unwanted)
-    saveUninitialized: false,            // something about uninitialized sessions being saved (bots & (healthchecks?))
-    store: memoryStore                  // not exist in one demo
-};
 app.get(`/jag/healthCheck`, (req, res) => {
     res.status(200).send(`{}`);
 });
@@ -110,11 +81,10 @@ passport.use(`oidc`, new Strategy({client}, (tokenSet, userinfo, done) => {
 passport.serializeUser(function (user, done) {
     console.log(`${user.preferred_username} has been serialized into the Sessions`);
     done(null, user);
-    // So in effect during "serializeUser", the PassportJS library adds the authenticated user
-    // to end of the "req.session.passport" object. Directly maintains authenticated users for each session
-    // within the "req.session.passport.user.{..}"
+    // The PassportJS library adds the authenticated user to end of the "req.session.passport" object. Directly maintains
+    // authenticated users for each session within the "req.session.passport.user.{..}"
+    // +req.session.passport.user.{..}
 });
-// Populates (constantly) 'user' with req.session.passport.user.{..}
 
 passport.deserializeUser(function (user, done) {
     done(null, user);
@@ -122,9 +92,7 @@ passport.deserializeUser(function (user, done) {
 // + req.user   (initiated by session validation)
 
 app.get(`/jag/auth/callback`, (req, res, next) => {
-    console.log(`in /jag/auth/callback -- passport.authenticate`);
     // Two kinds of passport.authenticate.  This authenticates and routes.
-    // (accessToken is not defined here)
     passport.authenticate(`oidc`, {
         successRedirect: `/jag`,
         failureRedirect: `https://www.greenwell.de`
@@ -136,11 +104,8 @@ app.get(`/jag/logout`, (req, res) => {
     res.redirect(client.endSessionUrl());
 });
 
-
 // logout callback
 app.get(`/jag/logout/callback`, (req, res) => {
-    console.log(`Calling logout`);
-    // clears the persisted user from the local storage
     req.logout();
     res.redirect(`https://work.greenwell.de`);
 });
@@ -148,32 +113,21 @@ app.get(`/jag/logout/callback`, (req, res) => {
 const jsonParser = bodyParser.json();
 app.all([`/jag/api/v1`, `/jag/api/v1*`], jsonParser , async (req, res) => {
     const newUrl = req.url.replace(`/jag`, ``);
-    console.log(`1) req outgoing to http://api-server:8888${newUrl}`);
     let options = {method: req.method,
         headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${accessToken}`
         }};
     let body = req.body;
-    console.log(`2) Request Body Type =  ${typeof body}`);
-    console.log(`3) Request Body =  ${body}`)
     let bodyString = JSON.stringify(body);
-    console.log(`4) Stringified Request Body =  ${bodyString}`)
     if ((req.method === `POST`) || (req.method === `PUT`)) {
         options = {...options,
             "body": bodyString};
     }
     const remoteResponse = await fetch(`http://api-server:8888${newUrl}`, options);
-    console.log(`5) Remote response = ${remoteResponse}`)
     const remoteResponseObj = await remoteResponse.json();
-    console.log(`6) Remote response.json object = ${remoteResponseObj}`)
-    console.log(`7) stringified: ${JSON.stringify(remoteResponseObj)}`)
-    // const remoteResponseJson = await remoteResponse.json();
-    res.status(200).json(remoteResponseObj);    // json->obj   //send->txt
-    console.log("8) ???? Why here")
-    ////       ITS IN HERE SOMEWHERE   - TEXT VS JSON
+    res.status(200).json(remoteResponseObj);
 });
-
 
 app.use(`/jag`, checkAuthenticated, express.static(path.join(process.cwd(), root)));
 
@@ -219,7 +173,3 @@ process.on(`SIGINT`, () => {
 //
 // 5) On the logout operation, the token on the client-side is destroyed without server interaction.
 //
-
-
-// https://medium.com/devops-dudes/secure-nestjs-rest-api-with-keycloak-745ef32a2370
-// https://access.redhat.com/documentation/en-us/red_hat_single_sign-on_continuous_delivery/5/html-single/securing_applications_and_services_guide/index#nodejs_adapter

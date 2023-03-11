@@ -30,9 +30,6 @@ services:
       - type: volume
         source: api-postgres-config
         target: /etc/postgresql
-      - type: volume
-        source: api-postgres-log
-        target: /var/log/postgresql
 
   auth-postgres:
     image: postgres:15.1-alpine3.17
@@ -61,10 +58,6 @@ services:
       - type: volume
         source: auth-postgres-config
         target: /etc/postgresql
-      - type: volume
-        source: auth-postgres-log
-        target: /var/log/postgresql
-
 
   auth-keycloak:
     container_name: auth-keycloak
@@ -87,22 +80,22 @@ services:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://auth-postgres:5432/${AUTH_POSTGRES_DB}
       KC_HTTP_RELATIVE_PATH: /auth
-      KC_HOSTNAME_ADMIN_URL: https://jag.baby/auth   # not req'd but more clear. (can use to move admin later)
+      KC_HOSTNAME_ADMIN_URL: https://${DOMAIN}/auth   # not required but more clear. (can use to move admin later)
       KC_HTTP_ENABLED: true
       KC_HOSTNAME_STRICT: false
       KC_PROXY: edge
       KC_PROXY_ADDRESS_FORWARDING: true
-      KC_HOSTNAME_STRICT_HTTPS: false                # good
-      KC_HOSTNAME_URL: https://jag.baby/auth         # not req'd but more clear.
-      KC_HOSTNAME_STRICT_BACKCHANNEL: false          # allow back channel for comms between containers.
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HOSTNAME_URL: https://${DOMAIN}/auth
+      KC_HOSTNAME_STRICT_BACKCHANNEL: false          # allow back channel for communications between containers.
       KC_HOSTNAME_PORT: 80
     expose:
       - 8080
     healthcheck:
       test: "curl -f auth-keycloak:8080/auth/realms/master"
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 60
+      retries: 10
     restart: unless-stopped
     volumes:
       - type: volume
@@ -122,8 +115,6 @@ services:
         condition: "service_healthy"
       api-postgres:
         condition: "service_healthy"
-    environment:
-      XXX: ${AUTH_ADMIN}
     ports:
       - '8888'
     healthcheck:
@@ -146,13 +137,11 @@ services:
         condition: "service_healthy"
       api-postgres:
         condition: "service_healthy"
-#    env_file:
-#      - .env
     ports:
       - '8888'
     healthcheck:
       test: "curl -f jag-server:8888/jag/healthCheck"
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
@@ -172,26 +161,26 @@ services:
         condition: "service_healthy"
     environment:
       NGINX_PROXY_CONTAINER: "reverse-proxy"
-      PGADMIN_DEFAULT_EMAIL: admin@ihmc.moc
-      PGADMIN_DEFAULT_PASSWORD: abc123
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
       PGADMIN_CONFIG_CONSOLE_LOG_LEVEL: 40
-      GUNICORN_ACCESS_LOGFILE: '/var/lib/pgadmin/access.log'
+      GUNICORN_ACCESS_LOGFILE: "/var/lib/pgadmin/access.log"
       PGADMIN_SERVER_JSON_FILE: config.json
     expose:
       - 80
     healthcheck:
       test: ["CMD", "wget", "-O", "-", "http://pgadmin:80/misc/ping"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
-      retries: 20
+      retries: 5
     logging:
       driver: none
-    networks:
-      - jagnet
     volumes:
       - type: volume
         source: pgadmin-data
         target: /var/lib/pgadmin
+    networks:
+      - jagnet
 
   reverse-proxy:
     container_name: reverse-proxy
@@ -218,22 +207,12 @@ services:
       test: "curl -k https://reverse-proxy:${PROXY_HTTPS_PORT}/jag"
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 20
     ports:
       - '80:80'
       - '443:443'
     restart: unless-stopped
     volumes:
-#?      - ./config:/config
-#      - ./nginx-proxy/templates:/etc/nginx/templates
-#      - ./certbot/conf:/etc/letsencrypt
-#      - ./certbot/www:/var/www/certbot
-#?      - /tmp/acme_challenge:/tmp/acme_challenge
-#      - "html:/usr/share/nginx/html"
-      - "dhparam:/etc/nginx/dhparam"
-      - "vhost:/etc/nginx/vhost.d"
-      - "certs:/etc/nginx/certs"
-      - "proxy_logs:/var/log/nginx"
       - "/run/docker.sock:/tmp/docker.sock:ro"
     networks:
       - jagnet
@@ -248,29 +227,12 @@ volumes:
   api-postgres-setup:
   api-postgres-data:
   api-postgres-config:
-  api-postgres-log:
   auth-postgres-setup:
   auth-postgres-data:
   auth-postgres-config:
-  auth-postgres-log:
   pgadmin-data:
-    name: "pgadmin-data"
-  html:
-    name: "html"
-  dhparam:
-    name: "dhparam"
-  vhost:
-    name: "vhost"
-  certs:
-    name: "certs"
-  auth-volume:
-    name: "auth-volume"
-  proxy_logs:
-    name: "proxy_logs"
   auth-keycloak-config:
 
 networks:
   jagnet:
-    name: jagnet
-    external: true
 

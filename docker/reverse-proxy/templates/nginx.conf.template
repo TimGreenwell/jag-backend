@@ -16,26 +16,17 @@ http {
                       '$status $body_bytes_sent "$http_referer" '
                       '"$http_user_agent" "$http_x_forwarded_for"';
 
-    access_log  /var/log/nginx/access1.log  main;
+    access_log  /var/log/nginx/access.log  main;
 
     sendfile        on;
     ssl_session_cache   shared:SSL:2m;
     ssl_session_timeout 10m;
     keepalive_timeout  65;
 
-    #gzip  on;
-
-    #include /etc/nginx/conf.d/*.conf;
-
 
     server {
-      listen 80;
-      server_name jag.baby;
-
-  #    location ~ /.well-known/acme-challenge/ {
-  #      allow all;
-  #      root /var/www/certbot;
-  #    }
+      listen ${PROXY_IP}:${PROXY_HTTP_PORT};
+      server_name ${PUBLIC_NAME};
 
       location / {
         return 301 https://$host$request_uri;
@@ -43,16 +34,23 @@ http {
     }
 
     server {
-      listen 443 ssl;
-      server_name jag.baby;
+      listen ${PROXY_IP}:${PROXY_HTTPS_PORT} ssl;
+      server_name ${PUBLIC_NAME};
 
-      ssl_certificate /etc/letsencrypt/live/jag.baby/fullchain.pem;
-      ssl_certificate_key /etc/letsencrypt/live/jag.baby/privkey.pem;
-      include /etc/letsencrypt/options-ssl-nginx.conf;
-      ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-      access_log /var/log/nginx/jag.baby.access.log;
-      error_log  /var/log/nginx/jag.baby.error.log error;
+      ssl_certificate /etc/nginx/certs/${PUBLIC_NAME}/fullchain.pem;
+      ssl_certificate_key /etc/nginx/certs/${PUBLIC_NAME}/privkey.pem;
+      ssl_dhparam /etc/nginx/dhparam/ssl-dhparam.pem;
+      access_log /var/log/nginx/${PUBLIC_NAME}.access.log;
+      error_log  /var/log/nginx/${PUBLIC_NAME}.error.log error;
       rewrite_log on;
+
+      ssl_session_cache shared:le_nginx_SSL:10m;
+      ssl_session_timeout 1440m;
+      ssl_session_tickets off;
+      ssl_protocols TLSv1.2 TLSv1.3;
+      ssl_prefer_server_ciphers off;
+      ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";
+
 
       location / {
             rewrite ^([^.]*[^/])$ $1/ permanent;
@@ -111,7 +109,5 @@ http {
         add_header         'Access-Control-Allow-Headers' 'Authorization,Accept,Origin,DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Content-Range,Range,mode';
         add_header         'Access-Control-Allow-Methods' 'GET, PUT, PATCH, POST, DELETE, OPTIONS';
       }
-
-
     }
 }
