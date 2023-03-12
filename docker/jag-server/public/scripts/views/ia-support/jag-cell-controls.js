@@ -47,7 +47,7 @@ class JagCellControls extends HTMLElement {
 
         this._removeButton.addEventListener(`click`, () => {
             console.log(this._cell)
-            if (window.confirm(`Are you sure you want to disconnect this node as a child? (This will change all instances of the parent node to reflect this change.)`)) {
+            if (window.confirm(`Are you sure you want to disconnect this JAG as a child? (This will change all instances of the parent JAG to reflect this change.)`)) {
                 // const parentActivity = destinationNode.parent.activity;
                 const parentActivity = this._cell.parent.activity;
                 parentActivity.bindings = parentActivity.bindings.filter((binding) => {
@@ -64,7 +64,7 @@ class JagCellControls extends HTMLElement {
                     detail: {activity: parentActivity}
                 }));
                 // this.dispatchEvent(new CustomEvent(`event-promote-project`, {
-                //     detail: {node: this._cell}
+                //     detail: {cell: this._cell}
                 // }));
 
                 // this._selectedNodesMap.delete(selectedNodeModel.id);

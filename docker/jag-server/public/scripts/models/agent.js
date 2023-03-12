@@ -96,12 +96,12 @@ export default class AgentModel extends EventTarget {
         }));
     }
 
-    assessment(node) {
-        if (node.urn === ``) {
+    assessment(liveNode) {
+        if (liveNode.urn === ``) {
             return undefined;
         }
 
-        return this._assessments.get(node.urn);
+        return this._assessments.get(liveNode.urn);
     }
 
     static fromJSON(json) {

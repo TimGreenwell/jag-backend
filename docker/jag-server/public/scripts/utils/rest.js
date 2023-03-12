@@ -53,20 +53,20 @@ export default class RESTUtils {
     }
 
     static async all(url) {
-        // TODO: safely join URL paths (perhaps Node package?)
+        // TODO: safely join URL paths (perhaps LiveNode package?)
         const options = {};
         const reply = await RESTUtils.request(url, options, `Error listing`);
         return reply;
     }
 
     static async get(url) {
-        // TODO: safely join URL paths (perhaps Node package?)
+        // TODO: safely join URL paths (perhaps LiveNode package?)
         const options = {};
         await RESTUtils.request(url, options, `Error retrieving JAG`);
     }
 
     static async has(url) {
-        // TODO: safely join URL paths (perhaps Node package?)
+        // TODO: safely join URL paths (perhaps LiveNode package?)
         const options = {
             method: `HEAD`,
             headers: {
@@ -106,7 +106,7 @@ export default class RESTUtils {
     static async delete(url) {
         const xsrfToken = new RegExp(`(?:(?:^|.*;\s*)XSRF-TOKEN\s*\=\s*([^;]*).*$)|^.*$`, `u`);
         const csrfToken = document.cookie.replace(xsrfToken, `$1`);
-        // TODO: safely join URL paths (perhaps Node package?)
+        // TODO: safely join URL paths (perhaps LiveNode package?)
         const options = {
             method: `DELETE`,
             headers: {
@@ -119,7 +119,7 @@ export default class RESTUtils {
 
     static async clear(url) {
         // const csrfToken = document.cookie.replace(/(?:(?:^|.*;\s*)XSRF-TOKEN\s*\=\s*([^;]*).*$)|^.*$/, '$1');
-        // TODO: safely join URL paths (perhaps Node package?)
+        // TODO: safely join URL paths (perhaps LiveNode package?)
         const options = {
             method: `DELETE`,
             headers: {

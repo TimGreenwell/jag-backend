@@ -13,7 +13,7 @@ import TimeView from "./views/at-timeview.js";
 import Library from './views/at-activity-library.js';                     // AT - Left view of available Activities
 import ProjectLibrary from './views/at-node-library.js';         // AT - Left view(2) of current JAGs
 import Menu from './views/at-menu.js';                           // AT - Top view of user actions (plus title/logo)
-import Properties from './views/at-properties.js';               // AT - Right view of JAG Node data entry fields
+import Properties from './views/at-properties.js';               // AT - Right view of JAG LiveNode data entry fields
 import StorageService from './services/storage-service.js';   // Interface services with JAG in storage(s)
 import IndexedDBStorage from './storages/indexed-db.js';      // Available storage option (IndexedDB)
 import RESTStorage from './storages/rest.js';                 // Available storage option (tested with Postgres)

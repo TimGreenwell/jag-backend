@@ -45,7 +45,7 @@ class AutoComplete extends HTMLElement {
         this._selected_index = 0;
 
         // Removes all existing childs
-        while (this.hasChildNodes()) {
+        while (this.hasChildNodes()) {    // Node.hasChildNodes
             this.removeChild(this.lastChild);
         }
 

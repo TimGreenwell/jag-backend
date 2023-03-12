@@ -156,7 +156,7 @@ customElements.define(`def-menu`, class extends HTMLElement {
             composed: true,
             detail: {execution: event.value}
         }));
-        if (this._executionSelect.value !== `node.execution.none`) {
+        if (this._executionSelect.value !== `livenode.execution.none`) {
             const onfailOptions = Activity.getOnFailOptions(this._executionSelect.value);
             while (this._onfailSelect.options.length > 0) {
                 this._onfailSelect.remove(0);

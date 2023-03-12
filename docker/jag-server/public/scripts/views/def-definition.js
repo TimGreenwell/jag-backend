@@ -17,7 +17,7 @@ class Definition extends HTMLElement {
 
     constructor() {
         super();
-        this._definingNode = null;
+        this._definingLiveNode = null;
         this._functionString = String;
         this._failTrigger = false;
         this._winTrigger = false;
@@ -31,19 +31,19 @@ class Definition extends HTMLElement {
         this._initUI();
     }
 
-    get definingNode() {
-        return this._definingNode;
+    get definingLiveNode() {
+        return this._definingLiveNode;
     }
 
-    set definingNode(node) {
-        this._definingNode = node;
+    set definingLiveNode(liveNode) {
+        this._definingLiveNode = liveNode;
     }
 
-    changeDefiningNode(node) {
-        this._definingNode = node;
-        this.buildTestBank(node);
-        this.buildSubscriptionBank(node);
-        this._buildFunction(node);
+    changeDefiningLiveNode(liveNode) {
+        this._definingLiveNode = liveNode;
+        this.buildTestBank(liveNode);
+        this.buildSubscriptionBank(liveNode);
+        this._buildFunction(liveNode);
     }
 
     get functionString() {
@@ -67,16 +67,16 @@ class Definition extends HTMLElement {
     }
 
 
-    removeAllChildNodes(parent) {
+    removeAllChildren(parent) {
         while (parent.firstChild) {
             parent.removeChild(parent.firstChild);
         }
     }
 
 
-    buildSubscriptionBank(subscriptionNode = this._definingNode) {
-        this.removeAllChildNodes(this._$subscriptionEntryDiv);
-        if (this.definingNode.subscriptions.length > 0) {
+    buildSubscriptionBank(subscriptionNode = this._definingLiveNode) {
+        this.removeAllChildren(this._$subscriptionEntryDiv);
+        if (this.definingLiveNode.subscriptions.length > 0) {
             // ///////////  SUBSCRIPTIONS - Title Line - Title
             const $subscriptionSubtitle = document.createElement(`H2`);
             $subscriptionSubtitle.innerText = `Subscribed To:  `;
@@ -142,8 +142,8 @@ class Definition extends HTMLElement {
     }
 
 
-    buildTestBank(testNode = this._definingNode) {
-        this.removeAllChildNodes(this.$testerEntryDiv);
+    buildTestBank(testNode = this._definingLiveNode) {
+        this.removeAllChildren(this.$testerEntryDiv);
 
         testNode.children.forEach((child) => {
             const childTester = this.createTestElement(child);
@@ -152,18 +152,18 @@ class Definition extends HTMLElement {
     }
 
 
-    createTestElement(node) {
+    createTestElement(liveNode) {
         const stateOptions = [];
-        const label = `${node.urn} / ${node.contextualName}`;
-        const test_el = FormUtils.createPropertyElement(`test-${node.id}`, label);
+        const label = `${liveNode.urn} / ${liveNode.contextualName}`;
+        const test_el = FormUtils.createPropertyElement(`test-${liveNode.id}`, label);
         test_el.className = `test-collection`;
-        this._valueInput = FormUtils.createTextInput(`test-value-${node.id}`);
+        this._valueInput = FormUtils.createTextInput(`test-value-${liveNode.id}`);
         this._valueInput.setAttribute(`placeholder`, `test return value`);
-        this._valueInput.setAttribute(`node`, node.id);
+        this._valueInput.setAttribute(`livenode`, liveNode.id);
         this._valueInput.className = `test-property`;
         this._valueInput.addEventListener(`blur`, (event) => {
-            this._testBankMap.set(node.id, event.target.value);
-            this._buildFunction(node);
+            this._testBankMap.set(liveNode.id, event.target.value);
+            this._buildFunction(liveNode);
         });
 
         const stateDefinition = Definition.STATE;
@@ -173,7 +173,7 @@ class Definition extends HTMLElement {
                 text: stateDefinition[state].text
             });
         }
-        this._stateInput = FormUtils.createSelect(`test-state-${node.id}`, stateOptions, Definition.STATE.ACTIVE.name);
+        this._stateInput = FormUtils.createSelect(`test-state-${liveNode.id}`, stateOptions, Definition.STATE.ACTIVE.name);
         this._stateInput.className = `test-property`;
         this._stateInput.addEventListener(`change`, this._updateTestStateMap.bind(this));
         test_el.appendChild(this._valueInput);
@@ -270,23 +270,23 @@ class Definition extends HTMLElement {
         this._$textArea.value = templateFunction;
     }
 
-    _buildFunction(node) {
-        this.removeAllChildNodes(this._$infoWrap);
-        const availableChildren = this.getAvailableChildrenReturnValues(node);
+    _buildFunction(liveNode) {
+        this.removeAllChildren(this._$infoWrap);
+        const availableChildren = this.getAvailableChildrenReturnValues(liveNode);
         const $availableChildrenSpan = document.createElement(`span`);
         $availableChildrenSpan.innerText = `\${AvailableChildren} = [${availableChildren}]              `;
         this._$infoWrap.appendChild($availableChildrenSpan);
 
-        const allChildren = this.getAllChildrenReturnValues(node);
+        const allChildren = this.getAllChildrenReturnValues(liveNode);
         const $allChildrenSpan = document.createElement(`span`);
         $allChildrenSpan.innerText = `\${AllChildren} = [${allChildren}]`;
         this._$infoWrap.appendChild($allChildrenSpan);
     }
 
-    getAllChildrenReturnValues(node) {
+    getAllChildrenReturnValues(liveNode) {
         let values = [];
         if (this.dataMode === `live`) {
-            values = node.children.map((child) => {
+            values = liveNode.children.map((child) => {
                 if (values) {
                     return values;
                 } else {
@@ -294,7 +294,7 @@ class Definition extends HTMLElement {
                 }
             });
         } else {
-            values = this.definingNode.children.map((child) => {
+            values = this.definingLiveNode.children.map((child) => {
                 const values = this._testBankMap.get(child.id);
                 if (values) {
                     return values;
@@ -307,10 +307,10 @@ class Definition extends HTMLElement {
     }
 
 
-    getAvailableChildrenReturnValues(node) {
+    getAvailableChildrenReturnValues(liveNode) {
         let values = [];
         if (this.dataMode === `live`) {
-            values = node.children.
+            values = liveNode.children.
                 filter((child) => {
                     return (child.returnValue !== undefined);
                 }).
@@ -318,7 +318,7 @@ class Definition extends HTMLElement {
                     return child.returnValue;
                 });
         } else {
-            values = this.definingNode.children.map((child) => {
+            values = this.definingLiveNode.children.map((child) => {
                 return this._testBankMap.get(child.id);
             }).filter((value) => {
                 // if ((value !== undefined) || (value !== null)) {
@@ -349,13 +349,13 @@ class Definition extends HTMLElement {
             lastReportTime: null,
             lastReportedCode: null
         });
-        this._definingNode.subscriptions.push(subscription);
+        this._definingLiveNode.subscriptions.push(subscription);
         this.buildSubscriptionBank();
     }
 
     _removeSubscription(event) {
         const deadSubscription = event.target.parentElement.id;
-        this._definingNode.removeSubscription(deadSubscription);
+        this._definingLiveNode.removeSubscription(deadSubscription);
         this.buildSubscriptionBank();
     }
 

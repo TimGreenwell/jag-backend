@@ -16,7 +16,7 @@ import AnalysisModel from '../models/analysis-model.js';
 import Activity from "../models/activity.js";
 import Agent from '../models/agent.js';
 import Team from '../models/team.js';
-import NodeModel from '../models/node.js';
+import LiveNode from '../models/live-node.js';
 
 export default class Schemas {
 
@@ -37,11 +37,11 @@ export default class Schemas {
             ]
         };
 
-        const NODE_STORE = {
-            name: `node`,
+        const LIVENODE_STORE = {
+            name: `livenode`,
             key: `id`,
-            deserialize: NodeModel.fromJSON,
-            rest: `jags`,
+            deserialize: LiveNode.fromJSON,
+            rest: `livenodes`,
             indexList: [
                 {
                     name: `id-index`,
@@ -103,7 +103,7 @@ export default class Schemas {
 
         Schemas.SCHEMA_SET = {
             activity: ACTIVITY_STORE,
-            node: NODE_STORE,
+            livenode: LIVENODE_STORE,
             analysis: ANALYSIS_STORE,
             agent: AGENT_STORE,
             team: TEAM_STORE

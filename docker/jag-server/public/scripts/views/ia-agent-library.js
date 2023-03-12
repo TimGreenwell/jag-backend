@@ -164,7 +164,6 @@ customElements.define(`agent-library`, class extends HTMLElement {
     }
 
     addListItem(newAgent) {
-        // handleNodeStorageCreated (@controllerAT)
         const listItemElement = this.createListItemCollection(newAgent);
         this._libraryList.push(listItemElement);
         this._$list.appendChild(listItemElement.element);

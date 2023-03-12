@@ -8,11 +8,11 @@ The JAGAT web application provides a friendly user interface for drag-and-drop c
 
 ## Dependencies
 
-JAGAT runs on Node.js utilizing the Express.js web application framework and a variety of propriety graphics and logic modules.
+JAGAT runs on LiveNode.js utilizing the Express.js web application framework and a variety of propriety graphics and logic modules.
 
 ## Getting Started
 
-To run JAGAT, you will need the Node Package Manager (npm). Clone this repository or extract a compressed copy to a target directory, navigate to the target directory in a terminal, and execute
+To run JAGAT, you will need the LiveNode Package Manager (npm). Clone this repository or extract a compressed copy to a target directory, navigate to the target directory in a terminal, and execute
 
 `npm install`
 

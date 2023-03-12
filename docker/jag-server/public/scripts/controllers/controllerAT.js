@@ -8,7 +8,7 @@
 
 'use strict';
 
-import NodeModel from "../models/node.js";
+import LiveNode from "../models/live-node.js";
 import StorageService from "../services/storage-service.js";
 import UserPrefs from "../utils/user-prefs.js";
 import Controller from "./controller.js";
@@ -34,9 +34,9 @@ export default class ControllerAT extends Controller {
         StorageService.subscribe(`command-activity-deleted`, this.commandActivityDeletedHandler.bind(this));   // (a)} All from observable
         StorageService.subscribe(`command-activity-cloned`, this.commandActivityClonedHandler.bind(this));     //    } Cross-tab communications
         StorageService.subscribe(`command-activity-replaced`, this.commandActivityReplacedHandler.bind(this)); //    }
-        StorageService.subscribe(`command-node-created`, this.commandNodeCreatedHandler.bind(this));           // }
-        StorageService.subscribe(`command-node-updated`, this.commandNodeUpdatedHandler.bind(this));           // }
-        StorageService.subscribe(`command-node-deleted`, this.commandNodeDeletedHandler.bind(this));           // }
+        StorageService.subscribe(`command-livenode-created`, this.commandLiveNodeCreatedHandler.bind(this));           // }
+        StorageService.subscribe(`command-livenode-updated`, this.commandLiveNodeUpdatedHandler.bind(this));           // }
+        StorageService.subscribe(`command-livenode-deleted`, this.commandLiveNodeDeletedHandler.bind(this));           // }
     }
 
     set menu(value) {
@@ -75,10 +75,10 @@ export default class ControllerAT extends Controller {
             this.cacheActivity(activity);
         });
 
-        const allNodes = await StorageService.all(`node`);
-        allNodes.forEach((node) => {
-            this.addDerivedProjectData(node);
-            this.cacheProject(node);
+        const allLiveNodes = await StorageService.all(`livenode`);
+        allLiveNodes.forEach((liveNode) => {
+            this.addDerivedProjectData(liveNode);
+            this.cacheProject(liveNode);
         });
 
         // Event function (event parameter unused)
@@ -89,39 +89,39 @@ export default class ControllerAT extends Controller {
 
     initializePanels() {
         this._activityLibrary.addListItems([...this._activityMap.values()]);
-        const rootOnly = [...this.projectMap.values()].filter((node) => {
-            return node.isRoot();
+        const projectNodeOnly = [...this.projectMap.values()].filter((liveNode) => {
+            return liveNode.isRoot();
         });
-        this._projectLibrary.addListItems(rootOnly);
+        this._projectLibrary.addListItems(projectNodeOnly);
     }
 
     initializeHandlers() {
-        this._playground.addEventListener(`event-promote-project`, this.eventPromoteProjectHandler.bind(this));             // button to promote node to Jag (root)
+        this._playground.addEventListener(`event-promote-project`, this.eventPromoteProjectHandler.bind(this));             // button to promote liveNode  to projectNode
         this._playground.addEventListener(`event-activity-created`, this.eventActivityCreatedHandler.bind(this));           // 'Create Activity' Popup initiated by Menu
-        this._playground.addEventListener(`event-activity-updated`, this.eventActivityUpdatedHandler.bind(this));           // Any structural change to nodes affects Activities
-        this._playground.addEventListener(`event-node-updated`, this.eventNodeUpdatedHandler.bind(this));                   // Node isExpanded property changed
-        this._playground.addEventListener(`event-nodes-selected`, this.eventNodesSelectedHandler.bind(this));               // mouse clicks on nodes
-        this._playground.addEventListener(`event-node-repositioned`, this.eventNodeRepositionedHandler.bind(this));         // mouse movement event
-        this._playground.addEventListener(`event-nodes-connected`, this.eventNodesConnectedHandler.bind(this));             // onEdgeFinalized between nodes (user connects)
+        this._playground.addEventListener(`event-activity-updated`, this.eventActivityUpdatedHandler.bind(this));           // Any structural change to liveNodes affects Activities
+        this._playground.addEventListener(`event-livenode-updated`, this.eventLiveNodeUpdatedHandler.bind(this));           // LiveNode isExpanded property changed
+        this._playground.addEventListener(`event-livenodes-selected`, this.eventLiveNodesSelectedHandler.bind(this));       // mouse clicks on liveNodes
+        this._playground.addEventListener(`event-livenode-repositioned`, this.eventLiveNodeRepositionedHandler.bind(this)); // mouse movement event
+        this._playground.addEventListener(`event-projects-connected`, this.eventProjectsConnectedHandler.bind(this));       // onEdgeFinalized between liveNodes (user connects)
         this._playground.addEventListener(`event-playground-clicked`, this.eventPlaygroundClickedHandler.bind(this));       // user deselects by clicking background
         this._playground.addEventListener(`event-import-jag`, this.eventImportJagHandler.bind(this));                       // popup to import JAG JSON
 
         this._properties.addEventListener(`event-activity-updated`, this.eventActivityUpdatedHandler.bind(this));           // Activity property updates
-        this._properties.addEventListener(`event-node-updated`, this.eventNodeUpdatedHandler.bind(this));                   // Node property updates (contextual)
+        this._properties.addEventListener(`event-livenode-updated`, this.eventLiveNodeUpdatedHandler.bind(this));           // LiveNode property updates (contextual)
         this._properties.addEventListener(`event-export-jag`, this.eventExportJagHandler.bind(this));                       // button to export JAG and Activities to file as JSON
         this._properties.addEventListener(`event-export-svg`, this.eventExportSvgHandler.bind(this));                       // button to export JAG as svg
         this._properties.addEventListener(`event-urn-changed`, this.eventUrnChangedHandler.bind(this));                     // URN changed - rename or clone actions
         this._properties.addEventListener(`event-endpoints-selected`, this.eventEndpointsSelected.bind(this));              // URN changed - rename or clone actions
 
         this._menu.addEventListener(`event-add-activity`, this.eventAddActivityHandler.bind(this));                         // menu item: call 'Create Activity' popup
-        this._menu.addEventListener(`event-clear-playground`, this.eventClearPlaygroundHandler.bind(this));                 // menu item: clear nodes from playground
-        this._menu.addEventListener(`event-define-node`, this.eventDefineNodeHandler.bind(this));                           // menu item: open Define Node tab(s) using selected node(s)
-        this._menu.addEventListener(`event-redraw-nodes`, this.eventLayoutNodesHandler.bind(this));                         // menu item: auto-place nodes @todo still not pretty
+        this._menu.addEventListener(`event-clear-playground`, this.eventClearPlaygroundHandler.bind(this));                 // menu item: clear liveNodes from playground
+        this._menu.addEventListener(`event-define-livenode`, this.eventDefineLiveNodeHandler.bind(this));                   // menu item: open Define LiveNode tab(s)
+        this._menu.addEventListener(`event-redraw-svg`, this.eventRedrawSvgHandler.bind(this));                             // menu item: auto-place liveNodes
         this._menu.addEventListener(`event-popup-importer`, this.eventPopupImporterHandler.bind(this));                     // menu item: call 'Import Jag' popup
         // this._menu.addEventListener(`event-toggle-timeview`...   (handled upstairs at jag-at.js)                         // menu item: open timeview panel
         this._menu.addEventListener(`event-toggle-colorize`, this.eventToggleColorHandler.bind(this));
 
-        this._activityLibrary.addEventListener(`event-activity-selected`, this.eventActivitySelectedHandler.bind(this));    // Clicking Activity instantiates Node in playground
+        this._activityLibrary.addEventListener(`event-activity-selected`, this.eventActivitySelectedHandler.bind(this));    // Clicking Activity instantiates LiveNode in playground
         this._activityLibrary.addEventListener(`event-activity-deleted`, this.eventActivityDeletedHandler.bind(this));      // Permanently delete Activity
         this._activityLibrary.addEventListener(`event-activity-locked`, this.eventActivityLockedHandler.bind(this));        // 'Lock' Activity (restrict deletes and renames)
 
@@ -149,27 +149,27 @@ export default class ControllerAT extends Controller {
      *    -- playground --
      * eventActivityCreatedHandler    (a) (C) - popup create Activity (original event in menu starts playground popup)
      * eventActivityUpdatedHandler    (a) (C) - structure change
-     * eventNodeUpdatedHandler            (a) - Node isExpanded/location property changed
-     * eventNodesSelectedHandler              - user selects Node in graph
-     * eventNodeRepositionedHandler           - user repositioned Node
-     * eventNodesConnectedHandler        (a)  - user connects two Nodes with an edge
-     * eventPlaygroundClickedHandler     (a)  - user selects node
+     * eventLiveNodeUpdatedHandler            (a) - LiveNode isExpanded/location property changed
+     * eventLiveNodesSelectedHandler              - user selects LiveNode in graph
+     * eventLiveNodeRepositionedHandler           - user repositioned LiveNode
+     * eventProjectsConnectedHandler        (a)  - user connects two Project Nodes with an edge
+     * eventPlaygroundClickedHandler     (a)  - user selects liveNode
      * eventImportJagHandler             (a)  - popup import JAG JSON
-     * eventPromoteProjectHandler        (a)  - button to promote node to Jag (root)
+     * eventPromoteProjectHandler        (a)  - button to promote liveNode to ProjectNode
      *
      *    -- properties --
      * eventUrnChangedHandler            (C)  - URN field is changed
      * eventActivityUpdatedHandler       (C)  - user updates an Activity related field
-     * eventNodeUpdatedHandler   (Playground) - user updates a Node related field
+     * eventLiveNodeUpdatedHandler   (Playground) - user updates a LiveNode related field
      * eventExportJagHandler                  - button to export JAG and Activities to file
 
      * eventUrnChangedHandler         (a)(C)  - URN field is changed
      *
      *       -- menu --
      * eventAddActivityHandler                - menu item: call 'Create Activity' popup
-     * eventClearPlaygroundHandler            - menu item: clear nodes from playground
-     * eventDefineNodeHandler                 - menu item: open Define Node tab(s) using selected node(s)
-     * eventRedrawNodesHandler                - menu item: auto-place nodes @todo still not pretty
+     * eventClearPlaygroundHandler            - menu item: clear liveNodes from playground
+     * eventDefineNodeHandler                 - menu item: open Define LiveNode tab(s)
+     * eventRedrawSvgHandler                - menu item: auto-place nodes @todo still not pretty
      * eventPopupImporterHandler              - menu item: call 'Import Jag' popup
      *
      *  -- activity library --
@@ -190,67 +190,67 @@ export default class ControllerAT extends Controller {
 
     // eventActivityUpdatedHandler --- hosted by common controller.
 
-    async eventNodeUpdatedHandler(event) {
+    async eventLiveNodeUpdatedHandler(event) {
         let projectNode;
-        const updatedNodeModel = event.detail.nodeModel;
-        if (updatedNodeModel.parentId) {  // Not same as root... this handles the root node of tree that has just been claimed by another project.  (parent comes next step)
-            projectNode = this.fetchProject(updatedNodeModel.projectId);
-            projectNode.replaceChild(updatedNodeModel);
+        const updatedLiveNode = event.detail.liveNode;
+        if (updatedLiveNode.parentId) {  // Not same as root... this handles the project node of tree that has just been claimed by another project.  (parent comes next step)
+            projectNode = this.fetchProject(updatedLiveNode.projectId);
+            projectNode.replaceChild(updatedLiveNode);
         } else {
-            projectNode = updatedNodeModel;
+            projectNode = updatedLiveNode;
         }
-        await StorageService.update(projectNode, `node`);
+        await StorageService.update(projectNode, `livenode`);
     }
 
-    eventNodesSelectedHandler(event) {
-        const selectedNodeArray = event.detail.selectedNodeArray;
-        this._properties.handleSelectionUpdate(selectedNodeArray);
+    eventLiveNodesSelectedHandler(event) {
+        const selectedLiveNodeArray = event.detail.selectedLiveNodeArray;
+        this._properties.handleSelectionUpdate(selectedLiveNodeArray);
         // this._timeview.refreshTimeview(selectedNodeArray[0]);    // Selecting a node also updates it. Need to look into that
         // ide.handleSelectionUpdate(e.detail);
     }
 
-    eventNodeRepositionedHandler(event) {
+    eventLiveNodeRepositionedHandler(event) {
         event.stopPropagation();
-        const nodeModel = event.detail.nodeModel;
-        nodeModel.x = event.detail.x;
-        nodeModel.y = event.detail.y;
+        const liveNode = event.detail.liveNode;
+        liveNode.x = event.detail.x;
+        liveNode.y = event.detail.y;
     }
 
-    async eventNodesConnectedHandler(event) {            // only needed id's
+    async eventProjectsConnectedHandler(event) {            // only needed id's
         const projectNodeId = event.detail.projectNodeId;
-        const parentNodeId = event.detail.parentNodeId;
-        const childNodeId = event.detail.childNodeId;
+        const parentLiveNodeId = event.detail.parentLiveNodeId;
+        const childLiveNodeId = event.detail.childLiveNodeId;
 
 
         const projectModel = this.fetchProject(projectNodeId);
-        const parentNodeModel = this.searchTreeForId(projectModel, parentNodeId);
-        parentNodeModel.isExpanded = true;
-        const childNodeModel = this.fetchProject(childNodeId);
+        const parentLiveNode = this.searchTreeForId(projectModel, parentLiveNodeId);
+        parentLiveNode.isExpanded = true;
+        const childLiveNode = this.fetchProject(childLiveNodeId);
 
-        if (this.loopDetection(projectModel, parentNodeModel, childNodeModel)) {
+        if (this.loopDetection(projectModel, parentLiveNode, childLiveNode)) {
             alert(`That node join results in an infinite loop problem - please consider an alternative design`);
             this._playground._refreshPlayground(projectModel);
         } else {
             if (this._timeview) {
                 this._timeview.refreshTimeview();
             }
-            const childId = parentNodeModel.activity.addChild(childNodeModel.urn);
-            parentNodeModel.addChild(childNodeModel);  // do not think this does anything here... or?
-            childNodeModel.childId = childId;  // this could also be done later. ok here
+            const childId = parentLiveNode.activity.addChild(childLiveNode.urn);
+            parentLiveNode.addChild(childLiveNode);  // do not think this does anything here... or?
+            childLiveNode.childId = childId;  // this could also be done later. ok here
 
-            if (parentNodeModel.activity.connector.execution === `node.execution.none`) {
-                parentNodeModel.activity.connector.execution = `node.execution.sequential`;
+            if (parentLiveNode.activity.connector.execution === `livenode.execution.none`) {
+                parentLiveNode.activity.connector.execution = `livenode.execution.sequential`;
             }
 
-            this.repopulateProject(parentNodeModel, projectNodeId);
+            this.repopulateProject(parentLiveNode, projectNodeId);
 
-            this.cacheProject(childNodeModel);
-            this.cacheProject(parentNodeModel);
+            this.cacheProject(childLiveNode);
+            this.cacheProject(parentLiveNode);
 
-            event.detail.activity = parentNodeModel.activity;
+            event.detail.activity = parentLiveNode.activity;
             await this.eventActivityUpdatedHandler(event);
 
-            event.detail.nodeModelId = childNodeModel.id;
+            event.detail.liveNodeId = childLiveNode.id;
             await this.eventProjectDeletedHandler(event);
         }
     }
@@ -280,11 +280,11 @@ export default class ControllerAT extends Controller {
 
         const jagPromises = [];
         for (const jag of jags) {
-            const jagModel = NodeModel.fromJSON(jag);
-            const fullJagModel = new NodeModel(jagModel);
-            this.addDerivedProjectData(fullJagModel);
-            this.cacheProject(fullJagModel);
-            jagPromises.push(StorageService.create(fullJagModel, `node`));
+            const jagDescription = LiveNode.fromJSON(jag);  // @TODO  is right? LiveNode.fromJSON --- and not Activity.fromJSOON
+            const liveNode = new LiveNode(jagDescription);
+            this.addDerivedProjectData(liveNode);
+            this.cacheProject(liveNode);
+            jagPromises.push(StorageService.create(liveNode, `livenode`));
         }
         await Promise.all(jagPromises);
     }
@@ -293,7 +293,7 @@ export default class ControllerAT extends Controller {
 
     // eventUrnChangedHandler --- hosted by common controller.
     // eventActivityUpdatedHandler --- hosted by common controller.
-    // eventNodeUpdatedHandler --- common with 'playground' handler
+    // eventLiveNodeUpdatedHandler --- common with 'playground' handler
 
     eventEndpointsSelected(event) {
         const selectedFromEndpoints = event.detail.fromEndpoints;
@@ -302,37 +302,37 @@ export default class ControllerAT extends Controller {
     }
 
     eventExportJagHandler(event) {
-        const node = event.detail.node;
-        const descendantUrns = this.gatherDescendentUrns(node);
+        const liveNode = event.detail.liveNode;
+        const descendantUrns = this.gatherDescendentUrns(liveNode);
         const neededActivities = descendantUrns.map((urn) => {
             const activityModel = this.fetchActivity(urn);
             const activityJson = JSON.stringify(activityModel.toJSON(), null, 4);
             return activityJson;
         });
-        const jagJson = JSON.stringify(node.toJSON(), null, 4);
+        const jagJson = JSON.stringify(liveNode.toJSON(), null, 4);
         const fileData = `{"activities" : [${neededActivities}], "jags" : [${jagJson}]}`;
 
         const a = document.createElement(`a`);
         const data = `data:application/json,${encodeURI(fileData)}`;
         a.href = data;
-        a.download = `${node.activity.name}.json`;
+        a.download = `${liveNode.activity.name}.json`;
         a.click();
     }
 
     eventExportSvgHandler(event) {
-        const node = event.detail.node;
-        this._playground.printSvg(`${node.name}-jag.svg`);
-        this._timeview.printSvg(`${node.name}-layout.svg`);
+        const liveNode = event.detail.liveNode;
+        this._playground.printSvg(`${liveNode.name}-jag.svg`);
+        this._timeview.printSvg(`${liveNode.name}-layout.svg`);
     }
 
     async eventPromoteProjectHandler(event) {
-        const newProject = event.detail.node;
-        newProject.childId = null;
-        newProject.parentId = null;
-        this.addDerivedProjectData(newProject);
+        const newProjectNode = event.detail.liveNode;
+        newProjectNode.childId = null;
+        newProjectNode.parentId = null;
+        this.addDerivedProjectData(newProjectNode);
         // this.cacheProject(newProject);        // updating and caching project just before a 'create' -useful?
-        await StorageService.create(newProject, `node`);
-        this._playground._refreshPlayground(newProject);
+        await StorageService.create(newProjectNode, `livenode`);
+        this._playground._refreshPlayground(newProjectNode);
     }
 
     /**   -- Menu --  */
@@ -345,7 +345,7 @@ export default class ControllerAT extends Controller {
         this._playground.clearPlayground();
     }
 
-    eventDefineNodeHandler() {
+    eventDefineLiveNodeHandler() {
         //  let origin = window.location.origin
         function openInNewTab(href) {
             Object.assign(document.createElement(`a`), {
@@ -355,17 +355,17 @@ export default class ControllerAT extends Controller {
             }).click();
         }
 
-        const selectedNodes = this._playground.selectedNodes;
+        const selectedLiveNodes = this._playground.selectedLiveNodes;
 
-        selectedNodes.forEach((selectedNode) => {
-            const projectId = selectedNode.projectId;
-            const nodeId = selectedNode.id;
-            openInNewTab(`./node.html?project=${projectId}&node=${nodeId}`);
+        selectedLiveNodes.forEach((selectedLiveNode) => {
+            const projectId = selectedLiveNode.projectId;
+            const liveNodeId = selectedLiveNode.id;
+            openInNewTab(`./node.html?project=${projectId}&livenode=${liveNodeId}`);
         });
     }
 
-    eventLayoutNodesHandler() {
-        this._playground.layoutNodes();
+    eventRedrawSvgHandler() {
+        this._playground.layoutLiveNodes();
     }
 
     eventPopupImporterHandler() {
@@ -374,8 +374,8 @@ export default class ControllerAT extends Controller {
     }
 
     // eventToggleTimeviewHandler() {
-    //     const selectedNodes = this._playground.selectedNodes;
-    //     this._timeview.refreshTimeview(selectedNodes[0]);
+    //     const selectedLiveNodes = this._playground.selectedLiveNodes;
+    //     this._timeview.refreshTimeview(selectedLiveNodes[0]);
     // }
 
     eventToggleColorHandler() {
@@ -415,13 +415,13 @@ export default class ControllerAT extends Controller {
         console.log(`Local>> (Activity selected / Activity list item selected) `);
         const activitySelected = event.detail.activity;
         const isExpanded = event.detail.isExpanded;
-        const newProjectRootNode = this.buildNodeTreeFromActivity(activitySelected, isExpanded);
-        this.addDerivedProjectData(newProjectRootNode);
-        this.cacheProject(newProjectRootNode);
+        const newProjectNode = this.buildLiveNodeTreeFromActivity(activitySelected, isExpanded);
+        this.addDerivedProjectData(newProjectNode);
+        this.cacheProject(newProjectNode);
 
-        await StorageService.create(newProjectRootNode, `node`);
-        // this._playground._buildNodeViewFromNodeModel(newProjectRootNode)
-        this._playground._refreshPlayground(newProjectRootNode);
+        await StorageService.create(newProjectNode, `livenode`);
+        // this._playground._buildNodeViewFromLiveNode(newProjectNode)
+        this._playground._refreshPlayground(newProjectNode);
     }
 
     /**   -- Project Library --  */
@@ -437,16 +437,16 @@ export default class ControllerAT extends Controller {
     }
 
     async eventProjectDeletedHandler(event) {
-        console.log(`Local>> (node deleted) `);
-        const deadNodeModelId = event.detail.nodeModelId;
-        await StorageService.delete(deadNodeModelId, `node`);
+        console.log(`Local>> (project deleted) `);
+        const removedLiveNodeId = event.detail.liveNodeId;
+        await StorageService.delete(removedLiveNodeId, `livenode`);
     }
 
     async eventProjectLockedHandler(event) {
-        console.log(`Local>> (node locked) `);
-        const lockedNodeModel = event.detail.nodeModel;
-        lockedNodeModel.isLocked = !lockedNodeModel.isLocked;
-        await StorageService.update(lockedNodeModel, `node`);
+        console.log(`Local>> (project locked) `);
+        const lockedLiveNode = event.detail.liveNode;
+        lockedLiveNode.isLocked = !lockedLiveNode.isLocked;
+        await StorageService.update(lockedLiveNode, `livenode`);
     }
 
     /**
@@ -460,9 +460,9 @@ export default class ControllerAT extends Controller {
      * commandActivityDeletedHandler
      * commandActivityClonedHandler
      * commandActivityReplacedHandler
-     * commandNodeCreatedHandler
-     * commandNodeUpdatedHandler
-     * commandNodeDeletedHandler
+     * commandLiveNodeCreatedHandler
+     * commandLiveNodeUpdatedHandler
+     * commandLiveNodeDeletedHandler
      *
      */
 
@@ -480,28 +480,28 @@ export default class ControllerAT extends Controller {
         const deletePromises = [];
         for (const viewedProject of this._playground.viewedProjects) {
             if (viewedProject.id === deletedActivityUrn) {
-                deletePromises.push(StorageService.delete(viewedProject, `node`));
+                deletePromises.push(StorageService.delete(viewedProject, `livenode`));
             }
         }
         await Promise.all(deletePromises);
-        this._playground.unselectEverything();  // for error when selected node is deleted
+        this._playground.unselectEverything();  // for error when selected liveNode is deleted
         this._activityLibrary.removeLibraryListItem(deletedActivityUrn);
     }
 
     commandActivityClonedHandler(clonedActivity, clonedActivityUrn) {
         UserPrefs.setDefaultUrnPrefixFromUrn(clonedActivityUrn);
-        this._playground._addActivityNodeTree(clonedActivity, clonedActivityUrn);
+        this._playground._addActivityNodeTree(clonedActivity, clonedActivityUrn);   // This is in BUCKET
     }
 
     commandActivityReplacedHandler(newActivity, replacedActivityUrn) {
-        this._playground.replaceActivityNode(newActivity, replacedActivityUrn);
+        this._playground.replaceActivityNode(newActivity, replacedActivityUrn);  // This is in BUCKET
         this._activityLibrary.replaceItem(newActivity, replacedActivityUrn);                   // Replace Activity list item in activityLibrary
     }
 
-    commandNodeCreatedHandler(createdNodeModel, createdNodeId) {
-        this.addDerivedProjectData(createdNodeModel);
-        this.cacheProject(createdNodeModel);
-        this._projectLibrary.addListItem(createdNodeModel);       // Add Activity list item to Library
+    commandLiveNodeCreatedHandler(createdLiveNode, createdLiveNodeId) {
+        this.addDerivedProjectData(createdLiveNode);
+        this.cacheProject(createdLiveNode);
+        this._projectLibrary.addListItem(createdLiveNode);       // Add Activity list item to Library
     }
 
     async commandActivityUpdatedHandler(updatedActivity, updatedActivityUrn) {
@@ -513,7 +513,7 @@ export default class ControllerAT extends Controller {
 
             if (cachedViewedProject.isActivityInProject(updatedActivityUrn)) {
                 const updatedProject = this.updateTreeWithActivityChange(updatedActivity, cachedViewedProject);
-                updatePromises.push(StorageService.update(updatedProject, `node`));
+                updatePromises.push(StorageService.update(updatedProject, `livenode`));
             }
         }
         await Promise.all(updatePromises);
@@ -521,35 +521,35 @@ export default class ControllerAT extends Controller {
         this._activityLibrary.updateItem(updatedActivity);
     }
 
-    commandNodeUpdatedHandler(updatedNodeModel, updatedNodeId) {
-        this.addDerivedProjectData(updatedNodeModel);
-        this.cacheProject(updatedNodeModel);
-        console.log(`((COMMAND IN) >>  Node Updated: ${updatedNodeModel.activity.name} / ${updatedNodeId}`);
-        this._playground._refreshPlayground(updatedNodeModel);  // <- causing issues
-        this._projectLibrary.updateItem(updatedNodeModel);
-        this._timeview.refreshTimeview(updatedNodeModel);
+    commandLiveNodeUpdatedHandler(updatedLiveNode, updatedLiveNodeId) {
+        this.addDerivedProjectData(updatedLiveNode);
+        this.cacheProject(updatedLiveNode);
+        console.log(`((COMMAND IN) >>  liveNode Updated: ${updatedLiveNode.activity.name} / ${updatedLiveNodeId}`);
+        this._playground._refreshPlayground(updatedLiveNode);  // <- causing issues
+        this._projectLibrary.updateItem(updatedLiveNode);
+        this._timeview.refreshTimeview(updatedLiveNode);
     }
 
-    commandNodeDeletedHandler(deletedNodeId) {
-        this.uncacheProject(deletedNodeId);
-        this._playground.deleteNodeModel(deletedNodeId);
-        this._projectLibrary.removeNodeLibraryListItem(deletedNodeId);
+    commandLiveNodeDeletedHandler(deletedLiveNodeId) {
+        this.uncacheProject(deletedLiveNodeId);
+        this._playground.deleteLiveNode(deletedLiveNodeId);
+        this._projectLibrary.removeProjectLibraryListItem(deletedLiveNodeId);
     }
 
     /**
      *                                  Support Functions
      *
-     * buildNodeTreeFromActivity   (c)   Build node tree given root activity
+     * buildLiveNodeTreeFromActivity   (c)   Build liveNode tree given root activity
      * gatherDescendentUrns              Build set of all child urns
      * gatherAncestorUrns                Build set of direct ancestor urns
      * loopDetection                     -> No URN exists as both descendant and ancestor (feedback detection)
      *
      */
-    // buildNodeTreeFromActivity --- hosted by common controller.
+    // buildLiveNodeTreeFromActivity --- hosted by common controller.
 
-    gatherDescendentUrns(childNodeModel, workStack = []) {   // need this in nodes
-        workStack.push(childNodeModel.urn);
-        childNodeModel.children.forEach((child) => {
+    gatherDescendentUrns(childLiveNode, workStack = []) {
+        workStack.push(childLiveNode.urn);
+        childLiveNode.children.forEach((child) => {
             this.gatherDescendentUrns(child, workStack);
         });
         return workStack;
@@ -560,16 +560,16 @@ export default class ControllerAT extends Controller {
         let nextParentId = parentModelId;
         const projectNode = this.fetchProject(projectModelId);
         do {
-            const checkNode = projectNode.findChildById(nextParentId);
-            urnStack.push(checkNode.urn);
-            nextParentId = checkNode.parentId;
+            const foundChildLiveNode = projectNode.findChildById(nextParentId);
+            urnStack.push(foundChildLiveNode.urn);
+            nextParentId = foundChildLiveNode.parentId;
         } while (nextParentId);
         return urnStack;
     }
 
-    loopDetection(projectModel, parentNodeModel, childNodeModel) {
-        const descendentStack = this.gatherDescendentUrns(childNodeModel);
-        const ancestorStack = this.gatherAncestorUrns(projectModel.id, parentNodeModel.id);
+    loopDetection(projectModel, parentLiveNode, childLiveNode) {
+        const descendentStack = this.gatherDescendentUrns(childLiveNode);
+        const ancestorStack = this.gatherAncestorUrns(projectModel.id, parentLiveNode.id);
         const intersection = descendentStack.filter((x) => {
             return ancestorStack.includes(x);
         });

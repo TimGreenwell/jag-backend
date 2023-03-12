@@ -82,21 +82,21 @@ customElements.define(`jag-menu`, class extends HTMLElement {
         }.bind(this));
 
         const $redraw = document.createElement(`span`);
-        $redraw.id = `menu-redraw-nodes`;
+        $redraw.id = `menu-redraw-svg`;
         $redraw.classList.add(`menu-item`);
         $redraw.innerText = `redraw\nnodes`;
         $centerLiDiv.appendChild($redraw);
         $redraw.addEventListener(`click`, function (e) {
-            this.dispatchEvent(new CustomEvent(`event-redraw-nodes`));
+            this.dispatchEvent(new CustomEvent(`event-redraw-svg`));
         }.bind(this));
 
         const $define = document.createElement(`span`);
-        $define.id = `menu-define-node`;
+        $define.id = `menu-define-livenode`;
         $define.classList.add(`menu-item`);
         $define.innerText = `define\nnode`;
         $centerLiDiv.appendChild($define);
         $define.addEventListener(`click`, function (e) {
-            this.dispatchEvent(new CustomEvent(`event-define-node`));
+            this.dispatchEvent(new CustomEvent(`event-define-livenode`));
         }.bind(this));
 
         const $import = document.createElement(`span`);

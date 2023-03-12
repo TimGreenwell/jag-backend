@@ -1,5 +1,5 @@
 /**
- * @file Node model for a specific analysis' JAG.
+ * @file LiveNode model for a specific analysis' JAG.
  *
  * @author mvignati
  * @version 1.65

@@ -13,8 +13,8 @@ export default function _buildUI() {
     const $activityPropertiesDiv = FormUtils.createEmptyInputContainer(`activity-container`);
     $propertyDiv.appendChild($activityPropertiesDiv);
 
-    const $nodePropertiesDiv = FormUtils.createEmptyInputContainer(`node-container`);
-    $propertyDiv.appendChild($nodePropertiesDiv);
+    const $liveNodePropertiesDiv = FormUtils.createEmptyInputContainer(`livenode-container`);
+    $propertyDiv.appendChild($liveNodePropertiesDiv);
 
     const $urnDiv = FormUtils.createPropertyElement(`urn-input`, `URN`);
     $urnDiv.className = `padded activity`;
@@ -139,43 +139,43 @@ export default function _buildUI() {
     elementMap.set($annotations.id, $annotations);
     $annotationsDiv.appendChild($annotations);
 
-    const $nodeNameDiv = FormUtils.createPropertyElement(`node-name-input`, `Contextual Name`);
-    $nodeNameDiv.className = `padded node`;
-    const $nodeNameInput = FormUtils.createTextInput(`node-name-input`);
-    elementMap.set($nodeNameInput.id, $nodeNameInput);
-    $nodeNameDiv.appendChild($nodeNameInput);
-    $nodePropertiesDiv.appendChild($nodeNameDiv);
+    const $liveNodeNameDiv = FormUtils.createPropertyElement(`livenode-name-input`, `Contextual Name`);
+    $liveNodeNameDiv.className = `padded livenode`;
+    const $liveNodeNameInput = FormUtils.createTextInput(`livenode-name-input`);
+    elementMap.set($liveNodeNameInput.id, $liveNodeNameInput);
+    $liveNodeNameDiv.appendChild($liveNodeNameInput);
+    $liveNodePropertiesDiv.appendChild($liveNodeNameDiv);
 
-    const $nodeExpectedDurationDiv = FormUtils.createPropertyElement(`node-expected-duration-input`, `Expected Duration`);
-    $nodeExpectedDurationDiv.className = `padded node leaf-only`;
-    const $nodeExpectedDurationInput = FormUtils.createTextInput(`node-expected-duration-input`);
-    $nodeExpectedDurationInput.setAttribute(`placeholder`, `expected duration (seconds)`);
-    //$nodeExpectedDurationInput.className = `direct-property`;
-    elementMap.set($nodeExpectedDurationInput.id, $nodeExpectedDurationInput);
-    $nodeExpectedDurationDiv.appendChild($nodeExpectedDurationInput);
-    $nodePropertiesDiv.appendChild($nodeExpectedDurationDiv);
+    const $liveNodeExpectedDurationDiv = FormUtils.createPropertyElement(`livenode-expected-duration-input`, `Expected Duration`);
+    $liveNodeExpectedDurationDiv.className = `padded livenode leaf-only`;
+    const $liveNodeExpectedDurationInput = FormUtils.createTextInput(`livenode-expected-duration-input`);
+    $liveNodeExpectedDurationInput.setAttribute(`placeholder`, `expected duration (seconds)`);
+    //$liveNodeExpectedDurationInput.className = `direct-property`;
+    elementMap.set($liveNodeExpectedDurationInput.id, $liveNodeExpectedDurationInput);
+    $liveNodeExpectedDurationDiv.appendChild($liveNodeExpectedDurationInput);
+    $liveNodePropertiesDiv.appendChild($liveNodeExpectedDurationDiv);
 
-    // const $nodeTimeAllowanceDiv = FormUtils.createPropertyElement(`node-time-allowance-input`, `Time Allowance`);
-    // $nodeTimeAllowanceDiv.className = `padded node `;
-    // const $nodeTimeAllowanceInput = FormUtils.createTextInput(`node-time-allowance-input`);
-    // $nodeTimeAllowanceInput.setAttribute(`placeholder`, `time allowance`);
-    // //$nodeTimeAllowanceInput.className = `direct-property`;
-    // elementMap.set($nodeTimeAllowanceInput.id, $nodeTimeAllowanceInput);
-    // $nodeTimeAllowanceDiv.appendChild($nodeTimeAllowanceInput);
-    // $nodePropertiesDiv.appendChild($nodeTimeAllowanceDiv);
+    // const $liveNodeTimeAllowanceDiv = FormUtils.createPropertyElement(`livenode-time-allowance-input`, `Time Allowance`);
+    // $liveNodeTimeAllowanceDiv.className = `padded livenode `;
+    // const $liveNodeTimeAllowanceInput = FormUtils.createTextInput(`livenode-time-allowance-input`);
+    // $liveNodeTimeAllowanceInput.setAttribute(`placeholder`, `time allowance`);
+    // //$liveNodeTimeAllowanceInput.className = `direct-property`;
+    // elementMap.set($liveNodeTimeAllowanceInput.id, $liveNodeTimeAllowanceInput);
+    // $liveNodeTimeAllowanceDiv.appendChild($liveNodeTimeAllowanceInput);
+    // $liveNodePropertiesDiv.appendChild($liveNodeTimeAllowanceDiv);
 
-    const $nodeDescDiv = FormUtils.createPropertyElement(`node-desc-input`, `Contextual Description`);
-    $nodeDescDiv.className = `padded node`;
-    $nodePropertiesDiv.appendChild($nodeDescDiv);
-    const $nodeDescInput = FormUtils.createTextInput(`node-desc-input`);
-    elementMap.set($nodeDescInput.id, $nodeDescInput);
-    $nodeDescDiv.appendChild($nodeDescInput);
+    const $liveNodeDescDiv = FormUtils.createPropertyElement(`livenode-desc-input`, `Contextual Description`);
+    $liveNodeDescDiv.className = `padded livenode`;
+    $liveNodePropertiesDiv.appendChild($liveNodeDescDiv);
+    const $liveNodeDescInput = FormUtils.createTextInput(`livenode-desc-input`);
+    elementMap.set($liveNodeDescInput.id, $liveNodeDescInput);
+    $liveNodeDescDiv.appendChild($liveNodeDescInput);
 
 
     // Create JSON export area
     const $exportButtonsDiv = FormUtils.createEmptyInputContainer(`export-buttons`);
     $exportButtonsDiv.className = `row-stretch`;
-    $nodePropertiesDiv.appendChild($exportButtonsDiv);
+    $liveNodePropertiesDiv.appendChild($exportButtonsDiv);
     const $exportJsonButton = FormUtils.createButton(`export-json-button`, `Export to JSON`);
     elementMap.set($exportJsonButton.id, $exportJsonButton);
     $exportButtonsDiv.appendChild($exportJsonButton);
@@ -213,5 +213,5 @@ export default function _buildUI() {
  *                 remove-button
  *
  *
- *       node-container
+ *       livenode-container
  */

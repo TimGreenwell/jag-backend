@@ -48,7 +48,7 @@
 [33m32e885a[m minor changes - still trying to work out routes vs pipelines vs bindings
 [33m389c6ce[m EIP notes and properties window CSS changes
 [33m047b967[m starting the route add - just as a trial
-[33m9388733[m Code cleanup - fixed auto-layout on new nodes.  Matched IA to AT at HTML/upper js lever.  About to move timeline to Activity instead of Node.
+[33m9388733[m Code cleanup - fixed auto-layout on new nodes.  Matched IA to AT at HTML/upper js lever.  About to move timeline to Activity instead of LiveNode.
 [33m483f0cd[m Mid-level tested good.  Consolidated traversals.  Code cleaning.  Added collection for all the repopulate methods
 [33m47687c9[m Fixed inability to add node as head.  Fixed coloring when 2+ trees present.  Fixed select style to remain after redraws.
 [33m880d10f[m Touched up popup display and added comments - removed superfulous edge-model.
@@ -99,9 +99,9 @@
 [33m76516db[m Preliminary scan for eslint warnings on js files outside the views folder.
 [33mbd8956f[m Addressing the Unrecognized Function inspection which fails due to our Dependency Injection
 [33m23c9fa2[m Corrected easy eqeqeq violations (eslint)
-[33m0a81688[m Fixed -Remove Node From Playground-  Required clearing selected items
+[33m0a81688[m Fixed -Remove LiveNode From Playground-  Required clearing selected items
 [33m2a454c6[m Fixed the Shift Drag error and 3rd child add error - resulting from eslint updates and my stupidity
-[33m10ffd4d[m  Finished (for now) with eslint.  Node locationing is still bad since last Tues mtg.
+[33m10ffd4d[m  Finished (for now) with eslint.  LiveNode locationing is still bad since last Tues mtg.
 [33me39ae84[m  yet more eslint -- bad showing at Tues meeting - look at the relative positioning
 [33ma0dc163[m  more eslint - still working
 [33me2fb29d[m[33m ([m[1;31morigin/bignodes[m[33m)[m more eslint corrections

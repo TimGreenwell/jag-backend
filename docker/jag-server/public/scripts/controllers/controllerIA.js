@@ -123,7 +123,7 @@ export default class ControllerIA extends Controller {
             return this.cacheActivity(activity);
         });
 
-        // @TODO need this?
+        // @TODO need this?  -shouldnt - IA is Jag-based
         const allNodes = await StorageService.all(`node`);
         allNodes.forEach((node) => {
             if (node.id === node.projectId) {
@@ -364,8 +364,8 @@ export default class ControllerIA extends Controller {
     }
 
     eventCollapseToggledHandler(event) {
-        const node = event.detail.node;
-        node.toggleCollapse();             //  -- think this is going to be moved to an Analysis array if we want it saved.
+        const cell = event.detail.cell;
+        cell.toggleCollapse();             //  -- think this is going to be moved to an Analysis array if we want it saved.
         // just initialize tree would be nice - but think it needs to start from scratch.
         // earlier version of this just call a 'layout'event - whats that?
         this._iaTable.analysisView.layout();
@@ -627,11 +627,11 @@ export default class ControllerIA extends Controller {
 
     // addChild(node){                          // from nodemodel --originall called when the +sign is clicked.
     //     if (this.canHaveChildren) {
-    //         const child = new Node();
+    //         const child = new LiveNode();
     //         this._children.push(node);
     //         node.parent = this;
     //     } else {
-    //         alert("Node must first be assigned a valid URN")
+    //         alert("LiveNode must first be assigned a valid URN")
     //     }
     // }
 

@@ -46,7 +46,7 @@ There are pieces worth reviewing but deletion is imminent unless we go back to t
             if (!childrenMap.has(child.id)) {
                 let edge = this._createEdge(node, child.id);
                 edge.setSubActivityNode(sub_node);
-                edge.addEventListener('event-nodes-selected', this._boundHandleEdgeSelected);
+                edge.addEventListener('event-livenodes-selected', this._boundHandleEdgeSelected);
             }
 
             if (child.name) sub_node.setContextualName(child.name);
@@ -103,7 +103,7 @@ slowly once, understand well and then trash.  Maybe it offers improvements in te
     //         currentNodeModel.children.forEach((child) => {
     //             let edge = this._createEdge(currentNodeModel, child.id);
     //             edge.setSubActivityNode(child);
-    //             edge.addEventListener('event-nodes-selected', this._boundHandleEdgeSelected);
+    //             edge.addEventListener('event-livenodes-selected', this._boundHandleEdgeSelected);
     //             workStack.push(child)
     //     //        this._edgeContainerDiv.appendChild(edge);
     //         })

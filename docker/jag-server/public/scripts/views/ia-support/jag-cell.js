@@ -6,7 +6,7 @@
  */
 
 // These are the JAG Blocks found in the IA Table  (contains autocomplete)
-// Could use a better name => iaJagCell?  1:1 based off atActivityNodes
+// Could use a better name => iaJagCell?  1:1 based off atActivity
 
 
 'use strict';
@@ -16,10 +16,10 @@ import AutoComplete from '../../ui/auto-complete.js';
 import JagCellControls from './jag-cell-controls.js';
 import AnalysisCell from './analysis-cell.js';
 import JAG from "../../models/activity.js";
-import Node from "../../models/node.js";
+import LiveNode from "../../models/live-node.js";
 import Validator from "../../utils/validation.js";
 
-// A Cell based off (model/Node)
+// A Cell based off (model/LiveNode)
 class JagCell extends AnalysisCell {
 
     constructor(cellModel, parent) {
@@ -108,7 +108,7 @@ class JagCell extends AnalysisCell {
     // Handlers
 
     _handleNameChange(event) {
-        // This runs when the Name field of the IATABLE Jag node area loses focus - blurs
+        // This runs when the Name field of the IATABLE Jag area loses focus - blurs
         if (this.nameElementEntry !== this.cellModel.activity.name) {
             this.nameElementEntry = this.nameElementEntry.split(`:`).slice(-1);
 
@@ -118,7 +118,7 @@ class JagCell extends AnalysisCell {
                     bubbles: true,
                     composed: true,
                     detail: {activity: this._cellModel.activity}
-                }));  // tlg changed from node to cellModel  - looks bad
+                }));
             } else {
                 this._cellModel.activity.urn = this.urnElementEntry;
                 this.dispatchEvent(new CustomEvent(`event-activity-created`, {
@@ -139,6 +139,9 @@ class JagCell extends AnalysisCell {
         }
     }
 
+    // TODO tlg - I am doing node renames now and notice this area seems wrong.  Are not jagcells only tied to JAGS and not liveNodes?
+    // I thought I messed up renaming nodes and made these into liveNodes(NodeModels) instead of Jags(Activities) but also see it
+    // looks at .parent -- which only liveNodes have.  (they both have addChild)
     _handleNameEdit(e) {
         switch (e.key) {
         case `Enter`:
@@ -147,14 +150,16 @@ class JagCell extends AnalysisCell {
             e.preventDefault();
             this._htmlElements.nameEntry.blur();
 
+
+            // @TODO --- Argh - what?
             if (e.shiftKey) {
-                this.nodeModel.addChild(new Node());
+                this.liveNode.addChild(new LiveNode());
             }   // shift to controller (ControllerIA.addNewNode(cellModel))
             if (e.ctrlKey) {
-                if (this.nodeModel.parent === undefined) {
+                if (this.liveNode.parent === undefined) {
                     console.log(`Can not add siblings to root`);
                 } else {
-                    this.nodeModel.parent.addChild(new Node());
+                    this.liveNode.parent.addChild(new LiveNode());
                     // shift to controller (ControllerIA.addNewNode(cellModel.parent))
                 }
             }
@@ -203,7 +208,7 @@ class JagCell extends AnalysisCell {
                         composed: true,
                         detail: {activityConstruct}
                     }));
-                    const parentActivity = this.nodeModel.parent.activity;
+                    const parentActivity = this.liveNode.parent.activity;
                     const id = parentActivity.addChild(this.urnElementEntry);                    // <-- thinking we dont need ids in the jag child list.. does not seem used
                     this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
                         bubbles: true,
@@ -270,7 +275,7 @@ class JagCell extends AnalysisCell {
         description.urn = newURN;
         const newActivity = JAG.fromJSON(description);
         // Update model references.
-        this._node.model = newActivity; // ?
+       // this._node.model = newActivity; // ?  WHAT IS _NODE --- Think this was replaced by the below _cellModel
         this._cellModel = newActivity;
         await StorageService.create(newActivity, `activity`);
         // Remove unsaved box shadow on URN property input.
@@ -281,7 +286,7 @@ class JagCell extends AnalysisCell {
 
 
     /**
-     * The two methods below came from the Node Model.  Wrong place for them.
+     * The two methods below came from the LiveNode Model.  Wrong place for them.
      * @param view
      * @returns {Promise<void>}
      */
@@ -292,13 +297,13 @@ class JagCell extends AnalysisCell {
         } else {
             this.activity.name = view.name;
         }
-        await StorageService.update(this, `node`);
+        await StorageService.update(this, `livenode`);
     }
 
     /**
      * Synchronizes the display values with the underlying jag model.
      * Actions could be, load a new jag model, create a new jag model or change the name of the current jag.
-     * tlg - if nodes are instances of a jag, why should their change affect the jag itself?
+     * tlg - if liveNodes are instances of a jag, why should their change affect the jag itself?
      */
     async syncJAG(view, replace = true) {
         const urn = view.urn;
@@ -360,7 +365,7 @@ class JagCell extends AnalysisCell {
 
         $nameEntry.setAttribute(`contenteditable`, ``);
         $nameEntry.setAttribute(`spellcheck`, `false`);
-        $nameEntry.classList.add(`nodename`);
+        $nameEntry.classList.add(`jagname`);
         $nameEntry.setAttribute(`placeholder`, `Activity`);
 
 
@@ -379,7 +384,7 @@ class JagCell extends AnalysisCell {
             this.dispatchEvent(new CustomEvent(`event-collapse-toggled`, {
                 bubbles: true,
                 composed: true,
-                detail: {node: this._cellModel}
+                detail: {cell: this._cellModel}
             }));
         });
         $fold.classList.add(`fold-button`);

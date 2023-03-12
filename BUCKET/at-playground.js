@@ -76,7 +76,7 @@ class AtPlayground extends Popupable {
         //  this.addEventListener('drop', this.onImport.bind(this));
     }
 
-    get selectedNodes() {
+    get selectedLiveNodes() {
         const selectedIdArray = [...this._selectedActivityNodeElementSet].map((element) => {
             return element.nodeModel;
         });
@@ -165,7 +165,7 @@ class AtPlayground extends Popupable {
         if (window.confirm(`Are you sure you want to add this node as a child? (This will change all instances of the parent node to reflect this change.)`)) {
             this._is_edge_being_created = false;
             this._created_edge.setSubActivityNode(node);                // a lot happens in here
-            this._created_edge.addEventListener(`event-nodes-selected`, this._boundHandleEdgeSelected);
+            this._created_edge.addEventListener(`event-livenodes-selected`, this._boundHandleEdgeSelected);
             // EVENT-NODES-SELECTED only dispatched at the 'this' level.
 
             // identical issue below
@@ -183,7 +183,7 @@ class AtPlayground extends Popupable {
             //  @TODO -- Maybe the 'join new project stuff should go here?' -- setAttribute(project,newAncestor)  +  reparent
             //  @TODO -- half thought update Jag should come first - but now think the order is good... thoughts?
 
-            this.dispatchEvent(new CustomEvent(`event-nodes-connected`, {
+            this.dispatchEvent(new CustomEvent(`event-projects-connected`, {
                 bubbles: true,
                 composed: true,
                 detail: {
@@ -393,7 +393,7 @@ class AtPlayground extends Popupable {
             return jagNodeElement.nodeModel;
         });
 
-        this.dispatchEvent(new CustomEvent(`event-nodes-selected`, {
+        this.dispatchEvent(new CustomEvent(`event-livenodes-selected`, {
             detail: {selectedNodeArray}
         }));
         e.stopPropagation();  // Don't let it bubble up to the playgroundClicker handler.
@@ -483,7 +483,7 @@ class AtPlayground extends Popupable {
                 const edge = this._createEdge($newViewNode, child.id);         // this wants a jag-node - not a nodeModel
                 const $childViewNode = this._buildNodeViewFromNodeModel(child);                          // first build child
                 edge.setSubActivityNode($childViewNode);                                                       // then connect tail of edge to it.
-                edge.addEventListener(`event-nodes-selected`, this._boundHandleEdgeSelected);
+                edge.addEventListener(`event-livenodes-selected`, this._boundHandleEdgeSelected);
                 // EVENT-NODES-SELECTED only dispatched at the 'this' level.
             });
         }
@@ -492,7 +492,7 @@ class AtPlayground extends Popupable {
 
 
     redrawSelectedNodes() {
-        this.selectedNodes.forEach((node) => {
+        this.selectedLiveNodes.forEach((node) => {
             this._redrawNodes(node);
         });
     }
@@ -521,7 +521,7 @@ class AtPlayground extends Popupable {
             const $childViewNode = this._redrawNodes(child, x_offset, y_offset);                          // first build child
 
             //     edge.setSubActivityNode($childViewNode);                                                   // then connect tail of edge to it.
-            //     edge.addEventListener('event-nodes-selected', this._boundHandleEdgeSelected);
+            //     edge.addEventListener('event-livenodes-selected', this._boundHandleEdgeSelected);
         });
 
         return $newViewNode;

@@ -8,42 +8,42 @@
 
 export default class Traversal {
 
-    static iterate(node, callback) {
+    static iterate(liveNode, callback) {
         const workStack = [];
-        workStack.push(node);
+        workStack.push(liveNode);
         const results = [];
         while (workStack.length > 0) {
-            const currentNode = workStack.pop();
-            const result = callback(currentNode);
+            const currentLiveNode = workStack.pop();
+            const result = callback(currentLiveNode);
             if (result) {
                 results.push(result);
             }
-            currentNode.children.forEach((child) => {
+            currentLiveNode.children.forEach((child) => {
                 workStack.push(child);
             });
         }
         return results;
     }
 
-    static recurseChildrenPreorder(node, callback) {
-        callback(node);
-        node.children.forEach((child) => {
+    static recurseChildrenPreorder(liveNode, callback) {
+        callback(liveNode);
+        liveNode.children.forEach((child) => {
             return this.recurseChildrenPreorder(child, callback);
         });
     }
 
-    static recurseChildrenPostorder(node, callback) {
-        node.children.forEach((child) => {
+    static recurseChildrenPostorder(liveNode, callback) {
+        liveNode.children.forEach((child) => {
             return this.recurseChildrenPostorder(child, callback);
         });
-        callback(node);
+        callback(liveNode);
     }
 
-    static recurseProvidesIOPostorder(node, callback) {
-        node.providesOutputTo.forEach((child) => {
+    static recurseProvidesIOPostorder(liveNode, callback) {
+        liveNode.providesOutputTo.forEach((child) => {
             return this.recurseProvidesIOPostorder(child, callback);
         });
-        callback(node);
+        callback(liveNode);
     }
 
 

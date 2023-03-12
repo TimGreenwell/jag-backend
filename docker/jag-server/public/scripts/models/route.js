@@ -1,5 +1,5 @@
 /**
- * @file Node model for a specific analysis' JAG.
+ * @file LiveNode model for a specific analysis' JAG.
  *
  * @author mvignati
  * @version 1.65
@@ -9,31 +9,31 @@
 export default class Route  {
 
     constructor({
-        nodes,
-        shiftedNodes,
+        liveNodes,
+        shiftedLiveNodes,
         // earliestPossibleX?
         maxHeight
     } = {}) {
-        this._nodes = nodes;
-        this._shiftedNodes = shiftedNodes;
+        this._liveNodes = liveNodes;
+        this._shiftedLiveNodes = shiftedLiveNodes;
         this._maxHeight = maxHeight;
     }
 
 
-    get nodes() {
-        return this._nodes;
+    get liveNodes() {
+        return this._liveNodes;
     }
 
-    set nodes(value) {
-        this._nodes = value;
+    set liveNodes(value) {
+        this._liveNodes = value;
     }
 
-    get shiftedNodes() {
-        return this._shiftedNodes;
+    get shiftedLiveNodes() {
+        return this._shiftedLiveNodes;
     }
 
-    set shiftedNodes(value) {
-        this._shiftedNodes = value;
+    set shiftedLiveNodes(value) {
+        this._shiftedLiveNodes = value;
     }
 
     get maxHeight() {

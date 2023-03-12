@@ -1,5 +1,5 @@
 /**
- * @file Node properties panel.
+ * @file LiveNode properties panel.
  *
  * @author cwilber
  * @author mvignati
@@ -18,7 +18,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
 
     constructor() {
         super();
-        this._focusNode = undefined;
+        this._focusLiveNode = undefined;
         this._selectedFromEndpoints = [];
         this._selectedToEndpoints = [];
         this._elementMap = new Map();
@@ -46,10 +46,10 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         this._elementMap.get(`unbind-button`).addEventListener(`click`, this.handleUnbindButton.bind(this));
         this._elementMap.get(`remove-button`).addEventListener(`click`, this.handleRemoveButton.bind(this));
 
-        this._elementMap.get(`node-name-input`).addEventListener(`blur`, this._handleNodeNameChange.bind(this));
-        this._elementMap.get(`node-expected-duration-input`).addEventListener(`blur`, this._handleNodeExpectedDurationChange.bind(this));
-        // this._elementMap.get(`node-time-allowance-input`).addEventListener(`blur`, this._handleNodeTimeAllowanceChange.bind(this));
-        this._elementMap.get(`node-desc-input`).addEventListener(`blur`, this._handleNodeDescChange.bind(this));
+        this._elementMap.get(`livenode-name-input`).addEventListener(`blur`, this._handleLiveNodeNameChange.bind(this));
+        this._elementMap.get(`livenode-expected-duration-input`).addEventListener(`blur`, this._handleLiveNodeExpectedDurationChange.bind(this));
+        // this._elementMap.get(`livenode-time-allowance-input`).addEventListener(`blur`, this._handleLiveNodeTimeAllowanceChange.bind(this));
+        this._elementMap.get(`livenode-desc-input`).addEventListener(`blur`, this._handleLiveNodeDescChange.bind(this));
         this._elementMap.get(`export-json-button`).addEventListener(`click`, this._handleExportJsonClick.bind(this));
         this._elementMap.get(`export-svg-button`).addEventListener(`click`, this._handleExportSvgClick.bind(this));
     }
@@ -64,9 +64,9 @@ customElements.define(`jag-properties`, class extends HTMLElement {
      * _handleOperatorChange
      * _handleAddEndpointIn
      * _handleAddEndpointOut
-     * _handleNodeNameChange
-     * _handleNodeExpectedDurationChange
-     * _handleNodeDescChange
+     * _handleLiveNodeNameChange
+     * _handleLiveNodeExpectedDurationChange
+     * _handleLiveNodeDescChange
      * _handleExportJsonClick
      * _handleExportSvgClick
      * handleFromSelect
@@ -78,14 +78,14 @@ customElements.define(`jag-properties`, class extends HTMLElement {
 
     _handleUrnChange() {
         const $urnInput = this._elementMap.get(`urn-input`);
-        if (this._focusNode.activity.urn !== $urnInput.value) {
+        if (this._focusLiveNode.activity.urn !== $urnInput.value) {
             if (Validator.isValidUrn($urnInput.value)) {        // && entered urn is valid...
                 this.dispatchEvent(new CustomEvent(`event-urn-changed`, {
                     bubbles: true,
                     composed: true,
                     detail: {
                         originalUrn: $urnInput.value,
-                        newUrn: this._focusNode.activity.urn
+                        newUrn: this._focusLiveNode.activity.urn
                     }
                 }));
             }
@@ -95,12 +95,12 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     _handleActivityNameChange(e) {
         e.stopImmediatePropagation();
         const $activityNameInput = this._elementMap.get(`name-input`);
-        if (this._focusNode) {
-            this._focusNode.activity.name = $activityNameInput.value;
+        if (this._focusLiveNode) {
+            this._focusLiveNode.activity.name = $activityNameInput.value;
             this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
                 bubbles: true,
                 composed: true,
-                detail: {activity: this._focusNode.activity}
+                detail: {activity: this._focusLiveNode.activity}
             }));
         }
     }
@@ -108,13 +108,13 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     _handleExpectedDurationChange(e) {
         e.stopImmediatePropagation();
         const $activityExpectedDurationInput = this._elementMap.get(`duration-input`);
-        if (this._focusNode) {
+        if (this._focusLiveNode) {
             const newValue = $activityExpectedDurationInput.value;
-            this._focusNode.activity.expectedDuration = Validator.isNumeric(newValue) ? newValue : `0`;
+            this._focusLiveNode.activity.expectedDuration = Validator.isNumeric(newValue) ? newValue : `0`;
             this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
                 bubbles: true,
                 composed: true,
-                detail: {activity: this._focusNode.activity}
+                detail: {activity: this._focusLiveNode.activity}
             }));
         }
     }
@@ -122,12 +122,12 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     _handleActivityDescChange(e) {
         e.stopImmediatePropagation();
         const $activityDescInput = this._elementMap.get(`desc-input`);
-        if ((this._focusNode) && (this._focusNode.activity)) {
-            this._focusNode.activity.description = $activityDescInput.value;
+        if ((this._focusLiveNode) && (this._focusLiveNode.activity)) {
+            this._focusLiveNode.activity.description = $activityDescInput.value;
             this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
                 bubbles: true,
                 composed: true,
-                detail: {activity: this._focusNode.activity}
+                detail: {activity: this._focusLiveNode.activity}
             }));
         }
     }
@@ -135,12 +135,12 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     _handleExecutionChange(e) {
         e.stopImmediatePropagation();
         const $executionSelect = this._elementMap.get(`execution-select`);
-        if (this._focusNode) {
-            this._focusNode.activity.connector.execution = $executionSelect.value;
+        if (this._focusLiveNode) {
+            this._focusLiveNode.activity.connector.execution = $executionSelect.value;
             this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
                 bubbles: true,
                 composed: true,
-                detail: {activity: this._focusNode.activity}
+                detail: {activity: this._focusLiveNode.activity}
             }));
         }
     }
@@ -148,19 +148,19 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     _handleOperatorChange(e) {
         e.stopImmediatePropagation();
         const $operatorSelect = this._elementMap.get(`operator-select`);
-        if (this._focusNode) {
-            this._focusNode.activity.operator = $operatorSelect.value;
+        if (this._focusLiveNode) {
+            this._focusLiveNode.activity.operator = $operatorSelect.value;
             this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
                 bubbles: true,
                 composed: true,
-                detail: {activity: this._focusNode.activity}
+                detail: {activity: this._focusLiveNode.activity}
             }));
         }
     }
 
     _handleAddEndpointIn() {
-        if (this._focusNode) {
-            const activity = this._focusNode.activity;
+        if (this._focusLiveNode) {
+            const activity = this._focusLiveNode.activity;
             const exchangeName = window.prompt(`Input name`);
             if (exchangeName === ``) {
                 return;
@@ -179,8 +179,8 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     }
 
     _handleAddEndpointOut() {
-        if (this._focusNode) {
-            const activity = this._focusNode.activity;
+        if (this._focusLiveNode) {
+            const activity = this._focusLiveNode.activity;
             const exchangeName = window.prompt(`Output name`);
             if (exchangeName === ``) {
                 return;
@@ -198,58 +198,58 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         }
     }
 
-    _handleNodeNameChange(e) {
+    _handleLiveNodeNameChange(e) {
         e.stopImmediatePropagation();
-        const $nodeNameInput = this._elementMap.get(`node-name-input`);
-        if (this._focusNode) {
-            this._focusNode.contextualName = $nodeNameInput.value;
-            this.dispatchEvent(new CustomEvent(`event-node-updated`, {   //
+        const $liveNodeNameInput = this._elementMap.get(`livenode-name-input`);
+        if (this._focusLiveNode) {
+            this._focusLiveNode.contextualName = $liveNodeNameInput.value;
+            this.dispatchEvent(new CustomEvent(`event-livenode-updated`, {   //
                 bubbles: true,
                 composed: true,
-                detail: {nodeModel: this._focusNode}
+                detail: {liveNode: this._focusLiveNode}
             }));
         }
     }
 
-    _handleNodeExpectedDurationChange(e) {
+    _handleLiveNodeExpectedDurationChange(e) {
         {
             e.stopImmediatePropagation();
-            const $nodeExpectedDurationInput = this._elementMap.get(`node-expected-duration-input`);
-            if (this._focusNode) {
-                this._focusNode.contextualExpectedDuration = $nodeExpectedDurationInput.value;
-                this.dispatchEvent(new CustomEvent(`event-node-updated`, {
+            const $liveNodeExpectedDurationInput = this._elementMap.get(`livenode-expected-duration-input`);
+            if (this._focusLiveNode) {
+                this._focusLiveNode.contextualExpectedDuration = $liveNodeExpectedDurationInput.value;
+                this.dispatchEvent(new CustomEvent(`event-livenode-updated`, {
                     bubbles: true,
                     composed: true,
-                    detail: {nodeModel: this._focusNode}
+                    detail: {liveNode: this._focusLiveNode}
                 }));
             }
         }
     }
 
-    // _handleNodeTimeAllowanceChange(e) {
+    // _handleLiveNodeTimeAllowanceChange(e) {
     //     {
     //         e.stopImmediatePropagation();
-    //         const $nodeTimeAllowanceInput = this._elementMap.get(`node-time-allowance-input`);
-    //         if (this._focusNode) {
-    //             this._focusNode.contextualTimeAllowance = $nodeTimeAllowanceInput.value;
-    //             this.dispatchEvent(new CustomEvent(`event-node-updated`, {
+    //         const $liveNodeTimeAllowanceInput = this._elementMap.get(`livenode-time-allowance-input`);
+    //         if (this._focusLiveNode) {
+    //             this._focusLiveNode.contextualTimeAllowance = $livenodeTimeAllowanceInput.value;
+    //             this.dispatchEvent(new CustomEvent(`event-livenode-updated`, {
     //                 bubbles: true,
     //                 composed: true,
-    //                 detail: {nodeModel: this._focusNode}
+    //                 detail: {liveNode: this._focusLiveNode}
     //             }));
     //         }
     //     }
     // }
 
-    _handleNodeDescChange(e) {
+    _handleLiveNodeDescChange(e) {
         e.stopImmediatePropagation();
-        const $nodeDescInput = this._elementMap.get(`node-desc-input`);
-        if (this._focusNode) {
-            this._focusNode.contextualDescription = $nodeDescInput.value;
-            this.dispatchEvent(new CustomEvent(`event-node-updated`, {
+        const $liveNodeDescInput = this._elementMap.get(`livenode-desc-input`);
+        if (this._focusLiveNode) {
+            this._focusLiveNode.contextualDescription = $liveNodeDescInput.value;
+            this.dispatchEvent(new CustomEvent(`event-livenode-updated`, {
                 bubbles: true,
                 composed: true,
-                detail: {nodeModel: this._focusNode}
+                detail: {liveNode: this._focusLiveNode}
             }));
         }
     }
@@ -259,7 +259,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         this.dispatchEvent(new CustomEvent(`event-export-jag`, {
             bubbles: true,
             composed: true,
-            detail: {node: this._focusNode}
+            detail: {liveNode: this._focusLiveNode}
         }));
     }
 
@@ -268,7 +268,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         this.dispatchEvent(new CustomEvent(`event-export-svg`, {
             bubbles: true,
             composed: true,
-            detail: {node: this._focusNode}
+            detail: {liveNode: this._focusLiveNode}
         }));
     }
 
@@ -301,8 +301,8 @@ customElements.define(`jag-properties`, class extends HTMLElement {
             this._selectedFromEndpoints = this.convertOptionsToEndpoints($selectedFromOptions);
             const allowedEndpointDestination = this.filterInvalidDestinations(this._selectedFromEndpoints);
 
-            unbindable = this.isUnbindable(this._focusNode.activity.bindings, this._selectedFromEndpoints);
-            removable = this.isRemovable(this._focusNode.activity.bindings, this._selectedFromEndpoints);
+            unbindable = this.isUnbindable(this._focusLiveNode.activity.bindings, this._selectedFromEndpoints);
+            removable = this.isRemovable(this._focusLiveNode.activity.bindings, this._selectedFromEndpoints);
 
             $toEndpointSelect.classList.remove(`hidden`);
             this._addAllowedEndpointsToSelect($toEndpointSelect, allowedEndpointDestination, false);
@@ -349,7 +349,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
 
 
 
-            unbindable = this.isUnbindable(this._focusNode.activity.bindings, this._selectedFromEndpoints, this._selectedToEndpoints);
+            unbindable = this.isUnbindable(this._focusLiveNode.activity.bindings, this._selectedFromEndpoints, this._selectedToEndpoints);
             $bindButton.disabled = unbindable;
         }
         $unbindButton.disabled = !(unbindable);
@@ -368,14 +368,14 @@ customElements.define(`jag-properties`, class extends HTMLElement {
             this._selectedToEndpoints.forEach((to) => {
                 const binding = new Binding({from,
                     to});
-                this._focusNode.activity.addBinding(binding);
+                this._focusLiveNode.activity.addBinding(binding);
             });
         });
-        // this._focusNode.activity.addBinding(this._selectedEndpoints);
+        // this._focusLiveNode.activity.addBinding(this._selectedEndpoints);
         this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
             bubbles: true,
             composed: true,
-            detail: {activity: this._focusNode.activity}
+            detail: {activity: this._focusLiveNode.activity}
         }));
         $bindButton.disabled = true;
     }
@@ -386,14 +386,14 @@ customElements.define(`jag-properties`, class extends HTMLElement {
             this._selectedFromEndpoints.forEach((selectedFromEndpoint) => {
                 const removedBinding = new Binding({from: selectedFromEndpoint,
                     to: null});
-                this._focusNode.activity.removeBinding(removedBinding);
+                this._focusLiveNode.activity.removeBinding(removedBinding);
             });
         } else {
             this._selectedFromEndpoints.forEach((selectedFromEndpoint) => {
                 this._selectedToEndpoints.forEach((selectedToEndpoint) => {
                     const removedBinding = new Binding({from: selectedFromEndpoint,
                         to: selectedToEndpoint});
-                    this._focusNode.activity.removeBinding(removedBinding);
+                    this._focusLiveNode.activity.removeBinding(removedBinding);
                 });
             });
         }
@@ -401,7 +401,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
             bubbles: true,
             composed: true,
-            detail: {activity: this._focusNode.activity}
+            detail: {activity: this._focusLiveNode.activity}
         }));
         $unbindButton.disabled = true;
     }
@@ -410,17 +410,17 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         const $removeButton = this._elementMap.get(`remove-button`);
         this._selectedFromEndpoints.forEach((selectedFromEndpoint) => {
             if (selectedFromEndpoint.direction === `input`) {
-                this._focusNode.activity.removeInput(selectedFromEndpoint.id);
+                this._focusLiveNode.activity.removeInput(selectedFromEndpoint.id);
             }
             if (selectedFromEndpoint.direction === `output`) {
-                this._focusNode.activity.removeOutput(selectedFromEndpoint.id);
+                this._focusLiveNode.activity.removeOutput(selectedFromEndpoint.id);
             }
         });
 
         this.dispatchEvent(new CustomEvent(`event-activity-updated`, {
             bubbles: true,
             composed: true,
-            detail: {activity: this._focusNode.activity}
+            detail: {activity: this._focusLiveNode.activity}
         }));
         $removeButton.disabled = true;
     }
@@ -433,22 +433,22 @@ customElements.define(`jag-properties`, class extends HTMLElement {
      */
 
     handleExternalActivityUpdate(newActivity, newActivityUrn) {   // ===> Called by ControllerAT
-        if (this._focusNode) {
-            if (newActivityUrn === this._focusNode.activity.urn) {
-                this._focusNode.activity = newActivity;
-                this._populatePropertyFields(this._focusNode);
+        if (this._focusLiveNode) {
+            if (newActivityUrn === this._focusLiveNode.activity.urn) {
+                this._focusLiveNode.activity = newActivity;
+                this._populatePropertyFields(this._focusLiveNode);
             }
         }
     }
 
-    handleSelectionUpdate(selection) {       // <== Called by ControllerAT    (selectedNodeArray)
+    handleSelectionUpdate(selection) {       // <== Called by ControllerAT    (selectedLiveNodeArray)
         this._clearProperties();
         if (selection.length > 0) {
-            const selectedNodeModel = selection[0];
-            this._focusNode = selectedNodeModel;
-            this._populatePropertyFields(this._focusNode);
+            const selectedLiveNodeModel = selection[0];
+            this._focusLiveNode = selectedLiveNodeModel;
+            this._populatePropertyFields(this._focusLiveNode);
         } else {
-            this._enablePropertyInputs(false, this._focusNode.activity);
+            this._enablePropertyInputs(false, this._focusLiveNode.activity);
         }
     }
 
@@ -461,56 +461,56 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     /**
      * Manipulating the Property fields - populate, enable, clear, tooltips
      *
-     *  _populatePropertyFields - fill property values according to reflect this._focusNode (on Activity update or new _focusNode)
+     *  _populatePropertyFields - fill property values according to reflect this._focusLiveNode (on Activity update or new _focusLiveNode)
      *  _enablePropertyInputs - Property entries are turned on and flags displayed
      *  _addPropertyTooltips
      *   _clearProperties
      */
 
-    _populatePropertyFields(focusNode) {
+    _populatePropertyFields(focusLiveNode) {
         const $leafs = Array.from(document.getElementsByClassName(`activity leaf-only`));
         $leafs.forEach((leaf) => {
-            if (focusNode && focusNode.hasChildren()) {
+            if (focusLiveNode && focusLiveNode.hasChildren()) {
                 leaf.classList.add(`hidden`);
             } else {
                 leaf.classList.remove(`hidden`);
             }
         });
 
-        this._elementMap.get(`urn-input`).value = focusNode.activity.urn;
-        this._elementMap.get(`name-input`).value = focusNode.activity.name;
-        this._elementMap.get(`duration-input`).value = focusNode.activity.expectedDuration;
+        this._elementMap.get(`urn-input`).value = focusLiveNode.activity.urn;
+        this._elementMap.get(`name-input`).value = focusLiveNode.activity.name;
+        this._elementMap.get(`duration-input`).value = focusLiveNode.activity.expectedDuration;
 
-        this._elementMap.get(`execution-select`).value = focusNode.activity.connector.execution || `none`;
-        this._elementMap.get(`operator-select`).value = focusNode.activity.operator || `none`;
-        this._elementMap.get(`desc-input`).value = focusNode.activity.description;
-        this._elementMap.get(`node-name-input`).value = focusNode.contextualName;
-        this._elementMap.get(`node-expected-duration-input`).value = focusNode.contextualExpectedDuration;
-        // this._elementMap.get(`node-time-allowance-input`).value = focusNode.contextualTimeAllowance;
-        this._elementMap.get(`node-desc-input`).value = focusNode.contextualDescription;
-        this._enablePropertyInputs(true, focusNode);
+        this._elementMap.get(`execution-select`).value = focusLiveNode.activity.connector.execution || `none`;
+        this._elementMap.get(`operator-select`).value = focusLiveNode.activity.operator || `none`;
+        this._elementMap.get(`desc-input`).value = focusLiveNode.activity.description;
+        this._elementMap.get(`livenode-name-input`).value = focusLiveNode.contextualName;
+        this._elementMap.get(`livenode-expected-duration-input`).value = focusLiveNode.contextualExpectedDuration;
+        // this._elementMap.get(`livenode-time-allowance-input`).value = focusLiveNode.contextualTimeAllowance;
+        this._elementMap.get(`livenode-desc-input`).value = focusLiveNode.contextualDescription;
+        this._enablePropertyInputs(true, focusLiveNode);
         this._addPropertyTooltips();
         this._populateEndpoints();
         this._populateAnnotations();
     }
 
-    _enablePropertyInputs(enabled, focusNode) {
+    _enablePropertyInputs(enabled, focusLiveNode) {
         this._elementMap.get(`urn-input`).disabled = !enabled;
         this._elementMap.get(`name-input`).disabled = !enabled;
         this._elementMap.get(`duration-input`).disabled = !enabled;
         this._elementMap.get(`desc-input`).disabled = !enabled;
-        this._elementMap.get(`node-name-input`).disabled = !enabled;
-        this._elementMap.get(`node-expected-duration-input`).disabled = !enabled;
-        // this._elementMap.get(`node-time-allowance-input`).disabled = !enabled;
-        this._elementMap.get(`node-desc-input`).disabled = !enabled;
+        this._elementMap.get(`livenode-name-input`).disabled = !enabled;
+        this._elementMap.get(`livenode-expected-duration-input`).disabled = !enabled;
+        // this._elementMap.get(`livenode-time-allowance-input`).disabled = !enabled;
+        this._elementMap.get(`livenode-desc-input`).disabled = !enabled;
         this._elementMap.get(`execution-select`).disabled = !enabled;
         this._elementMap.get(`operator-select`).disabled = !enabled;
         this._elementMap.get(`export-json-button`).disabled = !enabled;
         this._elementMap.get(`export-svg-button`).disabled = !enabled;
 
-        const $leafs = Array.from(document.getElementsByClassName(`node leaf-only`));
+        const $leafs = Array.from(document.getElementsByClassName(`livenode leaf-only`));
         $leafs.forEach((leaf) => {
-            if (focusNode && focusNode.hasChildren()) {
+            if (focusLiveNode && focusLiveNode.hasChildren()) {
                 const childElements = Array.from(leaf.getElementsByTagName(`input`));
 
                 childElements.forEach((element) => {
@@ -535,10 +535,10 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         this._elementMap.get(`name-input`).value = ``;
         this._elementMap.get(`duration-input`).value = ``;
         this._elementMap.get(`desc-input`).value = ``;
-        this._elementMap.get(`node-name-input`).value = ``;
-        this._elementMap.get(`node-expected-duration-input`).value = ``;
-        // this._elementMap.get(`node-time-allowance-input`).value = ``;
-        this._elementMap.get(`node-desc-input`).value = ``;
+        this._elementMap.get(`livenode-name-input`).value = ``;
+        this._elementMap.get(`livenode-expected-duration-input`).value = ``;
+        // this._elementMap.get(`livenode-time-allowance-input`).value = ``;
+        this._elementMap.get(`livenode-desc-input`).value = ``;
         this._elementMap.get(`execution-select`).value = Activity.EXECUTION.NONE.name;
         this._elementMap.get(`operator-select`).value = Activity.OPERATOR.NONE.name;
         this._elementMap.get(`urn-input`).classList.toggle(`edited`, false);
@@ -621,7 +621,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         if (selectOptions.length > 0) {
             options = selectOptions.map((selectOption) => {
                 let label;
-                if (selectOption.activityId === this._focusNode.activity.urn) {
+                if (selectOption.activityId === this._focusLiveNode.activity.urn) {
                     label = `(${selectOption.activityConnectionType}) this`;
                 } else {
                     label = `(${selectOption.activityConnectionType}) ${selectOption.activityName}`;
@@ -637,7 +637,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
                             // Look to see if previous binding can be added to the option text string...
                             if (addBindings) {   // method parameter to state whether this previous binding is desired for display
                                 const foundBindings = [];
-                                this._focusNode.activity.bindings.forEach((extantBinding) => {
+                                this._focusLiveNode.activity.bindings.forEach((extantBinding) => {
                                     if ((extantBinding.from.exchangeName === selectOptionEndpoint.exchangeName) && (extantBinding.from.exchangeSourceUrn === selectOption.activityId)) {
                                         foundBindings.push(extantBinding.to.exchangeName);
                                     }
@@ -669,10 +669,10 @@ customElements.define(`jag-properties`, class extends HTMLElement {
 
     retrieveEndpoint(exchangeSourceUrn, exchangeName, direction) {    // @TODO This would have been cleaner with a simple urn lookup in an activityCache or something.
         let possessor;
-        if (this._focusNode.activity.urn === exchangeSourceUrn) {
-            possessor = this._focusNode;
+        if (this._focusLiveNode.activity.urn === exchangeSourceUrn) {
+            possessor = this._focusLiveNode;
         } else {
-            possessor = this._focusNode.childrenWithActivity(exchangeSourceUrn).pop();
+            possessor = this._focusLiveNode.childrenWithActivity(exchangeSourceUrn).pop();
         }
         let matchingEndpoint;
         const checkEndpoint = new Endpoint({exchangeSourceUrn,
@@ -714,12 +714,12 @@ customElements.define(`jag-properties`, class extends HTMLElement {
 
     _getSelfIns() {
         const availableInputs = [];
-        if (this._focusNode.activity.getInputs().length > 0) {
+        if (this._focusLiveNode.activity.getInputs().length > 0) {
             availableInputs.push({
-                activityId: this._focusNode.activity.urn,
-                activityName: this._focusNode.activity.name,
+                activityId: this._focusLiveNode.activity.urn,
+                activityName: this._focusLiveNode.activity.name,
                 activityConnectionType: `input`,
-                endpoints: this._focusNode.activity.getInputs()
+                endpoints: this._focusLiveNode.activity.getInputs()
             });
         }
         return availableInputs;
@@ -727,12 +727,12 @@ customElements.define(`jag-properties`, class extends HTMLElement {
 
     _getSelfOuts() {
         const availableOutputs = [];
-        if (this._focusNode.activity.getOutputs().length > 0) {
+        if (this._focusLiveNode.activity.getOutputs().length > 0) {
             availableOutputs.push({
-                activityId: this._focusNode.activity.urn,
-                activityName: this._focusNode.activity.name,
+                activityId: this._focusLiveNode.activity.urn,
+                activityName: this._focusLiveNode.activity.name,
                 activityConnectionType: `output`,
-                endpoints: this._focusNode.activity.getOutputs()
+                endpoints: this._focusLiveNode.activity.getOutputs()
             });
         }
         return availableOutputs;
@@ -741,7 +741,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     _getChildIns() {
         const availableInputs = [];
         const alreadyTallied = [];
-        this._focusNode.children.forEach((child) => {
+        this._focusLiveNode.children.forEach((child) => {
             if ((child.activity.getInputs().length > 0) && (!(alreadyTallied.includes(child.activity.urn)))) {
                 availableInputs.push({
                     activityId: child.activity.urn,
@@ -758,7 +758,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     _getChildOuts() {
         const availableOutputs = [];
         const alreadyTallied = [];
-        this._focusNode.children.forEach((child) => {
+        this._focusLiveNode.children.forEach((child) => {
             if ((child.activity.getOutputs().length > 0) && (!(alreadyTallied.includes(child.activity.urn)))) {
                 availableOutputs.push({
                     activityId: child.activity.urn,
@@ -776,7 +776,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     blacklistProviders(urn) {
         const workStack = [];
         const blackListedUrns = new Set();
-        const childrenArray = this._focusNode.activity.children.map((child) => {
+        const childrenArray = this._focusLiveNode.activity.children.map((child) => {
             return child.urn;
         });
         workStack.push(urn);
@@ -784,7 +784,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
             const checkUrn = workStack.pop();
             if (childrenArray.includes(checkUrn)) {
                 blackListedUrns.add(urn);
-                const forbiddenProviders = this._focusNode.activity.bindings.filter((binding) => {
+                const forbiddenProviders = this._focusLiveNode.activity.bindings.filter((binding) => {
                     return ((binding.to.exchangeSourceUrn === checkUrn) && (childrenArray.includes(binding.from.exchangeSourceUrn)));
                 }).map((binding2) => {
                     return binding2.from.exchangeSourceUrn;
@@ -831,7 +831,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         let removable = true;
         fromEndpoints.forEach((endpoint) => {
             bindings.forEach((binding) => {
-                if (((binding.from.exchangeSourceUrn === endpoint.exchangeSourceUrn) && (binding.from.exchangeName === endpoint.exchangeName)) || (endpoint.exchangeSourceUrn !== this._focusNode.activity.urn)) {
+                if (((binding.from.exchangeSourceUrn === endpoint.exchangeSourceUrn) && (binding.from.exchangeName === endpoint.exchangeName)) || (endpoint.exchangeSourceUrn !== this._focusLiveNode.activity.urn)) {
                     removable = false;
                 }
             });
@@ -881,15 +881,15 @@ customElements.define(`jag-properties`, class extends HTMLElement {
     _populateAnnotations() {
         const $annotationsProperty = this._elementMap.get(`annotations-property`);
         this._clearAnnotations();
-        if (this._focusNode.children.length > 0) {
-            for (const child of this._focusNode.children) {
+        if (this._focusLiveNode.children.length > 0) {
+            for (const child of this._focusLiveNode.children) {
                 let child_name = child.id;
                 if (child.activity) {
                     child_name = child.activity.name;
                 }
 
                 const child_annotations = FormUtils.createPropertyElement(`annotations-${child.id}`, child_name);
-                child_annotations.className = `annotation node`;
+                child_annotations.className = `annotation livenode`;
 
                 const annotation_add = document.createElement(`span`);
                 annotation_add.innerHTML = `+`;
@@ -908,7 +908,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
                 iterable_checkbox.type = `checkbox`;
 
                 iterable_checkbox.addEventListener(`change`, function () {
-                    this._focusNode.activity.setIterable(child.id, iterable_checkbox.checked);
+                    this._focusLiveNode.activity.setIterable(child.id, iterable_checkbox.checked);
                 }.bind(this));
 
                 iterable_box.appendChild(iterable_checkbox);
@@ -958,7 +958,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
                         remove.className = `annotation remove`;
 
                         remove.addEventListener(`click`, function () {
-                            this._focusNode.activity.removeAnnotation(child.id, annotation[0]);
+                            this._focusLiveNode.activity.removeAnnotation(child.id, annotation[0]);
                         }.bind(this));
 
                         annotation_box.appendChild(remove);
@@ -1026,7 +1026,7 @@ customElements.define(`jag-properties`, class extends HTMLElement {
             }
         }
 
-        this._focusNode.activity.addAnnotation(id, name, value);
+        this._focusLiveNode.activity.addAnnotation(id, name, value);
     }
 
     _clearAnnotations() {
@@ -1047,8 +1047,8 @@ export default customElements.get(`jag-properties`);
 //     description.urn = newURN;
 //     const newActivity = Activity.fromJSON(description);
 //     // Update activity references.
-//     this._node.activity = newActivity; // ?
-//     this._focusNode.activity = newActivity;
+//     this._liveNode.activity = newActivity; // ?
+//     this._focusLiveNode.activity = newActivity;
 //     this.dispatchEvent(new CustomEvent(`event-activity-created`, {
 //         bubbles: true,
 //         composed: true,
@@ -1068,7 +1068,7 @@ export default customElements.get(`jag-properties`);
 //     if (e.key === `Enter`) {
 //         e.preventDefault();
 //         const inputs = this.querySelectorAll(`input:enabled, textarea`);
-//         this._$urnInput.classList.toggle(`edited`, this._$urnInput.value !== this._focusNode.activity.urn);
+//         this._$urnInput.classList.toggle(`edited`, this._$urnInput.value !== this._focusLiveNode.activity.urn);
 //         const currentPosition = this._$urnInput.tabIndex;
 //         if (currentPosition < inputs.length - 1) {
 //             inputs.item(currentPosition + 1).focus();
@@ -1088,7 +1088,7 @@ export default customElements.get(`jag-properties`);
 //             $inputs.item(currentPosition).blur();
 //         }
 //     } else {
-//         this._focusNode.activity.name = `[${this._$activityNameInput.value}]`;
+//         this._focusLiveNode.activity.name = `[${this._$activityNameInput.value}]`;
 //     }
 // }
 // _handleActivityDescEdit(e) {
@@ -1102,6 +1102,6 @@ export default customElements.get(`jag-properties`);
 //             inputs.item(currentPosition).blur();
 //         }
 //     } else {
-//         this._focusNode.activity.description = `[${this._$activityDescInput.value}]`;
+//         this._focusLiveNode.activity.description = `[${this._$activityDescInput.value}]`;
 //     }
 // }

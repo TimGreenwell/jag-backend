@@ -52,7 +52,7 @@ class AtTimeview extends HTMLElement {
         this._timeviewSvg.appendChild(this.$background);
         this._timeContainerWrapperDiv.appendChild(this._timeviewSvg);
 
-        this.currentNodeModel = null;
+        this.currentLiveNode = null;
         this.svgLocationX = 0;
         this.svgLocationY = 0;
         this.windowSize = null;
@@ -61,9 +61,9 @@ class AtTimeview extends HTMLElement {
         this.panY = 0;
         this.zoomStep = 0;
 
-        // this.boxMap = new Map();  // id, svg rectangle (id is copy of corresponding node id)
-        this.zoomMap = new Map(); // id, zoom level (each node temporarily saves users zoom level)
-        this.childNodeDescriptorsMap = new Map();
+        // this.liveNodeSvgBoxMap = new Map();  // id, svg rectangle (id is copy of corresponding liveNodeId)
+        this.zoomMap = new Map(); // id, zoom level (each liveNode temporarily saves users zoom level)
+        this.childLiveNodeSvgBoxsMap = new Map();
 
         this._timeviewSvg.addEventListener(`mousedown`, this.svgMouseDownEvent.bind(this));
         this._timeviewSvg.addEventListener(`wheel`, this.svgWheelZoomEvent.bind(this));
@@ -76,25 +76,25 @@ class AtTimeview extends HTMLElement {
         this.svg.saveSvg(this._timeviewSvg, name);
     }
 
-    refreshTimeview(nodeModel = this.currentNodeModel) {
-        if (this.currentNodeModel) {
-            this.zoomMap.set(this.currentNodeModel.id, this.zoomStep);
+    refreshTimeview(liveNode = this.currentLiveNode) {
+        if (this.currentLiveNode) {
+            this.zoomMap.set(this.currentLiveNode.id, this.zoomStep);
         }
-        this.currentNodeModel = nodeModel;
+        this.currentLiveNode = liveNode;
 
         this.svg.clearBackground(this.id);
-        if (this.currentNodeModel) {
-            if (this.zoomMap.has(this.currentNodeModel.id)) {
-                this.zoomStep = this.zoomMap.get(this.currentNodeModel.id);
+        if (this.currentLiveNode) {
+            if (this.zoomMap.has(this.currentLiveNode.id)) {
+                this.zoomStep = this.zoomMap.get(this.currentLiveNode.id);
             } else {
                 this.zoomStep = 0;
             }
-            this.treeHeight = nodeModel.findTreeHeight();
+            this.treeHeight = liveNode.findTreeHeight();
             const expanded = true;
-            this.svgBox = this.buildTimelineDiagram(this.svg.fetchBackground(this.id), nodeModel, this.svgOriginPoint);
+            this.svgBox = this.buildTimelineDiagram(this.svg.fetchBackground(this.id), liveNode, this.svgOriginPoint);
             this.windowSize = this.getBoundingClientRect();
             this.redrawSvg();
-            // this.boxMap.clear(); // ?
+            // this.liveNodeSvgBoxMap.clear(); // ?
         }
     }
 
@@ -103,174 +103,174 @@ class AtTimeview extends HTMLElement {
         return random;
     }
 
-    createNodeDescriptor(nodeModel) {
-        const nodeModelBox = new TimeviewBox();
-        nodeModelBox.id = nodeModel.id;
-        nodeModelBox.label = nodeModel.name;
-        return nodeModelBox;
+    createLiveNodeSvgBox(liveNode) {
+        const liveNodeSvgBox = new TimeviewBox();
+        liveNodeSvgBox.id = liveNode.id;
+        liveNodeSvgBox.label = liveNode.name;
+        return liveNodeSvgBox;
     }
 
-    buildChildNodeDescriptorMap(nodeModel, parentGroup) {
-        const boxMap = new Map();
-        nodeModel.children.forEach((childNodeModel) => {
-            const newBox = this.buildTimelineDiagram(parentGroup, childNodeModel, new Point());       // !!!
-            boxMap.set(childNodeModel.id, newBox);
+    buildChildLiveNodeSvgBoxMap(liveNode, parentGroup) {
+        const childLiveNodeSvgBoxMap = new Map();
+        liveNode.children.forEach((childLiveNode) => {
+            const newBox = this.buildTimelineDiagram(parentGroup, childLiveNode, new Point());       // !!!
+            childLiveNodeSvgBoxMap.set(childLiveNode.id, newBox);
         });
-        return boxMap;
+        return childLiveNodeSvgBoxMap;
     }
 
 
-    getInnerLeafBox(nodeModel) {
-        const nodeGroup = this.svg.fetchNodeGroup(nodeModel.id);
-        const nodeDescriptor = this.createNodeDescriptor(nodeModel);            // * just returning a box -- not hooking it up.
-        const labelElement = this.svg.createTextElement(nodeDescriptor.label, nodeModel.id);
-        nodeGroup.insertBefore(labelElement, nodeGroup.firstChild);
+    getInnerLeafBox(liveNode) {
+        const svgNodeGroup = this.svg.fetchSvgNodeGroup(liveNode.id);
+        const liveNodeSvgBox = this.createLiveNodeSvgBox(liveNode);            // * just returning a box -- not hooking it up.
+        const labelElement = this.svg.createTextElement(liveNodeSvgBox.label, liveNode.id);
+        svgNodeGroup.insertBefore(labelElement, svgNodeGroup.firstChild);
         const labelingWidth = this.svg.horizontalLeftMargin + this.svg.labelWidth(labelElement) + this.svg.horizontalRightMargin;
-        nodeDescriptor.height = this.svg.standardBoxHeight;
-        nodeDescriptor.totalLeafHeight = nodeDescriptor.height;
-        nodeDescriptor.width = labelingWidth;
-        this.svg.positionItem(labelElement, (nodeDescriptor.width / 2) - (this.svg.labelWidth(labelElement) / 2), 0);
-        return nodeDescriptor;
+        liveNodeSvgBox.height = this.svg.standardBoxHeight;
+        liveNodeSvgBox.totalLeafHeight = liveNodeSvgBox.height;
+        liveNodeSvgBox.width = labelingWidth;
+        this.svg.positionItem(labelElement, (liveNodeSvgBox.width / 2) - (this.svg.labelWidth(labelElement) / 2), 0);
+        return liveNodeSvgBox;
     }
 
-    getInnerSequentialBox(nodeModel, boxMap) {
-        const nodeGroup = this.svg.fetchNodeGroup(nodeModel.id);
-        const nodeDescriptor = this.createNodeDescriptor(nodeModel);            // * just returning a box -- not hooking it up.
-        const labelElement = this.svg.createTextElement(nodeDescriptor.label, nodeModel.id);
-        nodeGroup.insertBefore(labelElement, nodeGroup.firstChild);
+    getInnerSequentialBox(liveNode, liveNodeSvgBoxMap) {
+        const svgNodeGroup = this.svg.fetchSvgNodeGroup(liveNode.id);
+        const liveNodeSvgBox = this.createLiveNodeSvgBox(liveNode);            // * just returning a box -- not hooking it up.
+        const labelElement = this.svg.createTextElement(liveNodeSvgBox.label, liveNode.id);
+        svgNodeGroup.insertBefore(labelElement, svgNodeGroup.firstChild);
         const labelingWidth = this.svg.horizontalLeftMargin + this.svg.labelWidth(labelElement) + this.svg.horizontalRightMargin;
         let tallestChild = 0;
         let growingBoxWidth = this.svg.horizontalLeftMargin;
-        nodeModel.children.forEach((childNodeModel) => {
-            const childBox = boxMap.get(childNodeModel.id);
+        liveNode.children.forEach((childLiveNode) => {
+            const childBox = liveNodeSvgBoxMap.get(childLiveNode.id);
             if (childBox.height > tallestChild) {
                 tallestChild = childBox.height;
             }
             growingBoxWidth = growingBoxWidth + (Number(this.svg.horizontalInnerMargin) + childBox.width);
         });
         growingBoxWidth = growingBoxWidth + Number(this.svg.horizontalRightMargin - this.svg.horizontalInnerMargin);
-        nodeDescriptor.height = this.svg.verticalLabelShift + tallestChild + this.svg.verticalBottomMargin;
-        nodeDescriptor.width = Math.max(
+        liveNodeSvgBox.height = this.svg.verticalLabelShift + tallestChild + this.svg.verticalBottomMargin;
+        liveNodeSvgBox.width = Math.max(
             growingBoxWidth,
             labelingWidth
         );
-        this.svg.positionItem(labelElement, (nodeDescriptor.width / 2) - (this.svg.labelWidth(labelElement) / 2), 0);
+        this.svg.positionItem(labelElement, (liveNodeSvgBox.width / 2) - (this.svg.labelWidth(labelElement) / 2), 0);
         let x = this.svg.horizontalLeftMargin;
         const y = this.svg.verticalLabelShift;
-        nodeModel.children.forEach((childNodeModel) => {
-            const childBox = boxMap.get(childNodeModel.id);
+        liveNode.children.forEach((childLiveNode) => {
+            const childBox = liveNodeSvgBoxMap.get(childLiveNode.id);
             childBox.x = x;
             childBox.y = y;
             childBox.height = tallestChild;
-            const childNodeGroup = this.svg.fetchNodeGroup(childNodeModel.id);
-            const childRectangle = this.svg.fetchRectangle(childNodeModel.id);
+            const childNodeGroup = this.svg.fetchSvgNodeGroup(childLiveNode.id);
+            const childRectangle = this.svg.fetchRectangle(childLiveNode.id);
             this.svg.positionItem(childNodeGroup, childBox.x, childBox.y = y);
             this.svg.resizeRectangle(childRectangle, childBox.width, childBox.height);
             x = x + childBox.width + this.svg.horizontalInnerMargin;
         });
 
-        return nodeDescriptor;
+        return liveNodeSvgBox;
     }
 
-    getInnerParallelBox(nodeModel, boxMap) {
-        const nodeGroup = this.svg.fetchNodeGroup(nodeModel.id);
-        const nodeDescriptor = this.createNodeDescriptor(nodeModel);            // * just returning a box -- not hooking it up.
-        const labelElement = this.svg.createTextElement(nodeDescriptor.label, nodeModel.id);
-        nodeGroup.insertBefore(labelElement, nodeGroup.firstChild);
+    getInnerParallelBox(liveNode, liveNodeSvgBoxMap) {
+        const svgNodeGroup = this.svg.fetchSvgNodeGroup(liveNode.id);
+        const liveNodeSvgBox = this.createLiveNodeSvgBox(liveNode);            // * just returning a box -- not hooking it up.
+        const labelElement = this.svg.createTextElement(liveNodeSvgBox.label, liveNode.id);
+        svgNodeGroup.insertBefore(labelElement, svgNodeGroup.firstChild);
         const labelingWidth = this.svg.horizontalLeftMargin + this.svg.labelWidth(labelElement) + this.svg.horizontalRightMargin;
 
         let widestChild = 0;
         let growingBoxHeight = Number(this.svg.verticalLabelShift);
 
 
-        nodeModel.children.forEach((childNodeModel) => {
-            const childBox = boxMap.get(childNodeModel.id);
+        liveNode.children.forEach((childLiveNode) => {
+            const childBox = liveNodeSvgBoxMap.get(childLiveNode.id);
             if (childBox.width > widestChild) {
                 widestChild = childBox.width;
             }
             growingBoxHeight = growingBoxHeight + (Number(this.svg.verticalInnerMargin)) + childBox.height;
         });
-        nodeDescriptor.height = growingBoxHeight + Number(this.svg.verticalBottomMargin - this.svg.verticalInnerMargin);
-        nodeDescriptor.width = Math.max(
+        liveNodeSvgBox.height = growingBoxHeight + Number(this.svg.verticalBottomMargin - this.svg.verticalInnerMargin);
+        liveNodeSvgBox.width = Math.max(
             widestChild + (this.svg.horizontalLeftMargin + this.svg.horizontalRightMargin),
             labelingWidth
         );
         const x = this.svg.horizontalLeftMargin;
         let y = this.svg.verticalLabelShift;
-        nodeModel.children.forEach((childNodeModel) => {
-            const childBox = boxMap.get(childNodeModel.id);
+        liveNode.children.forEach((childLiveNode) => {
+            const childBox = liveNodeSvgBoxMap.get(childLiveNode.id);
             childBox.x = x;
             childBox.y = y;
             childBox.width = widestChild;
-            const childNodeGroup = this.svg.fetchNodeGroup(childNodeModel.id);
-            const childRectangle = this.svg.fetchRectangle(childNodeModel.id);
-            const childLabel = this.svg.fetchText(childNodeModel.id);
+            const childSvgNodeGroup = this.svg.fetchSvgNodeGroup(childLiveNode.id);
+            const childRectangle = this.svg.fetchRectangle(childLiveNode.id);
+            const childLabel = this.svg.fetchText(childLiveNode.id);
             this.svg.positionItem(childLabel, (childBox.width / 2) - (this.svg.labelWidth(childLabel) / 2), 0);
-            this.svg.positionItem(childNodeGroup, childBox.x, childBox.y = y);
+            this.svg.positionItem(childSvgNodeGroup, childBox.x, childBox.y = y);
             this.svg.resizeRectangle(childRectangle, childBox.width, childBox.height);
             y = y + childBox.height + this.svg.verticalInnerMargin;
         });
 
 
-        this.svg.positionItem(labelElement, (nodeDescriptor.width / 2) - (this.svg.labelWidth(labelElement) / 2), 0);
-        return nodeDescriptor;
+        this.svg.positionItem(labelElement, (liveNodeSvgBox.width / 2) - (this.svg.labelWidth(labelElement) / 2), 0);
+        return liveNodeSvgBox;
     }
 
-    produceDataLayout(childBoxCornerPoint, node, boxMap, parentBox) {
-        const nodeGroup = this.svg.fetchNodeGroup(node.id);
-        const box = boxMap.get(node.id);
-        const rectangle = this.svg.fetchRectangle(node.id);
+    produceDataLayout(childBoxCornerPoint, liveNode, liveNodeSvgBoxMap, parentBox) {
+        const svgNodeGroup = this.svg.fetchSvgNodeGroup(liveNode.id);
+        const box = liveNodeSvgBoxMap.get(liveNode.id);
+        const rectangle = this.svg.fetchRectangle(liveNode.id);
         let widthExtender = 0;
         const parentRightSide = parentBox.topLeftX + parentBox.width;
         const rightSideLimit = parentRightSide - this.svg.horizontalRightMargin;
         const childRightSide = childBoxCornerPoint.x + box.width;
-        if ((node.providesOutputTo.length === 0) && ((childRightSide) < (rightSideLimit))) {
+        if ((liveNode.providesOutputTo.length === 0) && ((childRightSide) < (rightSideLimit))) {
             widthExtender = (rightSideLimit) - (childRightSide);
         }
         this.svg.resizeRectangle(rectangle, box.width + widthExtender, box.height);
-        this.svg.positionItem(nodeGroup, childBoxCornerPoint.x, childBoxCornerPoint.y);
+        this.svg.positionItem(svgNodeGroup, childBoxCornerPoint.x, childBoxCornerPoint.y);
         const nextPoint = new Point({x: childBoxCornerPoint.x + box.width + this.svg.horizontalInnerMargin,
             y: childBoxCornerPoint.y});
-        node.providesOutputTo.forEach((dependant) => {
-            this.produceDataLayout(nextPoint, dependant, boxMap, parentBox);
-            nextPoint.y = nextPoint.y + boxMap.get(dependant.id).height + this.svg.verticalInnerMargin;
+        liveNode.providesOutputTo.forEach((dependant) => {
+            this.produceDataLayout(nextPoint, dependant, liveNodeSvgBoxMap, parentBox);
+            nextPoint.y = nextPoint.y + liveNodeSvgBoxMap.get(dependant.id).height + this.svg.verticalInnerMargin;
         });
     }
 
-    dependencyShiftRight(routeArray, nodeModel, boxMap) {
+    dependencyShiftRight(routeArray, liveNode, liveNodeSvgBoxMap) {
         // routeArray.sort((a, b) => {
-        //     return ((a.nodes.length > b.nodes.length) ? -1 : ((b.nodes.length > a.nodes.length) ? 1 : 0));
+        //     return ((a.liveNodes.length > b.liveNodes.length) ? -1 : ((b.liveNodes.length > a.liveNodes.length) ? 1 : 0));
         // });
         routeArray.forEach((route) => {
-            route.shiftedNodes = [];
-            nodeModel.children.forEach((child) => {
-                // const childBox = boxMap.get(child.id);
-                if (route.nodes.includes(child)) {
+            route.shiftedLiveNodes = [];
+            liveNode.children.forEach((childLiveNode) => {
+                // const childBox = liveNodeSvgBoxMap.get(child.id);
+                if (route.liveNodes.includes(childLiveNode)) {
                     // childBox.routeMembershipCount = childBox.routeMembershipCount + 1;
-                    // const depth = route.nodes.indexOf(child);
+                    // const depth = route.liveNodes.indexOf(child);
                     // if (depth > childBox.maxDepth) {
                     //     childBox.maxDepth = depth;
                     // }
-                    const maxDepth = this.getMaxDepth(child, routeArray);
-                    route.shiftedNodes[maxDepth] = child;
+                    const maxDepth = this.getMaxDepth(childLiveNode, routeArray);
+                    route.shiftedLiveNodes[maxDepth] = childLiveNode;
                 }
             });
         });
     }
 
 
-    setChildrenMaxDepth(node, boxMap, routeArray) {
-        node.children.forEach((child) => {
-            const childBox = boxMap.get(child.id);
-            childBox.maxDepth = this.getMaxDepth(child, routeArray);
+    setChildrenMaxDepth(liveNode, liveNodeSvgBoxMap, routeArray) {
+        liveNode.children.forEach((childLiveNode) => {
+            const childBox = liveNodeSvgBoxMap.get(childLiveNode.id);
+            childBox.maxDepth = this.getMaxDepth(childLiveNode, routeArray);
         });
     }
 
-    getMaxDepth(node, routeArray) {
+    getMaxDepth(liveNode, routeArray) {
         let maxDepth = 0;
         routeArray.forEach((route) => {
-            if (route.nodes.includes(node)) {
-                const depth = route.nodes.indexOf(node);
+            if (route.liveNodes.includes(liveNode)) {
+                const depth = route.liveNodes.indexOf(liveNode);
                 if (depth > maxDepth) {
                     maxDepth = depth;
                 }
@@ -279,17 +279,17 @@ class AtTimeview extends HTMLElement {
         return maxDepth;
     }
 
-    setChildrenMembershipCount(node, boxMap, routeArray) {
-        node.children.forEach((child) => {
-            const childBox = boxMap.get(child.id);
+    setChildrenMembershipCount(liveNode, liveNodeSvgBoxMap, routeArray) {
+        liveNode.children.forEach((child) => {
+            const childBox = liveNodeSvgBoxMap.get(child.id);
             childBox.routeMembershipCount = this.getMembershipCount(child, routeArray);
         });
     }
 
-    getMembershipCount(node, routeArray) {
+    getMembershipCount(liveNode, routeArray) {
         let membershipCount = 0;
         routeArray.forEach((route) => {
-            if (route.nodes.includes(node)) {
+            if (route.liveNodes.includes(liveNode)) {
                 membershipCount = membershipCount + 1;
             }
         });
@@ -297,13 +297,13 @@ class AtTimeview extends HTMLElement {
     }
 
     // this needs to be rewritten to grow appropriately  ex: 3>1 with margins within
-    adjustHeights(routesArray, boxMap) {          // currently only grows the start and end to match their routes.
+    adjustHeights(routesArray, liveNodeSvgBoxMap) {          // currently only grows the start and end to match their routes.
 
         const startPoints = [];
         const endPoints = [];
         routesArray.forEach((route) => {
-            startPoints.push(route.shiftedNodes[0]);
-            endPoints.push(route.shiftedNodes[route.shiftedNodes.length - 1]);
+            startPoints.push(route.shiftedLiveNodes[0]);
+            endPoints.push(route.shiftedLiveNodes[route.shiftedLiveNodes.length - 1]);
         });
         const startPointSet = new Set(startPoints);
         const endPointSet = new Set(endPoints);
@@ -311,33 +311,33 @@ class AtTimeview extends HTMLElement {
         let  lastEndPoint = null;
         startPointSet.forEach((routeStart) => {
             endPointSet.forEach((routeEnd) => {
-                const routeNodesByDepth = [];
+                const routedLiveNodesByDepth = [];
                 const nullsAtDepth = [];
                 routesArray.forEach((route) => {
-                    if ((route.shiftedNodes[0] === routeStart) && (route.shiftedNodes[route.shiftedNodes.length - 1] === routeEnd)) {
-                        for (let i = 0; i < route.shiftedNodes.length; i++) {
-                            if (!(routeNodesByDepth[i])) {
-                                routeNodesByDepth.push([]);
+                    if ((route.shiftedLiveNodes[0] === routeStart) && (route.shiftedLiveNodes[route.shiftedLiveNodes.length - 1] === routeEnd)) {
+                        for (let i = 0; i < route.shiftedLiveNodes.length; i++) {
+                            if (!(routedLiveNodesByDepth[i])) {
+                                routedLiveNodesByDepth.push([]);
                             }
                             if (!(nullsAtDepth[i])) {
                                 nullsAtDepth[i] = 0;
                             }
-                            if (route.shiftedNodes[i]) {
-                                routeNodesByDepth[i].push(route.shiftedNodes[i]);
+                            if (route.shiftedLiveNodes[i]) {
+                                routedLiveNodesByDepth[i].push(route.shiftedLiveNodes[i]);
                             } else {
                                 nullsAtDepth[i] += 1;
                             }
                         }
                     }
                 });
-                const uniqueRouteNodesByDepth = routeNodesByDepth.map((routeNode) => {
-                    return Array.from(new Set(routeNode));
+                const uniqueRoutedLiveNodesByDepth = routedLiveNodesByDepth.map((routeLiveNode) => {
+                    return Array.from(new Set(routeLiveNode));
                 });
-                // console.log(uniqueRouteNodesByDepth);  // as expected .. [] for the nulls
-                const heightByDepth = uniqueRouteNodesByDepth.map((nodesAtDepth) => {
+                // console.log(uniqueRoutedLiveNodesByDepth);  // as expected .. [] for the nulls
+                const heightByDepth = uniqueRoutedLiveNodesByDepth.map((liveNodesAtDepth) => {
                     let height = 0;
-                    nodesAtDepth.forEach((node) => {
-                        const box = boxMap.get(node.id);
+                    liveNodesAtDepth.forEach((liveNodeAtDepth) => {
+                        const box = liveNodeSvgBoxMap.get(liveNodeAtDepth.id);
                         height = height + box.height;
                     });
                     return height;
@@ -355,14 +355,14 @@ class AtTimeview extends HTMLElement {
                 }
 
 
-                boxMap.get(routeStart.id).apparentHeight += tallest;
+                liveNodeSvgBoxMap.get(routeStart.id).apparentHeight += tallest;
                 if (routeStart === lastStartPoint) {
-                    boxMap.get(routeStart.id).apparentHeight += this.svg.verticalInnerMargin;
+                    liveNodeSvgBoxMap.get(routeStart.id).apparentHeight += this.svg.verticalInnerMargin;
                 }
 
-                boxMap.get(routeEnd.id).apparentHeight += tallest;
+                liveNodeSvgBoxMap.get(routeEnd.id).apparentHeight += tallest;
                 if (routeEnd === lastEndPoint) {
-                    boxMap.get(routeEnd.id).apparentHeight += this.svg.verticalInnerMargin;
+                    liveNodeSvgBoxMap.get(routeEnd.id).apparentHeight += this.svg.verticalInnerMargin;
                 }
                 lastStartPoint = routeStart;
                 lastEndPoint = routeEnd;
@@ -371,40 +371,40 @@ class AtTimeview extends HTMLElement {
     }
 
 
-    // adjustHeights(routesArray, boxMap) {          // currently only grows the start and end to match their routes.
+    // adjustHeights(routesArray, liveNodeSvgBoxMap) {          // currently only grows the start and end to match their routes.
     //     let index = 0;
     //     while (index < routesArray.length) {
-    //         let startPoint = routesArray[index].shiftedNodes[0];
-    //         let endPoint = routesArray[index].shiftedNodes[routesArray[index].shiftedNodes.length -1];
+    //         let startPoint = routesArray[index].shiftedLiveNodes[0];
+    //         let endPoint = routesArray[index].shiftedLiveNodes[routesArray[index].shiftedLiveNodes.length -1];
     //         console.log(`start - ${startPoint.activity.urn}`);
     //         console.log(`end - ${endPoint.activity.urn}`);
-    //         const routeNodesByDepth = [];
+    //         const routedLiveNodesByDepth = [];
     //         const nullsAtDepth = [];
     //         routesArray.forEach((route) => {
-    //             if ((route.shiftedNodes[0] === startPoint) && (route.shiftedNodes[route.shiftedNodes.length - 1] === endPoint)) {
-    //                 for (let i = 0; i < route.shiftedNodes.length; i++) {
-    //                     if (!(routeNodesByDepth[i])) {
-    //                         routeNodesByDepth.push([]);
+    //             if ((route.shiftedLiveNodes[0] === startPoint) && (route.shiftedLiveNodes[route.shiftedLiveNodes.length - 1] === endPoint)) {
+    //                 for (let i = 0; i < route.shiftedLiveNodes.length; i++) {
+    //                     if (!(routedLiveNodesByDepth[i])) {
+    //                         routedLiveNodesByDepth.push([]);
     //                     }
     //                     if (!(nullsAtDepth[i])) {
     //                         nullsAtDepth[i] = 0;
     //                     }
-    //                     if (route.shiftedNodes[i]) {
-    //                         routeNodesByDepth[i].push(route.shiftedNodes[i]);
+    //                     if (route.shiftedLiveNodes[i]) {
+    //                         routedLiveNodesByDepth[i].push(route.shiftedLiveNodes[i]);
     //                     } else {
     //                         nullsAtDepth[i] += 1;
     //                     }
     //                 }
     //             }
     //         });
-    //         const uniqueRouteNodesByDepth = routeNodesByDepth.map((routeNode) => {
-    //             return Array.from(new Set(routeNode));
+    //         const uniqueRoutedLiveNodesByDepth = routedLiveNodesByDepth.map((routeLiveNode) => {
+    //             return Array.from(new Set(routeLiveNode));
     //         });
-    //         // console.log(uniqueRouteNodesByDepth);  // as expected .. [] for the nulls
-    //         const heightByDepth = uniqueRouteNodesByDepth.map((nodesAtDepth) => {
+    //         // console.log(uniqueRoutedLiveNodesByDepth);  // as expected .. [] for the nulls
+    //         const heightByDepth = uniqueRoutedLiveNodesByDepth.map((liveNodesAtDepth) => {
     //             let height = 0;
-    //             nodesAtDepth.forEach((node) => {
-    //                 const box = boxMap.get(node.id);
+    //             liveNodesAtDepth.forEach((liveNodeAtDepth) => {
+    //                 const box = liveNodeSvgBoxMap.get(liveNodeAtDepth.id);
     //                 height = height + box.height;
     //             });
     //             return height;
@@ -415,10 +415,10 @@ class AtTimeview extends HTMLElement {
     //         console.log(heightByDepth);
     //         console.log(heightByDepth.length);
     //         const tallest = Math.max(...heightByDepth);
-    //         boxMap.get(routeStart.id).apparentHeight += tallest;
-    //         boxMap.get(routeEnd.id).apparentHeight += tallest;
-    //         console.log(boxMap.get(routeStart.id).apparentHeight);
-    //         console.log(boxMap.get(routeEnd.id).apparentHeight);
+    //         liveNodeSvgBoxMap.get(routeStart.id).apparentHeight += tallest;
+    //         liveNodeSvgBoxMap.get(routeEnd.id).apparentHeight += tallest;
+    //         console.log(liveNodeSvgBoxMap.get(routeStart.id).apparentHeight);
+    //         console.log(liveNodeSvgBoxMap.get(routeEnd.id).apparentHeight);
     //         console.log();
     //         while (index < routesArray.length) &&
     //
@@ -432,11 +432,11 @@ class AtTimeview extends HTMLElement {
     // }
 
 
-    setEarliestX(routesArray, boxMap) {             // All seems to work good
+    setEarliestX(routesArray, liveNodeSvgBoxMap) {             // All seems to work good
         routesArray.forEach((route) => {
             let nextEarliestX = 0;
-            for (let i = 0; i < route.nodes.length; i++) {
-                const box = boxMap.get(route.nodes[i].id);
+            for (let i = 0; i < route.liveNodes.length; i++) {
+                const box = liveNodeSvgBoxMap.get(route.liveNodes[i].id);
                 if (nextEarliestX > box.earliestPossibleX) {
                     box.earliestPossibleX = nextEarliestX;
                 }
@@ -448,17 +448,17 @@ class AtTimeview extends HTMLElement {
     getDepth(routesArray) {
         let deepest = 0;
         routesArray.forEach((route) => {
-            if (route.shiftedNodes.length > deepest) {
-                deepest = route.shiftedNodes.length;
+            if (route.shiftedLiveNodes.length > deepest) {
+                deepest = route.shiftedLiveNodes.length;
             }
         });
         return deepest;
     }
 
-    getWidestRouteWidth(routesArray, boxMap) {             // Not fully checked but could be right
+    getWidestRouteWidth(routesArray, liveNodeSvgBoxMap) {             // Not fully checked but could be right
         let widestRouteLength = 0;
         routesArray.forEach((route) => {
-            const box = boxMap.get(route.nodes[route.nodes.length - 1].id);
+            const box = liveNodeSvgBoxMap.get(route.liveNodes[route.liveNodes.length - 1].id);
             if (widestRouteLength < box.earliestPossibleX + box.width) {
                 widestRouteLength = box.earliestPossibleX + box.width;
             }
@@ -468,28 +468,28 @@ class AtTimeview extends HTMLElement {
     }
 
 
-    // The way we size boxes for visual display, the starting nodes and the ending nodes grow with their respective intermediate modes.
+    // The way we size boxes for visual display, the starting liveNodes and the ending liveNodes grow with their respective intermediate modes.
     // Therefore, either the first or the last item will be the tallest.
-    getTallestDepth(routesArray, boxMap) {
-        const routeNodesByDepth = [];
+    getTallestDepth(routesArray, liveNodeSvgBoxMap) {
+        const routedLiveNodesByDepth = [];
         let overallTallest = 0;
         routesArray.forEach((route) => {
-            for (let i = 0; i < route.shiftedNodes.length; i++) {
-                if (!(routeNodesByDepth[i])) {
-                    routeNodesByDepth.push([]);
+            for (let i = 0; i < route.shiftedLiveNodes.length; i++) {
+                if (!(routedLiveNodesByDepth[i])) {
+                    routedLiveNodesByDepth.push([]);
                 }
-                if (route.shiftedNodes[i]) {
-                    routeNodesByDepth[i].push(route.shiftedNodes[i]);
+                if (route.shiftedLiveNodes[i]) {
+                    routedLiveNodesByDepth[i].push(route.shiftedLiveNodes[i]);
                 }
             }
         });
-        const uniqueRoutesArray = routeNodesByDepth.map((nodesAtDepth) => {
-            return Array.from(new Set(nodesAtDepth));
+        const uniqueRoutesArray = routedLiveNodesByDepth.map((liveNodesAtDepth) => {
+            return Array.from(new Set(liveNodesAtDepth));
         });
-        uniqueRoutesArray.forEach((nodesAtDepth) => {
+        uniqueRoutesArray.forEach((liveNodesAtDepth) => {
             let heightAtDepth = 0;
-            for (let i = 0; i < nodesAtDepth.length; i++) {
-                const box = boxMap.get(nodesAtDepth[i].id);
+            for (let i = 0; i < liveNodesAtDepth.length; i++) {
+                const box = liveNodeSvgBoxMap.get(liveNodesAtDepth[i].id);
                 heightAtDepth = heightAtDepth + box.apparentHeight + this.svg.verticalInnerMargin;
             }
             heightAtDepth = heightAtDepth - this.svg.verticalInnerMargin; // 1 too many
@@ -502,40 +502,40 @@ class AtTimeview extends HTMLElement {
     }
 
 
-    getInnerNoneBox(nodeModel, boxMap) {
-        const nodeGroup = this.svg.fetchNodeGroup(nodeModel.id);
-        const nodeDescriptor = this.createNodeDescriptor(nodeModel);            // * just returning a box -- not hooking it up.
-        const labelElement = this.svg.createTextElement(nodeDescriptor.label, nodeModel.id);
-        nodeGroup.insertBefore(labelElement, nodeGroup.firstChild);
+    getInnerNoneBox(liveNode, liveNodeSvgBoxMap) {
+        const svgNodeGroup = this.svg.fetchSvgNodeGroup(liveNode.id);
+        const liveNodeSvgBox = this.createLiveNodeSvgBox(liveNode);            // * just returning a box -- not hooking it up.
+        const labelElement = this.svg.createTextElement(liveNodeSvgBox.label, liveNode.id);
+        svgNodeGroup.insertBefore(labelElement, svgNodeGroup.firstChild);
         const labelingWidth = this.svg.horizontalLeftMargin + this.svg.labelWidth(labelElement) + this.svg.horizontalRightMargin;
-        nodeDescriptor.width = labelingWidth;  // The width is the maximum of the non-sibling-dependent node's total widths  max(child1.totalWidth... childn.totalwidth)
-        const routesArray = this.getRoutesFromBinding(nodeModel);
+        liveNodeSvgBox.width = labelingWidth;  // The width is the maximum of the non-sibling-dependent liveNode's total widths  max(child1.totalWidth... childn.totalwidth)
+        const routesArray = this.getRoutesFromBinding(liveNode);
 
-        this.setChildrenMaxDepth(nodeModel, boxMap, routesArray);   // maybe stick routesArray in node descriptor
-        this.setChildrenMembershipCount(nodeModel, boxMap, routesArray);
-        this.adjustHeights(routesArray, boxMap);         // artsy component
-        // this.adjustVerticalStart(routesArray, boxMap)    // artsy component
-        this.setEarliestX(routesArray, boxMap);         // appears to work great
-        nodeDescriptor.height = this.svg.verticalLabelShift + this.getTallestDepth(routesArray, boxMap) + this.svg.verticalBottomMargin;            // one of the depths (columns) takes the most space
-        nodeDescriptor.width = this.svg.horizontalLeftMargin + this.getWidestRouteWidth(routesArray, boxMap) + this.svg.horizontalRightMargin;
+        this.setChildrenMaxDepth(liveNode, liveNodeSvgBoxMap, routesArray);   // maybe stick routesArray in liveNode descriptor
+        this.setChildrenMembershipCount(liveNode, liveNodeSvgBoxMap, routesArray);
+        this.adjustHeights(routesArray, liveNodeSvgBoxMap);         // artsy component
+        // this.adjustVerticalStart(routesArray, liveNodeSvgBoxMap)    // artsy component
+        this.setEarliestX(routesArray, liveNodeSvgBoxMap);         // appears to work great
+        liveNodeSvgBox.height = this.svg.verticalLabelShift + this.getTallestDepth(routesArray, liveNodeSvgBoxMap) + this.svg.verticalBottomMargin;            // one of the depths (columns) takes the most space
+        liveNodeSvgBox.width = this.svg.horizontalLeftMargin + this.getWidestRouteWidth(routesArray, liveNodeSvgBoxMap) + this.svg.horizontalRightMargin;
 
         //
-        // nodeModel.children.forEach((childNodeModel) => {
-        //     const childBox = boxMap.get(childNodeModel.id);
+        // liveNode.children.forEach((childLiveNode) => {
+        //     const childBox = liveNodeSvgBoxMap.get(childLiveNode.id);
         //     const widestAtDepth = 0;
-        //     if (childNodeModel.isTopProducerSibling()) {
+        //     if (childLiveNode.isTopProducerSibling()) {
         //         // I never go down more than one level here ... oops
-        //         this.repopulateLeafSize(childNodeModel, boxMap);// leaf Size gives the height of dependent sibling leaf's boxHeights totaled
+        //         this.repopulateLeafSize(childLiveNode, liveNodeSvgBoxMap);// leaf Size gives the height of dependent sibling leaf's boxHeights totaled
         //
-        //         nodeDescriptor.totalLeafHeight = nodeDescriptor.totalLeafHeight + Math.max(childBox.totalLeafHeight, childBox.height) + this.svg.horizontalInnerMargin;
+        //         liveNodeSvgBox.totalLeafHeight = liveNodeSvgBox.totalLeafHeight + Math.max(childBox.totalLeafHeight, childBox.height) + this.svg.horizontalInnerMargin;
         //
-        //         nodeDescriptor.width = Math.max(nodeDescriptor.width, widestAtDepth, childBox.width);
-        //         nodeDescriptor.height = Math.max(nodeDescriptor.height, nodeDescriptor.totalLeafHeight, childBox.height);
+        //         liveNodeSvgBox.width = Math.max(liveNodeSvgBox.width, widestAtDepth, childBox.width);
+        //         liveNodeSvgBox.height = Math.max(liveNodeSvgBox.height, liveNodeSvgBox.totalLeafHeight, childBox.height);
         //     }
         // });
-        // nodeDescriptor.width = nodeDescriptor.width + (this.svg.horizontalLeftMargin + this.svg.horizontalRightMargin - this.svg.horizontalInnerMargin);
-        // nodeDescriptor.height = this.svg.verticalLabelShift + nodeDescriptor.height + (this.svg.verticalBottomMargin - this.svg.verticalInnerMargin);
-        this.svg.positionItem(labelElement, (nodeDescriptor.width / 2) - (this.svg.labelWidth(labelElement) / 2), 0);
+        // liveNodeSvgBox.width = liveNodeSvgBox.width + (this.svg.horizontalLeftMargin + this.svg.horizontalRightMargin - this.svg.horizontalInnerMargin);
+        // liveNodeSvgBox.height = this.svg.verticalLabelShift + liveNodeSvgBox.height + (this.svg.verticalBottomMargin - this.svg.verticalInnerMargin);
+        this.svg.positionItem(labelElement, (liveNodeSvgBox.width / 2) - (this.svg.labelWidth(labelElement) / 2), 0);
 
         // const boxCornerPoint = new Point({x: this.svg.horizontalLeftMargin,
         //     y: this.svg.verticalTopMargin + this.svg.verticalLabelShift});
@@ -549,86 +549,86 @@ class AtTimeview extends HTMLElement {
         const whereYatDepth = [];
         const lastVisitedAtDepth = [];
         routesArray.forEach((route) => {
-            for (let i = 0; i < route.shiftedNodes.length; i++) {
+            for (let i = 0; i < route.shiftedLiveNodes.length; i++) {
                 if (!(whereYatDepth[i])) {
                     whereYatDepth[i] = this.svg.verticalLabelShift;
                 }
-                if ((route.shiftedNodes[i]) && (route.shiftedNodes[i] !== lastVisitedAtDepth[i])) {
-                    const box = boxMap.get(route.shiftedNodes[i].id);
+                if ((route.shiftedLiveNodes[i]) && (route.shiftedLiveNodes[i] !== lastVisitedAtDepth[i])) {
+                    const box = liveNodeSvgBoxMap.get(route.shiftedLiveNodes[i].id);
 
                     const x = this.svg.horizontalLeftMargin + box.earliestPossibleX;
                     const y = whereYatDepth[i];
-                    const nodeRectangle = this.svg.fetchRectangle(box.id);
-                    const nodeGroup = this.svg.fetchNodeGroup(box.id);
+                    const svgRectangle = this.svg.fetchRectangle(box.id);
+                    const svgNodeGroup = this.svg.fetchSvgNodeGroup(box.id);
                     if (box.apparentHeight === 0) {
                         box.apparentHeight = box.height;
                     }
-                    this.svg.resizeRectangle(nodeRectangle, box.width, box.apparentHeight);
+                    this.svg.resizeRectangle(svgRectangle, box.width, box.apparentHeight);
 
-                    this.svg.positionItem(nodeGroup, x, y);
+                    this.svg.positionItem(svgNodeGroup, x, y);
                     // this.svg.positionItem(childLabel, (childBox.width / 2) - (this.svg.labelWidth(childLabel) / 2), 0);
                     whereYatDepth[i] = y + box.apparentHeight + this.svg.verticalInnerMargin;
-                    lastVisitedAtDepth[i] = route.shiftedNodes[i];
+                    lastVisitedAtDepth[i] = route.shiftedLiveNodes[i];
                 }
             }
         });
 
 
-        // nodeModel.children.forEach((childNodeModel) => {
-        //     if (childNodeModel.isTopProducerSibling()) {
-        //         this.produceDataLayout(childCornerPoint, childNodeModel, boxMap, nodeDescriptor);
-        //         const box = boxMap.get(childNodeModel.id);
+        // liveNode.children.forEach((childLiveNode) => {
+        //     if (childLiveNode.isTopProducerSibling()) {
+        //         this.produceDataLayout(childCornerPoint, childLiveNode, liveNodeSvgBoxMap, liveNodeSvgBox);
+        //         const box = liveNodeSvgBoxMap.get(childLiveNode.id);
         //         childCornerPoint.y = childCornerPoint.y + box.height + this.svg.verticalInnerMargin;
         //     }
         // });
 
-        return nodeDescriptor;
+        return liveNodeSvgBox;
     }
 
-    buildTimelineDiagram(parentGroup, nodeModel, boxCornerPoint) {
-        const nodeGroup = this.svg.createNodeGroup(nodeModel.id);          // nodeGroup for this nodeModel
-        parentGroup.appendChild(nodeGroup);
-        this.svg.positionItem(nodeGroup, boxCornerPoint.x, boxCornerPoint.y);
+    buildTimelineDiagram(parentGroup, liveNode, boxCornerPoint) {
+        const svgNodeGroup = this.svg.createSvgNodeGroup(liveNode.id);          // svgNodeGroup for this liveNode
+        parentGroup.appendChild(svgNodeGroup);
+        this.svg.positionItem(svgNodeGroup, boxCornerPoint.x, boxCornerPoint.y);
 
 
-        let nodeDescriptor;
+        let liveNodeSvgBox;
         // const childOriginPoint = new Point({x: boxCornerPoint.x + this.svg.horizontalLeftMargin,
         //     y: boxCornerPoint.y + this.svg.verticalLabelShift});
-        if (nodeModel.isExpanded) {
-            if ((nodeModel.hasChildren())) {
-                nodeModel.children.forEach((childNodeModel) => {
-                    const newBox = this.buildTimelineDiagram(nodeGroup, childNodeModel, new Point());       // !!!
-                    this.childNodeDescriptorsMap.set(childNodeModel.id, newBox);
+        if (liveNode.isExpanded) {
+            if ((liveNode.hasChildren())) {
+                liveNode.children.forEach((childLiveNode) => {
+                    const newBox = this.buildTimelineDiagram(svgNodeGroup, childLiveNode, new Point());       // !!!
+                    this.childLiveNodeSvgBoxsMap.set(childLiveNode.id, newBox);
                 });
 
-                //  const childNodeDescriptorsMap = this.buildChildNodeDescriptorMap(nodeModel, nodeGroup);  // at this point i have all children and heading up the recursion
+                //  const childLiveNodeSvgBoxsMap = this.buildChildNodeDescriptorMap(liveNode, svgNodeGroup);  // at this point i have all children and heading up the recursion
 
-                if (nodeModel._activity.connector.execution === `node.execution.parallel`) {               // Catch-all @TODO -> need smarter control
-                    nodeDescriptor = this.getInnerParallelBox(nodeModel, this.childNodeDescriptorsMap);
+                if (liveNode._activity.connector.execution === `livenode.execution.parallel`) {               // Catch-all @TODO -> need smarter control
+                    liveNodeSvgBox = this.getInnerParallelBox(liveNode, this.childLiveNodeSvgBoxsMap);
                 }
-                if (nodeModel._activity.connector.execution === `node.execution.sequential`) {
-                    nodeDescriptor = this.getInnerSequentialBox(nodeModel, this.childNodeDescriptorsMap);
+                if (liveNode._activity.connector.execution === `livenode.execution.sequential`) {
+                    liveNodeSvgBox = this.getInnerSequentialBox(liveNode, this.childLiveNodeSvgBoxsMap);
                 }
-                if (nodeModel._activity.connector.execution === `node.execution.none`) {
-                    nodeDescriptor = this.getInnerNoneBox(nodeModel, this.childNodeDescriptorsMap);
+                if (liveNode._activity.connector.execution === `livenode.execution.none`) {
+                    liveNodeSvgBox = this.getInnerNoneBox(liveNode, this.childLiveNodeSvgBoxsMap);
                 }
             } else {
-                nodeDescriptor = this.getInnerLeafBox(nodeModel);  // Actual leaf
+                liveNodeSvgBox = this.getInnerLeafBox(liveNode);  // Actual leaf
             }
         } else {
-            nodeDescriptor = this.getInnerLeafBox(nodeModel);  // Virtual leaf (isExpanded)
+            liveNodeSvgBox = this.getInnerLeafBox(liveNode);  // Virtual leaf (isExpanded)
         }
-        // this.svg.positionItem(nodeGroup, nodeDescriptor.topLeftX, nodeDescriptor.topLeftY);
-        // this.boxMap.set(nodeDescriptor.id, nodeDescriptor);
-        const svgBox = this.svg.createRectangle(nodeDescriptor.width, nodeDescriptor.height, nodeModel.id);
+        // this.svg.positionItem(svgNodeGroup, liveNodeSvgBox.topLeftX, liveNodeSvgBox.topLeftY);
+        // this.liveNodeSvgBoxMap.set(liveNodeSvgBox.id, liveNodeSvgBox);
+        const svgBox = this.svg.createRectangle(liveNodeSvgBox.width, liveNodeSvgBox.height, liveNode.id);
         this.svg.applyFilter(svgBox, this.svg.chosenFilter);
-        this.svg.applyLightnessDepthEffect(svgBox, nodeModel.treeDepth, this.treeHeight);
+        this.svg.applyLightnessDepthEffect(svgBox, liveNode.treeDepth, this.treeHeight);
         if (this.hasColor) {
-            this.svg.applyColorDepthEffect(svgBox, nodeModel.treeDepth, this.treeHeight);
+            this.svg.applyColorDepthEffect(svgBox, liveNode.treeDepth, this.treeHeight);
         }
-        nodeGroup.insertBefore(svgBox, nodeGroup.firstChild);
+        svgNodeGroup.insertBefore(svgBox, svgNodeGroup.firstChild);
 
-        return nodeDescriptor;
+        return liveNodeSvgBox;
     }
 
     svgWheelZoomEvent(event) {
@@ -709,12 +709,12 @@ class AtTimeview extends HTMLElement {
 
 
     logMapElements(value, key, map) {
-        //  to use:              boxMap.forEach(this.logMapElements);
+        //  to use:              liveNodeSvgBoxMap.forEach(this.logMapElements);
         console.log(`m[${key}] = ${value}`);
         console.log(JSON.stringify(value));
     }
 
-    buildRouteHeightArray(routes, nodeModel, boxMap) {
+    buildRouteHeightArray(routes, liveNode, liveNodeSvgBoxMap) {
         const longest = routes.reduce((a, b) => {            // seems to report ok
             return (a.length > b.length ? a : b);
         }, []).length;
@@ -722,17 +722,17 @@ class AtTimeview extends HTMLElement {
         const maxRouteHeight = [];
     }
 
-    findWidestAtDepth2(routes, nodeModel, boxMap) {
+    findWidestAtDepth2(routes, liveNode, liveNodeSvgBoxMap) {
         const longest = routes.reduce((a, b) => {            // seems to report ok
             return (a.length > b.length ? a : b);
         }, []).length;
 
-        console.log([...boxMap.entries()]);         // id, label, maxDepth
+        console.log([...liveNodeSvgBoxMap.entries()]);         // id, label, maxDepth
 
         const maxWidthAtDepth = [];
         routes.forEach((route) => {
             const routeWidthAtDepth = route.map((x) => {
-                return boxMap.get(x.id).width;
+                return liveNodeSvgBoxMap.get(x.id).width;
             });
             console.log(routeWidthAtDepth);       //    -- >  [13, 42, 12]  looks good
             for (let i = 0; i < longest; i++) {
@@ -765,10 +765,10 @@ class AtTimeview extends HTMLElement {
     }
 
 
-    findWidestAtDepth(sibling, boxMap, widestAtDepth) {
+    findWidestAtDepth(sibling, liveNodeSvgBoxMap, widestAtDepth) {
         const fetchActivitiesCallback = (sibling) => {
             const depth = sibling.dependencySlot;
-            const box = boxMap.get(sibling.id);
+            const box = liveNodeSvgBoxMap.get(sibling.id);
             if ((widestAtDepth[depth] == undefined) || (widestAtDepth[depth] < box.width)) {
                 widestAtDepth[depth] = box.width;
             }
@@ -777,54 +777,54 @@ class AtTimeview extends HTMLElement {
         return widestAtDepth;
     }
 
-    repopulateLeafSize(node, boxMap) {
-        const fetchActivitiesCallback = (node) => {
-            const nodeBox = boxMap.get(node.id);
-            if (node.providesOutputTo.length > 0) {
-                nodeBox.totalLeafHeight = 0;
+    repopulateLeafSize(liveNode, liveNodeSvgBoxMap) {
+        const fetchActivitiesCallback = (liveNode) => {
+            const liveNodeSvgBox = liveNodeSvgBoxMap.get(liveNode.id);
+            if (liveNode.providesOutputTo.length > 0) {
+                liveNodeSvgBox.totalLeafHeight = 0;
                 let marginSizeSum = 0;
-                node.providesOutputTo.forEach((child) => {
-                    const childNodeBox = boxMap.get(child.id);
-                    nodeBox.totalLeafHeight = nodeBox.totalLeafHeight + childNodeBox.totalLeafHeight;
+                liveNode.providesOutputTo.forEach((child) => {
+                    const childLiveNodeBox = liveNodeSvgBoxMap.get(child.id);
+                    liveNodeSvgBox.totalLeafHeight = liveNodeSvgBox.totalLeafHeight + childLiveNodeBox.totalLeafHeight;
                     marginSizeSum = marginSizeSum + this.svg.verticalInnerMargin;
                 });
                 marginSizeSum = marginSizeSum - this.svg.verticalInnerMargin;
-                nodeBox.height = Math.max(nodeBox.totalLeafHeight + marginSizeSum, nodeBox.height);
+                liveNodeSvgBox.height = Math.max(liveNodeSvgBox.totalLeafHeight + marginSizeSum, liveNodeSvgBox.height);
             }
         };
-        Traversal.recurseProvidesIOPostorder(node, fetchActivitiesCallback);
+        Traversal.recurseProvidesIOPostorder(liveNode, fetchActivitiesCallback);
     }
 
 
-    getRoutesFromBinding(node) {
+    getRoutesFromBinding(liveNode) {
         const routeList = [];
-        node.children.forEach((child) => {
+        liveNode.children.forEach((childLiveNode) => {
             const routeIndex = [];
-            if (!node.activity.isDependentSibling(child.activity.urn)) {                // if not dependant on a sibling...(its a starting point)
-                this.findRoutes(node, child, routeIndex, routeList);
+            if (!liveNode.activity.isDependentSibling(childLiveNode.activity.urn)) {                // if not dependant on a sibling...(its a starting point)
+                this.findRoutes(liveNode, childLiveNode, routeIndex, routeList);
             }
         });
-        this.dependencyShiftRight(routeList, node);
+        this.dependencyShiftRight(routeList, liveNode);
         return routeList;
     }
 
-    findRoutes(node, child, routeIndex, routeList) {
+    findRoutes(liveNode, childLiveNode, routeIndex, routeList) {
 
-        if (node.activity.hasConsumingSiblings(child.activity.urn)) {
-            node.activity.bindings.forEach((bind) => {
-                if (bind.from.exchangeSourceUrn === child.activity.urn) {
-                    node.children.forEach((childSibling) => {
+        if (liveNode.activity.hasConsumingSiblings(childLiveNode.activity.urn)) {
+            liveNode.activity.bindings.forEach((bind) => {
+                if (bind.from.exchangeSourceUrn === childLiveNode.activity.urn) {
+                    liveNode.children.forEach((childSibling) => {
                         if (childSibling.activity.urn === bind.to.exchangeSourceUrn) {
-                            routeIndex.push(child);
-                            this.findRoutes(node, childSibling, routeIndex, routeList);
+                            routeIndex.push(childLiveNode);
+                            this.findRoutes(liveNode, childSibling, routeIndex, routeList);
                             routeIndex.pop(); // current producerUrn (it gets re-added if another binding found)
                         }
                     });
                 }
             });
         } else {
-            routeIndex.push(child);
-            const newRoute = new Route({nodes: [...routeIndex]});
+            routeIndex.push(childLiveNode);
+            const newRoute = new Route({liveNodes: [...routeIndex]});
             routeList.push(newRoute);
             routeIndex.pop(); // the end consumer
         }
@@ -849,4 +849,4 @@ export default customElements.get(`jag-timeview`);
 // });
 
 // console.log(`------- Print Map ----------------------`)
-// console.log([...this.childNodeDescriptorsMap.entries()]);
+// console.log([...this.childLiveNodeSvgBoxsMap.entries()]);

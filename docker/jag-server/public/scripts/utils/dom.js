@@ -27,11 +27,11 @@ export default class DOMUtils {
     }
 
     // Select the text in $node
-    static selectNodeText($node) {
+    static selectNodeText($node) {                          // TODO : vague Node reference - rename
         const selection = window.getSelection();
         const range = document.createRange();
         selection.removeAllRanges();
-        range.selectNodeContents($node);
+        range.selectNodeContents($node);         // document.Range.selectNodeContents
         selection.addRange(range);      // <    dom.js:41 addRange(): The given range isn't in document.
     }
 

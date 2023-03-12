@@ -165,7 +165,6 @@ customElements.define(`jag-library`, class extends HTMLElement {
     }
 
     addListItem(newActivity) {
-        // handleNodeStorageCreated (@controllerAT)
         const listItemElement = this.createListItemCollection(newActivity);
         this._libraryList.push(listItemElement);
         this._$list.appendChild(listItemElement.element);

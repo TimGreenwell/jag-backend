@@ -1,5 +1,5 @@
 /**
- * @file Node model for a specific analysis' JAG.
+ * @file SvgObject model for a specific analysis' JAG.
  *
  * @author mvignati
  * @version 1.65
@@ -45,7 +45,7 @@ export default class SvgObject {
         this.SVG = `svg`;
         this.BACKGROUND = `background`;
         this.SUBGROUP = `subgroup`;
-        this.NODEGROUP = `node`;
+        this.SVGNODEGROUP = `svgnodegroup`;
         this.RECTANGLE = `rect`;
         this.EDGE = `edge`;
         this.LINE = `line`;
@@ -244,7 +244,7 @@ export default class SvgObject {
      updateLightness - adjust lightness portion of current hsla (100% = white)
      updateAlpha - adjust alpha portion of current hsla (0% = invisible)
      addColor - @TODO future effort to use color instead of lightness for depth effect
-     applyColorDepthEffect - color based on node depth in tree
+     applyColorDepthEffect - color based on svgNodeGroup depth in tree
      applyLightnessDepthEffect - adjust lightness based on depth in tree
      fillDepthLightness - apply effect to fill
      strokeDepthLightness - apply effect to stroke
@@ -306,12 +306,12 @@ export default class SvgObject {
         item.setAttributeNS(null, `stroke`, stroke);
     }
 
-    fillDepthLightness(depthOfNode, treeHeight) {
-        return this.initialBrightness - (treeHeight * this.stepBrightness / 2) + (depthOfNode * this.stepBrightness);
+    fillDepthLightness(depthOfSvgNodeGroup, treeHeight) {
+        return this.initialBrightness - (treeHeight * this.stepBrightness / 2) + (depthOfSvgNodeGroup * this.stepBrightness);
     }
 
-    strokeDepthLightness(depthOfNode, treeHeight) {
-        const fillShading = this.fillDepthLightness(depthOfNode, treeHeight);
+    strokeDepthLightness(depthOfSvgNodeGroup, treeHeight) {
+        const fillShading = this.fillDepthLightness(depthOfSvgNodeGroup, treeHeight);
         const strokeShading = fillShading - (this.stepBrightness * 4);
         return strokeShading;
     }
@@ -321,15 +321,15 @@ export default class SvgObject {
      *
      * buildSvg  - main svg container
      * createBackground - group to hold all subgroups
-     * createSubGroup - group to hold node groups and edges (and sub-subgroups, if exist)
-     * createNodeGroup - group to hold node rectangle, text, button groups
+     * createSubGroup - group to hold inner svgNodeGroups and edges (and sub-subgroups, if exist)
+     * createSvgNodeGroup - group to hold rectangle, text, button groups
      * createTextElement - basic svg text components
      * createCircle - test circle for debugging points
      * createInputEndpoint
      * createOutputEndpoint
      * createAddButton - group holding svg components forming 'add button'
      * createExpandButton - group holding svg components forming `expand button`
-     * createRectangle - Rectangle giving nodeGroup its form and size
+     * createRectangle - Rectangle giving svgNodeGroup its form and size
      * resizeRectangle - Convenience function to set and change rectangle size
      * createEdge - basic edge components (path is defined with pathing methods)
      * createBinding - data flow representation between Activities
@@ -359,11 +359,11 @@ export default class SvgObject {
         return group;
     }
 
-    createNodeGroup(id) {
-        const nodeGroup = document.createElementNS(this.SVGNS, `g`);
-        nodeGroup.id = this.buildId(this.NODEGROUP, id);
-        nodeGroup.setAttributeNS(null, `pointer-events`, `bounding-box`);   // handled by under rect -rethink
-        return nodeGroup;
+    createSvgNodeGroup(id) {
+        const svgNodeGroup = document.createElementNS(this.SVGNS, `g`);
+        svgNodeGroup.id = this.buildId(this.SVGNODEGROUP, id);
+        svgNodeGroup.setAttributeNS(null, `pointer-events`, `bounding-box`);   // handled by under rect -rethink
+        return svgNodeGroup;
     }
 
     createTextElement(text, id) {
@@ -386,8 +386,8 @@ export default class SvgObject {
         return circle;
     }
 
-    createInputEndpoint(nodeId, inputId) {         // id = nodeId - endpointId(name)
-        const endpointId = `${nodeId}:${inputId}`;
+    createInputEndpoint(liveNodeId, inputId) {         // id = liveNodeId - endpointId(name)
+        const endpointId = `${liveNodeId}:${inputId}`;
         const newId = this.buildId(this.INPUT, endpointId);
         const inputEndpoint = this.createCircle(newId, 5);
         inputEndpoint.classList.add(`input-endpoint`);
@@ -397,8 +397,8 @@ export default class SvgObject {
         return inputEndpoint;
     }
 
-    createOutputEndpoint(nodeId, outputId) {         // id = nodeId - endpointId(name)
-        const endpointId = `${nodeId}:${outputId}`;
+    createOutputEndpoint(liveNodeId, outputId) {         // id = liveNodeId - endpointId(name)
+        const endpointId = `${liveNodeId}:${outputId}`;
         const newId = this.buildId(this.OUTPUT, endpointId);
         const outputEndpoint = this.createCircle(newId, 5);
         outputEndpoint.classList.add(`output-endpoint`);
@@ -481,11 +481,11 @@ export default class SvgObject {
     }
 
 
-    createEdge(sourceId, destId, sourceBox, destBox) {
+    createEdge(sourceLiveNodeId, destLiveNodeId, sourceBox, destBox) {
         const edge = document.createElementNS(this.SVGNS, `path`);
-        const sourceNodeId = this.buildId(this.NODEGROUP, sourceId);
-        const destNodeId = this.buildId(this.NODEGROUP, destId);
-        const edgeIdentifier = `${sourceNodeId}${this.PATH_SEPARATOR}${destNodeId}`;
+        const edgeSourceId = this.buildId(this.SVGNODEGROUP, sourceLiveNodeId);
+        const edgeDestId = this.buildId(this.SVGNODEGROUP, destLiveNodeId);
+        const edgeIdentifier = `${edgeSourceId}${this.PATH_SEPARATOR}${edgeDestId}`;
         edge.id = edgeIdentifier;
         edge.setAttributeNS(null, `stroke`, `hsla(${this.standardHue},100%,0%,1)`);
         edge.setAttributeNS(null, `fill`, `transparent`);
@@ -508,30 +508,30 @@ export default class SvgObject {
         return cubicCurve;
     }
 
-    createBinding(fromNode, fromEndpoint, toNode, toEndpoint) {
+    createBinding(fromLiveNode, fromEndpoint, toLiveNode, toEndpoint) {
         let fromElement;
         let toElement;
         if (fromEndpoint.direction === `input`) {
-            fromElement = this.fetchInputEndpoint(fromNode.id, fromEndpoint.exchangeName);
+            fromElement = this.fetchInputEndpoint(fromLiveNode.id, fromEndpoint.exchangeName);
         } else {
-            fromElement = this.fetchOutputEndpoint(fromNode.id, fromEndpoint.exchangeName);
+            fromElement = this.fetchOutputEndpoint(fromLiveNode.id, fromEndpoint.exchangeName);
         }
         if (toEndpoint.direction === `input`) {
-            toElement = this.fetchInputEndpoint(toNode.id, toEndpoint.exchangeName);
+            toElement = this.fetchInputEndpoint(toLiveNode.id, toEndpoint.exchangeName);
         } else {
-            toElement = this.fetchOutputEndpoint(toNode.id, toEndpoint.exchangeName);
+            toElement = this.fetchOutputEndpoint(toLiveNode.id, toEndpoint.exchangeName);
         }
 
-        const fromNodeGroup = this.fetchNodeGroup(fromNode.id);
-        const fromTranslateString = fromNodeGroup.getAttributeNS(null, `transform`);
+        const fromSvgNodeGroup = this.fetchNodeGroup(fromLiveNode.id);
+        const fromTranslateString = fromSvgNodeGroup.getAttributeNS(null, `transform`);
         const fromTransformComponents = this.parse(fromTranslateString);
         const fromTransformX = Number(fromTransformComponents.translate[0]);
         const fromTransformY = Number(fromTransformComponents.translate[1]);
         const fromX = Number(fromElement.getAttributeNS(null, `cx`)) + fromTransformX;
         const fromY = Number(fromElement.getAttributeNS(null, `cy`)) + fromTransformY;
 
-        const toNodeGroup = this.fetchNodeGroup(toNode.id);
-        const toTranslateString = toNodeGroup.getAttributeNS(null, `transform`);
+        const toSvgNodeGroup = this.fetchNodeGroup(toLiveNode.id);
+        const toTranslateString = toSvgNodeGroup.getAttributeNS(null, `transform`);
         const toTransformComponents = this.parse(toTranslateString);
         const toTransformX = Number(toTransformComponents.translate[0]);
         const toTransformY = Number(toTransformComponents.translate[1]);
@@ -593,11 +593,11 @@ export default class SvgObject {
      * positionItem - changing location of item in respect to its group
      */
 
-    modifyTransform(nodeGroup, nodeModel, diffX, diffY) {
-        const groupTransformX = nodeModel.x + diffX;
-        const groupTransformY = nodeModel.y + diffY;
+    modifyTransform(svgNodeGroup, liveNode, diffX, diffY) {
+        const groupTransformX = liveNode.x + diffX;
+        const groupTransformY = liveNode.y + diffY;
         const newTransform = `translate(${groupTransformX},${groupTransformY})`;
-        nodeGroup.setAttributeNS(null, `transform`, `${newTransform}`);
+        svgNodeGroup.setAttributeNS(null, `transform`, `${newTransform}`);
     }
 
     positionItem(item, x, y) {
@@ -616,14 +616,14 @@ export default class SvgObject {
     /**
      * Object State Change
      *
-     * selectNode - update appearance of node to being selected
+     * selectSvgNodeGroup - update appearance of node to being selected
      * signalPossibleChild - update appearance of node to being possible added child
-     * unselectNode - reset appearance to normal
+     * unselectSvgNodeGroup - reset appearance to normal
      */
 
 
-    selectNode(node) {  // Apply 'select' effect (highlight)
-        const rectangle = this.fetchRectangle(node.id);
+    selectSvgNodeGroup(liveNode) {  // Apply 'select' effect (highlight)
+        const rectangle = this.fetchRectangle(liveNode.id);
         const hsla = rectangle.getAttributeNS(null, `fill`);
         const shadeFill = hsla.split(`,`)[2];
         rectangle.setAttributeNS(null, `fill`, `hsla(${this.selectedHue},100%,${shadeFill},1)`);
@@ -635,8 +635,8 @@ export default class SvgObject {
         edge.setAttributeNS(null, `cursor`, `grabbing`);
     }
 
-    signalPossibleChild(node) {  // Apply 'select' effect (highlight)
-        const rectangle = this.fetchRectangle(node.id);
+    signalPossibleChild(liveNode) {  // Apply 'select' effect (highlight)
+        const rectangle = this.fetchRectangle(liveNode.id);
         const hslaFill = rectangle.getAttributeNS(null, `fill`);
         const shadeFill = hslaFill.split(`,`)[2];
         rectangle.setAttributeNS(null, `fill`, `hsla(${this.possibleHue},100%,${shadeFill},1)`);
@@ -645,8 +645,8 @@ export default class SvgObject {
         rectangle.setAttributeNS(null, `stroke`, `hsla(${this.possibleHue},100%,${shadeStroke},1)`);
     }
 
-    signalWarning(node) {  // Apply 'select' effect (highlight)
-        const $rectangle = this.fetchRectangle(node.id);
+    signalWarning(liveNode) {  // Apply 'select' effect (highlight)
+        const $rectangle = this.fetchRectangle(liveNode.id);
         if ($rectangle) {
             // const hslaStroke = rectangle.getAttributeNS(null, `stroke`);
             // const shadeStroke = hslaStroke.split(`,`)[2];
@@ -657,8 +657,8 @@ export default class SvgObject {
         }
     }
 
-    unselectNode(node) {   // Remove 'select' effect (highlight)
-        const rectangle = this.fetchRectangle(node.id);
+    unselectSvgNodeGroup(liveNode) {   // Remove 'select' effect (highlight)
+        const rectangle = this.fetchRectangle(liveNode.id);
         const hslaFill = rectangle.getAttributeNS(null, `fill`);
         const shadeFill = hslaFill.split(`,`)[2];
         rectangle.setAttributeNS(null, `fill`, `hsla(${this.standardHue},100%,${shadeFill},1)`);
@@ -704,10 +704,10 @@ export default class SvgObject {
         const splitOrigPath = origPath.split(` `);
         const ox = Math.round(Number(splitOrigPath[1]));
         const oy = Math.round(Number(splitOrigPath[2]));
-        const destinationNodeId = this.fetchEdgeDestinationId(edge);
-        const destinationNode = svgSelectedItems.nodes.get(destinationNodeId);
+        const destinationLiveNodeId = this.fetchEdgeDestinationId(edge);
+        const destinationLiveNode = svgSelectedItems.svgNodeGroupMap.get(destinationLiveNodeId);
 
-        const transformString = destinationNode.getAttributeNS(null, `transform`);
+        const transformString = destinationLiveNode.getAttributeNS(null, `transform`);
         const transformComponents = this.parse(transformString);
         const ex = Number(transformComponents.translate[0]);
         const boxAdjustment = (this.standardBoxHeight / 2);
@@ -724,15 +724,15 @@ export default class SvgObject {
 
     changeSource(svgSelectedItems, edge) {
         const origPath = edge.getAttributeNS(null, `d`);
-        const sourceNodeId = this.fetchEdgeSourceId(edge);
-        const sourceNode = svgSelectedItems.nodes.get(sourceNodeId);
-        const id = this.fetchTargetId(sourceNode);
+        const sourceLiveNodeId = this.fetchEdgeSourceId(edge);
+        const sourceLiveNode = svgSelectedItems.nodes.get(sourceLiveNodeId);
+        const id = this.fetchTargetId(sourceLiveNode);
         const rect = this.fetchRectangle(id);
         const width = rect.getAttributeNS(null, `width`);
 
         const splitOrigPath = origPath.split(` `);
 
-        const transformString = sourceNode.getAttributeNS(null, `transform`);
+        const transformString = sourceLiveNode.getAttributeNS(null, `transform`);
         const transformComponents = this.parse(transformString);
         let boxAdjustment = width;
         const ox = Number(transformComponents.translate[0]) + Number(boxAdjustment);
@@ -789,17 +789,17 @@ export default class SvgObject {
      * Fetching - getter/setters
      *
      * fetchBackground - retrieve outer group (best highest level of background pointer events)
-     * fetchNodeGroup - retrieve collection of items forming node
+     * fetchSvgNodeGroup - retrieve collection of items forming svgNodeGroup
      * fetchExpandButton - retrieve collection of items forming Expand Button
      * fetchAddButton - retrieve collection of items forming add Button
-     * fetchRectangle - retrieve nodeGroup's rectangle
+     * fetchRectangle - retrieve svgNodeGroup's rectangle
      * fetchTargetId - retrieve pointer target's id
      * fetchTargetElementType - retrieve pointer target's element
      * fetchEdgeSourceId - retrieve edge's source element id
      * fetchEdgeDestinationId - retrieve edge's destination element id
-     * fetchEdgeToCursor - retrieve the edge attached to the cursor during node linkage
-     * fetchEdgeTo - retrieve the edge leading into a given node
-     * fetchEdgesFrom - retrieve the edges leaving a given node
+     * fetchEdgeToCursor - retrieve the edge attached to the cursor during SvgNodeGroup linkage
+     * fetchEdgeTo - retrieve the edge leading into a given SvgNodeGroup
+     * fetchEdgesFrom - retrieve the edges leaving a given SvgNodeGroup
      */
 
     fetchBackground() {
@@ -810,17 +810,17 @@ export default class SvgObject {
         return document.getElementById(this.buildId(this.SUBGROUP, id));
     }
 
-    fetchNodeGroup(id) {
-        return document.getElementById(this.buildId(this.NODEGROUP, id));
+    fetchSvgNodeGroup(id) {
+        return document.getElementById(this.buildId(this.SVGNODEGROUP, id));
     }
 
-    fetchInputEndpoint(fromNodeId, fromEndpointId) {
-        const fromId = `${fromNodeId}:${fromEndpointId}`;
+    fetchInputEndpoint(fromLiveNodeId, fromEndpointId) {
+        const fromId = `${fromLiveNodeId}:${fromEndpointId}`;
         return document.getElementById(this.buildId(this.INPUT, fromId));
     }
 
-    fetchOutputEndpoint(toNodeId, toEndpointId) {
-        const toId = `${toNodeId}:${toEndpointId}`;
+    fetchOutputEndpoint(toLiveNodeId, toEndpointId) {
+        const toId = `${toLiveNodeId}:${toEndpointId}`;
         return document.getElementById(this.buildId(this.OUTPUT, toId));
     }
 
@@ -853,7 +853,7 @@ export default class SvgObject {
         if (svgElement.id) {
             id = svgElement.id.split(this.ID_SEPARATOR)[1];
         } else {
-            id = this.fetchTargetId(svgElement.parentNode);
+            id = this.fetchTargetId(svgElement.parentNode);  // (Node.parentNode) = parent of the specified node in the DOM tree.
         }
         return id;
     }
@@ -862,7 +862,7 @@ export default class SvgObject {
         let elementType;
         if (svgElement.id) {
             if (svgElement.id.includes(this.PATH_SEPARATOR)) {
-                if (svgElement.id.split(this.ID_SEPARATOR)[0] === this.NODEGROUP) {
+                if (svgElement.id.split(this.ID_SEPARATOR)[0] === this.SVGNODEGROUP) {
                     elementType = this.EDGE;
                 } else if ((svgElement.id.split(this.ID_SEPARATOR)[0] === this.INPUT) || (svgElement.id.split(this.ID_SEPARATOR)[0] === this.INPUT)) {
                     elementType = this.BINDING;
@@ -871,7 +871,7 @@ export default class SvgObject {
                 elementType = svgElement.id.split(this.ID_SEPARATOR)[0];
             }
         } else {
-            elementType = this.fetchTargetElementType(svgElement.parentNode);
+            elementType = this.fetchTargetElementType(svgElement.parentNode);  //(Node.parentNode) = parent of the specified node in the DOM tree.
         }
         return elementType;
     }
@@ -887,7 +887,7 @@ export default class SvgObject {
     }
 
 
-    fetchEdgeSourceId(edge) {  // @todo this returns the id of the node of the edge source... might be cleaner to break this into two pieces - (more like the binding)
+    fetchEdgeSourceId(edge) {  // @todo this returns the id of the liveNode id of the edge source... might be cleaner to break this into two pieces - (more like the binding)
         const edgeSourceId = edge.id.split(this.PATH_SEPARATOR)[0];
         const sourceId = edgeSourceId.split(this.ID_SEPARATOR)[1];
         return sourceId;
@@ -904,13 +904,13 @@ export default class SvgObject {
         return cursorEdge;
     }
 
-    fetchEdgeTo(nodeId) {
-        const incomingEdge = document.querySelector(`[id$=${this.PATH_SEPARATOR}${this.buildId(this.NODEGROUP, nodeId)}]`);
+    fetchEdgeTo(liveNodeId) {
+        const incomingEdge = document.querySelector(`[id$=${this.PATH_SEPARATOR}${this.buildId(this.SVGNODEGROUP, liveNodeId)}]`);
         return incomingEdge;
     }
 
-    fetchEdgesFrom(nodeId) {
-        const outgoingEdges = Array.from(document.querySelectorAll(`[id^=${this.buildId(this.NODEGROUP, nodeId)}${this.PATH_SEPARATOR}]`));
+    fetchEdgesFrom(liveNodeId) {
+        const outgoingEdges = Array.from(document.querySelectorAll(`[id^=${this.buildId(this.SVGNODEGROUP, liveNodeId)}${this.PATH_SEPARATOR}]`));
         return outgoingEdges;
     }
 
@@ -958,7 +958,7 @@ export default class SvgObject {
 
     clearBackground(id) {
         const background = this.fetchBackground(id);
-        background.childNodes.forEach((gNode) => {
+        background.childNodes.forEach((gNode) => {   // Node.childNodes     TODO - this forEach looks wrong. -unused-
             while (background.firstChild) {
                 // The list is LIVE so it will re-index each call
                 background.removeChild(background.firstChild);
@@ -1074,29 +1074,29 @@ export default class SvgObject {
 
 }
 
-//  applyColorEffect(nodeModel) {
-//     const numberOfLeaves = nodeModel.leafCount;
+//  applyColorEffect(liveNode) {
+//     const numberOfLeaves = liveNode.leafCount;
 //     const colorDelta = Math.max(360 / numberOfLeaves, 5);
-//     this.colorTree(nodeModel, 0, colorDelta);
+//     this.colorTree(liveNode, 0, colorDelta);
 // }
 //
-//  colorTree(node, currentStep, colorDelta) {
+//  colorTree(liveNode, currentStep, colorDelta) {
 //     let colorValue;
-//     if (node.hasChildren()) {
+//     if (liveNode.hasChildren()) {
 //         let colorTotal = 0;
-//         node.children.forEach((child) => {
+//         liveNode.children.forEach((child) => {
 //             const returns = this.colorTree(child, currentStep, colorDelta);
 //             colorTotal = colorTotal + returns.colorValue;
 //             currentStep = returns.currentStep;
 //         });
-//         colorValue = colorTotal / node.children.length;
-//         const rectangle = this.fetchRectangle(node.id);
+//         colorValue = colorTotal / liveNode.children.length;
+//         const rectangle = this.fetchRectangle(liveNode.id);
 //         const hsla = rectangle.getAttributeNS(null, `fill`);
 //         const newHsla = this.updateHue(hsla, colorValue);
 //         rectangle.setAttributeNS(null, `fill`, newHsla);
 //     } else {
 //         colorValue = currentStep * colorDelta;
-//         const rectangle = this.fetchRectangle(node.id);
+//         const rectangle = this.fetchRectangle(liveNode.id);
 //         const hsla = rectangle.getAttributeNS(null, `fill`);
 //         const newHsla = this.updateHue(hsla, colorValue);
 //         rectangle.setAttributeNS(null, `fill`, newHsla);

@@ -1,5 +1,5 @@
 /**
- * @file Node model for a specific analysis' JAG.
+ * @file LiveNode model for a specific analysis' JAG.
  *
  * @author mvignati
  * @version 1.65
@@ -10,8 +10,6 @@
 import {uuidV4} from '../utils/uuid.js';
 import Validation from '../utils/validation.js';
 
-
-// node (with view/jag)  = at's jag-node       -- both syn with JAG model
 // noinspection JSUnusedGlobalSymbols
 export default class Cell extends EventTarget {
 
@@ -125,17 +123,17 @@ export default class Cell extends EventTarget {
     // /////////////////////////////////////////////////////////////////////////////////////////
 
 
-    activitiesInProject(urn) {    // return array of nodes matching urn
+    getLiveNodesByJag(urn) {    // return array of liveNodes matching urn
         const matchStack = [];
         const workStack = [];
 
-        workStack.push(this);                            // is a cell a nodemodel
+        workStack.push(this);                            // is a cell a liveNode
         while (workStack.length > 0) {
-            const nodeModel = workStack.pop();
-            if (nodeModel._urn === urn) {
-                matchStack.push(nodeModel);
+            const liveNode = workStack.pop();
+            if (liveNode._urn === urn) {
+                matchStack.push(liveNode);
             }
-            nodeModel.activity.children.forEach((kid) => {
+            liveNode.activity.children.forEach((kid) => {
                 workStack.push(kid);
             });
         }
@@ -143,7 +141,7 @@ export default class Cell extends EventTarget {
     }
 
     isActivityInProject(urn) {
-        return (this.activitiesInProject(urn).length > 0);
+        return (this.getLiveNodesByJag(urn).length > 0);
     }
 
     incrementDepth(depthCount) {
@@ -186,10 +184,10 @@ export default class Cell extends EventTarget {
     }
 
 
-    addChild(node) {                              // moved to controller
+    addChild(liveNode) {                              // moved to controller
         if (this.canHaveChildren) {
-            this._children.push(node);
-            node.parent = this;
+            this._children.push(liveNode);
+            liveNode.parent = this;
             this.incrementDepth(1);
             if (this.childCount > 1) {
                 this.incrementLeafCount();

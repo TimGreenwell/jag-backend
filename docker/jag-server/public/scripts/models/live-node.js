@@ -1,5 +1,5 @@
 /**
- * @file Node model for a specific analysis' JAG.
+ * @file LiveNode model for a specific analysis' JAG.
  *
  * @author mvignati
  * @version 1.65
@@ -11,7 +11,7 @@ import {uuidV4} from '../utils/uuid.js';
 import Validation from '../utils/validation.js';
 
 // noinspection JSUnusedGlobalSymbols
-export default class Node extends EventTarget {
+export default class LiveNode extends EventTarget {
 
     constructor({
         id = uuidV4(),
@@ -66,14 +66,14 @@ export default class Node extends EventTarget {
         this._dependencySlot = 0;
     }
 
-    becomeConsumerOf(node) {
-        if (!(node.providesOutputTo.includes(this))) {
-            node.providesOutputTo.push(this);
+    becomeConsumerOf(liveNode) {
+        if (!(liveNode.providesOutputTo.includes(this))) {
+            liveNode.providesOutputTo.push(this);
         }
-        if (!(this._requiresOutputFrom.includes(node))) {
-            this._requiresOutputFrom.push(node);
-            if (this._dependencySlot < (node.dependencySlot + 1)) {
-                this.adjustDependencySlot(node.dependencySlot + 1);
+        if (!(this._requiresOutputFrom.includes(liveNode))) {
+            this._requiresOutputFrom.push(liveNode);
+            if (this._dependencySlot < (liveNode.dependencySlot + 1)) {
+                this.adjustDependencySlot(liveNode.dependencySlot + 1);
             }
         }
     }
@@ -331,8 +331,8 @@ export default class Node extends EventTarget {
         this._requiresOutputFrom = value;
     }
 
-    addRequiresOutputFrom(node) {
-        this._requiresOutputFrom.push(node);
+    addRequiresOutputFrom(liveNode) {
+        this._requiresOutputFrom.push(liveNode);
     }
 
     get providesOutputTo() {
@@ -343,8 +343,8 @@ export default class Node extends EventTarget {
         this._providesOutputTo = value;
     }
 
-    addProvidesOutputTo(node) {
-        this._providesOutputTo(node);
+    addProvidesOutputTo(liveNode) {
+        this._providesOutputTo(liveNode);
     }
 
     get dependencySlot() {
@@ -389,7 +389,7 @@ export default class Node extends EventTarget {
         return lastPart;
     }
 
-    gatherDescendentUrns(childNodeModel = this, workStack = []) {   // need this in nodes
+    gatherDescendentUrns(childNodeModel = this, workStack = []) {   // need this in liveNodes
         workStack.push(childNodeModel.urn);
         childNodeModel.children.forEach((child) => {
             this.gatherDescendentUrns(child, workStack);
@@ -397,7 +397,7 @@ export default class Node extends EventTarget {
         return workStack;
     }
 
-    gatherDescendentIds(childNodeModel = this, workStack = []) {   // need this in nodes
+    gatherDescendentIds(childNodeModel = this, workStack = []) {   // need this in liveNodes
         workStack.push(childNodeModel.id);
         childNodeModel.children.forEach((child) => {
             this.gatherDescendentIds(child, workStack);
@@ -405,7 +405,7 @@ export default class Node extends EventTarget {
         return workStack;
     }
 
-    gatherDescendents(childNodeModel = this, workStack = []) {   // need this in nodes
+    gatherDescendents(childNodeModel = this, workStack = []) {   // need this in liveNodes
         workStack.push(childNodeModel);
         childNodeModel.children.forEach((child) => {
             this.gatherDescendents(child, workStack);
@@ -414,16 +414,16 @@ export default class Node extends EventTarget {
     }
 
 
-    // activitiesInDataScope(urn) {    // return array of nodes matching urn
+    // activitiesInDataScope(urn) {    // return array of liveNodes matching urn
     //     const matchStack = [];
     //     const workStack = [];
     //
     //     workStack.push(this);
     //     workStack.push(this.children);
     //     while (workStack.length > 0) {
-    //         const nodeModel = workStack.pop();
-    //         if (nodeModel.activity.urn === urn) {
-    //             matchStack.push(nodeModel);
+    //         const liveNodeModel = workStack.pop();
+    //         if (liveNodeModel.activity.urn === urn) {
+    //             matchStack.push(liveNodeModel);
     //         }
     //     }
     //     return matchStack;
@@ -439,18 +439,18 @@ export default class Node extends EventTarget {
         return matchStack
     }
 
-    activitiesInProject(urn) {    // return array of nodes matching urn
+    getLiveNodesByJag(urn) {    // return array of liveNodes matching urn
         const matchStack = [];
         const workStack = [];
 
         workStack.push(this);
         while (workStack.length > 0) {
-            const nodeModel = workStack.pop();
+            const liveNode = workStack.pop();
 
-            if (nodeModel.activity.urn === urn) {
-                matchStack.push(nodeModel);
+            if (liveNode.activity.urn === urn) {
+                matchStack.push(liveNode);
             }
-            nodeModel.children.forEach((kid) => {
+            liveNode.children.forEach((kid) => {
                 workStack.push(kid);
             });
         }
@@ -458,7 +458,7 @@ export default class Node extends EventTarget {
     }
 
     isActivityInProject(urn) {
-        return (this.activitiesInProject(urn).length > 0);
+        return (this.getLiveNodesByJag(urn).length > 0);
     }
 
     setDepth() {
@@ -488,11 +488,11 @@ export default class Node extends EventTarget {
         return (this.children.length !== 0);
     }
 
-    addChild(node) {                              // moved to controller
+    addChild(liveNode) {                              // moved to controller
         if (this.canHaveChildren) {
-            this._children.push(node);
-            node.parent = this;
-            node.incrementDepth(this._treeDepth);
+            this._children.push(liveNode);
+            liveNode.parent = this;
+            liveNode.incrementDepth(this._treeDepth);
         } else {
             alert(`Node must first be assigned a valid URN`);
         }
@@ -645,11 +645,11 @@ export default class Node extends EventTarget {
     static fromJSON(json) {
         const childStack = [];
         for (const child of json.children) {
-            childStack.push(Node.fromJSON(child));
+            childStack.push(LiveNode.fromJSON(child));
         }
         json.children = childStack;
-        const node = new Node(json);
-        return node;
+        const liveNode = new LiveNode(json);
+        return liveNode;
     }
 
 

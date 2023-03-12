@@ -16,7 +16,7 @@
 'use strict';
 
 import Activity from "../models/activity.js";
-import NodeModel from "../models/node.js";
+import LiveNode from "../models/live-node.js";
 import StorageService from "../services/storage-service.js";
 import InputValidator from "../utils/validation.js";
 import CellModel from "../models/cell.js";
@@ -28,7 +28,7 @@ export default class Controller extends EventTarget {
     constructor() {
         super();
         this._activityMap = new Map();       // Activity cache
-        this._projectMap = new Map();        // Node cache (For project heads and every descendent)
+        this._projectMap = new Map();        // LiveNode cache (For project heads and every descendent)
         this._analysisMap = new Map();       // Analysis cache
         this._currentAnalysis = undefined;   // type: AnalysisModel
     }
@@ -193,12 +193,12 @@ export default class Controller extends EventTarget {
      *
      *      updateTreeWithActivityChange  - update properties and look for updates/deletes to incorporate
      *      buildCellTreeFromActivityUrn  - build activity tree from root node
-     *      buildNodeTreeFromActivity     - build node tree from Activity Model & initial Expanded option.
+     *      buildLiveNodeTreeFromActivity     - build node tree from Activity Model & initial Expanded option.
      *      getChildrenToAdd              - compares activity children to node children to determine adds needed
      *      getChildrenToRemove           - compares activity children to node children to determine deletes needed
      *      searchTreeForId               - return node by id
      *      searchTreeForChildId          - return node by childID
-     *      removeAllChildNodes           - generic tree - remove children from parent (1 level deep)
+     *      removeAllChildren           - generic tree - remove children from parent (1 level deep)
      *      findRoutes                    - find all routes of data passing between siblings.
      *      relocateProject               - update node locations after a move
 
@@ -214,58 +214,58 @@ export default class Controller extends EventTarget {
      */
 
     updateTreeWithActivityChange(changedActivity, projectNode) {
-        const nodeStack = [];
-        const orphanedRootStack = [];
-        nodeStack.push(projectNode);
-        while (nodeStack.length > 0) {
-            const currentNode = nodeStack.pop();
-            if ((changedActivity.urn === undefined) || (currentNode.urn === changedActivity.urn)) {
+        const liveNodeStack = [];
+        const orphanedChildProjectNodeStack = [];
+        liveNodeStack.push(projectNode);
+        while (liveNodeStack.length > 0) {
+            const currentLiveNode = liveNodeStack.pop();
+            if ((changedActivity.urn === undefined) || (currentLiveNode.urn === changedActivity.urn)) {
                 if (changedActivity.urn === undefined) {
                     console.log(`Not bad - this happens when the URN of change is not known.  For example, a rebuild from an archive or fresh pull`);
                 }
-                const existingNodeChildren = currentNode.children.map((child) => {
+                const changingLiveNodeChildren = currentLiveNode.children.map((child) => {
                     return {
                         urn: child.urn,
                         id: child.childId
                     };
                 });
-                const validNodeChildren = changedActivity.children;
-                const kidsToAdd = this.getChildrenToAdd(existingNodeChildren, validNodeChildren);
-                const kidsToRemove = this.getChildrenToRemove(existingNodeChildren, validNodeChildren);
+                const changedActivityChildren = changedActivity.children;
+                const addedActivityChildren = this.getChildrenToAdd(changingLiveNodeChildren, changedActivityChildren);
+                const removedActivityChildren = this.getChildrenToRemove(changingLiveNodeChildren, changedActivityChildren);
 
-                kidsToAdd.forEach((child) => {
-                    // 1) get newly created activity from map. 2) Create Node
-                    const childActivity = this.fetchActivity(child.urn);
-                    const childNodeModel = new NodeModel();
-                    childNodeModel.urn = childActivity.urn;
-                    childNodeModel.activity = childActivity;
-                    childNodeModel.childId = child.id;  // Give the child the 'childId' that was listed in the Parent's Jag children.  (separated them from other children of same urn)
-                    childNodeModel.parent = currentNode;
-                    this.repopulateProject(childNodeModel, projectNode.projectId);
-                    currentNode.addChild(childNodeModel);
+                addedActivityChildren.forEach((newActivityChild) => {
+                    // 1) get newly created activity from map. 2) Create LiveNode
+                    const childActivity = this.fetchActivity(newActivityChild.urn);
+                    const childLiveNode = new LiveNode();
+                    childLiveNode.urn = childActivity.urn;
+                    childLiveNode.activity = childActivity;
+                    childLiveNode.childId = newActivityChild.id;  // Give the child the 'childId' that was listed in the Parent's Jag children.  (separated them from other children of same urn)
+                    childLiveNode.parent = currentLiveNode;
+                    this.repopulateProject(childLiveNode, projectNode.projectId);
+                    currentLiveNode.addChild(childLiveNode);
                 });
 
-                kidsToRemove.forEach((child) => {
-                    const childNodeModel = this.searchTreeForChildId(projectNode, child.id);    // currentNode.getChildById(child.id)
-                    currentNode.removeChild(childNodeModel);
-                    orphanedRootStack.push(childNodeModel);
+                removedActivityChildren.forEach((removedActivityChild) => {
+                    const childLiveNode = this.searchTreeForChildId(projectNode, removedActivityChild.id);    // currentLiveNode.getChildById(child.id)
+                    currentLiveNode.removeChild(childLiveNode);
+                    orphanedChildProjectNodeStack.push(childLiveNode);
                 });
             }
-            for (const child of currentNode.children) {
-                nodeStack.push(child);
+            for (const child of currentLiveNode.children) {
+                liveNodeStack.push(child);
             }
         }
-        for (const orphanedRootNode of orphanedRootStack) {
-            orphanedRootNode.parent = orphanedRootNode.id;
-            orphanedRootNode.childId = null;
-            this.repopulateProject(orphanedRootNode, orphanedRootNode.id);
+        for (const orphanedChildProjectNode of orphanedChildProjectNodeStack) {
+            orphanedChildProjectNode.parent = orphanedChildProjectNode.id;
+            orphanedChildProjectNode.childId = null;
+            this.repopulateProject(orphanedChildProjectNode, orphanedChildProjectNode.id);
         }
         return projectNode;
     }
 
     buildCellTreeFromActivityUrn(newRootActivityUrn) {
-        const nodeStack = [];
-        const resultStack = [];
+        const cellStack = [];
+        const resultingCellStack = [];
         const rootActivity = this.fetchActivity(newRootActivityUrn);
         const rootCellModel = new CellModel({
             urn: rootActivity.urn,
@@ -275,10 +275,10 @@ export default class Controller extends EventTarget {
         rootCellModel.activity = rootActivity;
         rootCellModel.parentUrn = null;
         rootCellModel.rootUrn = newRootActivityUrn;
-        nodeStack.push(rootCellModel);
-        while (nodeStack.length > 0) {
-            const currentNode = nodeStack.pop();
-            for (const child of currentNode.activity.children) {
+        cellStack.push(rootCellModel);
+        while (cellStack.length > 0) {
+            const currentCell = cellStack.pop();
+            for (const child of currentCell.activity.children) {
                 const childActivity = this.fetchActivity(child.urn);
                 // @TODO - add try/catch in case not in cache/storage (new Activity)
                 const childCellModel = new CellModel({
@@ -288,106 +288,107 @@ export default class Controller extends EventTarget {
                 });
                 childCellModel.activity = childActivity;
                 childCellModel.childId = child.id;
-                childCellModel.parentUrn = currentNode.urn;
+                childCellModel.parentUrn = currentCell.urn;
                 childCellModel.rootUrn = newRootActivityUrn;
-                currentNode.addChild(childCellModel, true);
-                nodeStack.push(childCellModel);
+                currentCell.addChild(childCellModel, true);
+                cellStack.push(childCellModel);
             }
-            resultStack.push(currentNode);
+            resultingCellStack.push(currentCell);
         }
-        const returnNode = resultStack.shift();
-        return returnNode;
+        const returnCell = resultingCellStack.shift();
+        return returnCell;
     }
 
-    buildNodeTreeFromActivity(rootActivity, isExpanded) {
-        const nodeStack = [];
-        const resultStack = [];
+    buildLiveNodeTreeFromActivity(rootActivity, isExpanded) {
+        const liveNodeStack = [];
+        const resultingLiveNodeStack = [];
         //  const rootActivity = this.fetchActivity(newRootActivityUrn); /// I could have just passed in the Model...instead of switching to urn and back.
-        const rootNodeModel = new NodeModel();
-        rootNodeModel.urn = rootActivity.urn;
-        rootNodeModel.activity = rootActivity;
-        rootNodeModel.parentUrn = null;
-        rootNodeModel.projectId = rootNodeModel.id;
-        rootNodeModel.isExpanded = isExpanded;
-        nodeStack.push(rootNodeModel);
-        while (nodeStack.length > 0) {
-            const currentNode = nodeStack.pop();
-            for (const child of currentNode.activity.children) {
+        const projectNode = new LiveNode();
+        projectNode.urn = rootActivity.urn;
+        projectNode.activity = rootActivity;
+        projectNode.parentUrn = null;
+        projectNode.projectId = projectNode.id;
+        projectNode.isExpanded = isExpanded;
+        liveNodeStack.push(projectNode);
+        while (liveNodeStack.length > 0) {
+            const currentLiveNode = liveNodeStack.pop();
+            for (const child of currentLiveNode.activity.children) {
                 const childActivity = this.fetchActivity(child.urn);
                 // @TODO - add try/catch in case not in cache/storage (new Activity)
-                const childNodeModel = new NodeModel();
+                const childLiveNode = new LiveNode();
 
-                childNodeModel.urn = child.urn;
-                childNodeModel.childId = child.id;
-                childNodeModel.activity = childActivity;
-                childNodeModel.childId = child.id;
-                childNodeModel.parentId = currentNode.id;
-                childNodeModel.projectId = currentNode.projectId;
-                currentNode.addChild(childNodeModel, true);
-                nodeStack.push(childNodeModel);
+                childLiveNode.urn = child.urn;
+                childLiveNode.childId = child.id;
+                childLiveNode.activity = childActivity;
+                childLiveNode.childId = child.id;
+                childLiveNode.parentId = currentLiveNode.id;
+                childLiveNode.projectId = currentLiveNode.projectId;
+                currentLiveNode.addChild(childLiveNode, true);
+                liveNodeStack.push(childLiveNode);
             }
-            resultStack.push(currentNode);
+            resultingLiveNodeStack.push(currentLiveNode);
         }
-        const returnNode = resultStack.shift();
-        return returnNode;
+        const finalProjectNode = resultingLiveNodeStack.shift();  // TODO: why this way instead of using original projectNode. 
+        return finalProjectNode;
     }
 
-    getChildrenToAdd(existingKids, validKids) {                               // originalActivity, updatedActivity) {
-        const returnValue = validKids.filter((validKid) => {
-            return !existingKids.find((existingKid) => {
+    getChildrenToAdd(changingLiveNodeChildren, changedActivityChildren) {                               // originalActivity, updatedActivity) {
+        const newActivityChildren = changedActivityChildren.filter((validKid) => {
+            return !changingLiveNodeChildren.find((existingKid) => {
                 return JSON.stringify(validKid) === JSON.stringify(existingKid);
             });
         });
-        return returnValue;
+        return newActivityChildren;
     }
 
-    getChildrenToRemove(existingKids, validKids) {                               // originalActivity, updatedActivity) {
-        const returnValue = existingKids.filter((existingKid) => {
-            return !validKids.find((validKid) => {
+    getChildrenToRemove(changingLiveNodeChildren, changedActivityChildren) {                               // originalActivity, updatedActivity) {
+        const removedActivityChildren = changingLiveNodeChildren.filter((existingKid) => {
+            return !changedActivityChildren.find((validKid) => {
                 return JSON.stringify(existingKid) === JSON.stringify(validKid);
             });
         });
-        return returnValue;
+        return removedActivityChildren;
     }
 
-    searchTreeForId(node, id) {
-        const findIdCallback = (node) => {
-            if (node.id === id) {
-                return node;
+    searchTreeForId(liveNode, id) {
+        const findIdCallback = (liveNode) => {
+            if (liveNode.id === id) {
+                return liveNode;
             }
         };
-        const foundNodes = Traversal.iterate(node, findIdCallback);
-        if ((foundNodes) && (foundNodes.length > 0)) {
-            return foundNodes[0];
+        const foundLiveNodes = Traversal.iterate(liveNode, findIdCallback);
+        if ((foundLiveNodes) && (foundLiveNodes.length > 0)) {
+            return foundLiveNodes[0];
         }
     }
 
-    searchTreeForChildId(node, childId) {
-        const findChildIdCallback = (node) => {
-            if (node.childId === childId) {
-                return node;
+    searchTreeForChildId(liveNode, childId) {
+        const findChildIdCallback = (liveNode) => {
+            if (liveNode.childId === childId) {
+                return liveNode;
             }
         };
-        const foundNodes = Traversal.iterate(node, findChildIdCallback);
-        if ((foundNodes) && (foundNodes.length > 0)) {
-            return foundNodes[0];
+        const foundLiveNodes = Traversal.iterate(liveNode, findChildIdCallback);
+        if ((foundLiveNodes) && (foundLiveNodes.length > 0)) {
+            return foundLiveNodes[0];
         }
     }
 
-    removeAllChildNodes(parent) {
+    // Abstract (@TODO or only DOM nodes?)
+    removeAllChildren(parent) {
         while (parent.firstChild) {
             parent.removeChild(parent.firstChild);
         }
     }
 
-    findRoutes(node, child, routeIndex, routeList) {
-        if (node.activity.hasConsumingSiblings(child.activity.urn)) {
-            node.activity.bindings.forEach((bind) => {
+    findRoutes(liveNode, child, routeIndex, routeList) {
+        if (liveNode.activity.hasConsumingSiblings(child.activity.urn)) {
+            liveNode.activity.bindings.forEach((bind) => {
                 if (bind.from.urn === child.activity.urn) {
-                    node.children.forEach((childSibling) => {
+                    liveNode.children.forEach((childSibling) => {
                         if (childSibling.activity.urn === bind.to.urn) {
                             routeIndex.push(child);
-                            this.findRoutes(node, childSibling, routeIndex, routeList);
+                            this.findRoutes(liveNode, childSibling, routeIndex, routeList);
                             routeIndex.pop(); // the end consumer
                             routeIndex.pop(); // current producerUrn (it gets re-added if another binding found)
                         }
@@ -401,66 +402,66 @@ export default class Controller extends EventTarget {
         return routeList;
     }
 
-    relocateProject(node, deltaX, deltaY) {
-        const changeLocationCallback = (node) => {
-            node.x = node.x + deltaX;
-            node.y = node.y + deltaY;
+    relocateProject(liveNode, deltaX, deltaY) {
+        const changeLocationCallback = (liveNode) => {
+            liveNode.x = liveNode.x + deltaX;
+            liveNode.y = liveNode.y + deltaY;
         };
-        Traversal.iterate(node, changeLocationCallback);
+        Traversal.iterate(liveNode, changeLocationCallback);
     }
 
-    addDerivedProjectData(node, projectId = node.id) {       // only to be applied at the top.
-        this.repopulateParent(node);
-        this.repopulateActivity(node);
-        this.repopulateProject(node, projectId);      // top specific
-        this.repopulateDepth(node);                   // requires parent
-        this.establishChildInterdependency(node);
-        this.repopulateExpectedDuration(node);
-        this.resortChildrenSpatially(node);
-        node.leafCount = node.leafcounter();          // only affects this node (@todo repopulate leaf count?)
+    addDerivedProjectData(liveNode, projectId = liveNode.id) {       // only to be applied at the top.
+        this.repopulateParent(liveNode);
+        this.repopulateActivity(liveNode);
+        this.repopulateProject(liveNode, projectId);      // top specific
+        this.repopulateDepth(liveNode);                   // requires parent
+        this.establishChildInterdependency(liveNode);
+        this.repopulateExpectedDuration(liveNode);
+        this.resortChildrenSpatially(liveNode);
+        liveNode.leafCount = liveNode.leafcounter();          // only affects this liveNode (@todo repopulate leaf count?)
     }
 
-    repopulateParent(node) {
-        const assignParentCallback = (node) => {
-            node.children.forEach((child) => {
-                child.parent = node;
-                child.parentId = node.id;
+    repopulateParent(liveNode) {
+        const assignParentCallback = (liveNode) => {
+            liveNode.children.forEach((child) => {
+                child.parent = liveNode;
+                child.parentId = liveNode.id;
             });
         };
-        Traversal.iterate(node, assignParentCallback);
+        Traversal.iterate(liveNode, assignParentCallback);
     }
 
-    repopulateActivity(node) {
-        const fetchActivitiesCallback = (node) => {
-            node.activity = this.fetchActivity(node.urn);
+    repopulateActivity(liveNode) {
+        const fetchActivitiesCallback = (liveNode) => {
+            liveNode.activity = this.fetchActivity(liveNode.urn);
         };
-        Traversal.recurseChildrenPreorder(node, fetchActivitiesCallback);
+        Traversal.recurseChildrenPreorder(liveNode, fetchActivitiesCallback);
     }
 
-    repopulateProject(node, projectId) {
-        const assignProjectCallback = (node) => {
-            node.projectId = projectId;
+    repopulateProject(liveNode, projectId) {
+        const assignProjectCallback = (liveNode) => {
+            liveNode.projectId = projectId;
         };
-        Traversal.iterate(node, assignProjectCallback);
+        Traversal.iterate(liveNode, assignProjectCallback);
     }
 
-    repopulateDepth(node) {  // needs accurate parent info.  @TODO rewrite to not require parent info
-        const assignDepthCallback = (node) => {
-            node.setDepth();
+    repopulateDepth(liveNode) {  // needs accurate parent info.  @TODO rewrite to not require parent info
+        const assignDepthCallback = (liveNode) => {
+            liveNode.setDepth();
         };
-        Traversal.recurseChildrenPreorder(node, assignDepthCallback);
+        Traversal.recurseChildrenPreorder(liveNode, assignDepthCallback);
     }
 
-    establishChildInterdependency(node) {
-        const childrenUrnList = node.activity.children.map((child) => {
+    establishChildInterdependency(liveNode) {
+        const childrenUrnList = liveNode.activity.children.map((child) => {
             return child.urn;
         });
-        node.activity.bindings.forEach((binding) => {
+        liveNode.activity.bindings.forEach((binding) => {
             if ((childrenUrnList.includes(binding.from.urn)) && (childrenUrnList.includes(binding.to.urn))) {
-                node.children.forEach((fromNode) => {
-                    node.children.forEach((toNode) => {
-                        if ((fromNode.activity.urn === binding.from.urn) && (toNode.activity.urn === binding.to.urn)) {
-                            toNode.becomeConsumerOf(fromNode);
+                liveNode.children.forEach((fromLiveNode) => {
+                    liveNode.children.forEach((toLiveNode) => {
+                        if ((fromLiveNode.activity.urn === binding.from.urn) && (toLiveNode.activity.urn === binding.to.urn)) {
+                            toLiveNode.becomeConsumerOf(fromLiveNode);
                         }
                     });
                 });
@@ -468,26 +469,26 @@ export default class Controller extends EventTarget {
         });
     }
 
-    repopulateExpectedDuration(node) {
-        const assignDurationCallback = (node) => {
+    repopulateExpectedDuration(liveNode) {
+        const assignDurationCallback = (liveNode) => {
             const childDurationsArray = [];
-            node.children.forEach((child) => {
+            liveNode.children.forEach((child) => {
                 childDurationsArray.push(child.contextualExpectedDuration);
             });
             if (childDurationsArray.length > 0) {
                 const totalExpectedDuration = childDurationsArray.reduce((partialSum, a) => {
                     return partialSum + Number(a);
                 }, 0);
-                node.contextualExpectedDuration = totalExpectedDuration;
+                liveNode.contextualExpectedDuration = totalExpectedDuration;
             }
         };
 
-        Traversal.recurseChildrenPostorder(node, assignDurationCallback);
+        Traversal.recurseChildrenPostorder(liveNode, assignDurationCallback);
     }
 
-    resortChildrenSpatially(node) {
-        const sortChildren = (node) => {
-            node.children.sort((a, b) => {
+    resortChildrenSpatially(liveNode) {
+        const sortChildren = (liveNode) => {
+            liveNode.children.sort((a, b) => {
                 if (a.y < b.y) {
                     return -1;
                 }
@@ -497,17 +498,17 @@ export default class Controller extends EventTarget {
                 return 0;
             });
         };
-        Traversal.recurseChildrenPostorder(node, sortChildren);
+        Traversal.recurseChildrenPostorder(liveNode, sortChildren);
     }
 
-    // repopulateDataDependence(node) {
+    // repopulateDataDependence(liveNode) {
     //     const routeList = [];
     //     const childRoutes = [];
     //     const allRoutes = [];
-    //     node.children.forEach((child) => {
+    //     liveNode.children.forEach((child) => {
     //         const routeIndex = [];
-    //         if (!node.activity.isDependentSibling(child.activity.urn)) {                // if not dependant on a sibling...(its a starting point)
-    //             this.findRoutes(node, child, routeIndex, routeList);
+    //         if (!liveNode.activity.isDependentSibling(child.activity.urn)) {                // if not dependant on a sibling...(its a starting point)
+    //             this.findRoutes(liveNode, child, routeIndex, routeList);
     //         }
     //     });
     //     return routeList;

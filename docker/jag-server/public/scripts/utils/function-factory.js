@@ -7,50 +7,50 @@
 
 export function functionFactory(returns, operator) {
     let parameters = null;
-    if (returns === `node.returns.available`) {
+    if (returns === `liveNode.returns.available`) {
         parameters = `\${availableChildren}`;
-    } else if (returns === `node.returns.all`) {
+    } else if (returns === `liveNode.returns.all`) {
         parameters = `\${allChildren}`;
-    } else if (returns === `node.returns.latest`) {
+    } else if (returns === `liveNode.returns.latest`) {
         parameters = `\${latestChild}`;
-    } else if (returns === `node.returns.priority`) {
+    } else if (returns === `liveNode.returns.priority`) {
         parameters = `\${priorityChild}`;
-    } else if (returns === `node.returns.final`) {
+    } else if (returns === `liveNode.returns.final`) {
         parameters = `\${finalChild}`;
     }
 
     let returnFunction = null;
-    if (operator === `node.operator.none`) {
+    if (operator === `liveNode.operator.none`) {
         returnFunction = `${parameters}`;
-    } else if (operator === `node.operator.and`) {
+    } else if (operator === `liveNode.operator.and`) {
         returnFunction = `and(${parameters}) `;
-    } else if (operator === `node.operator.or`) {
+    } else if (operator === `liveNode.operator.or`) {
         returnFunction = `or(${parameters})`;
-    } else if (operator === `node.operator.first`) {
+    } else if (operator === `liveNode.operator.first`) {
         returnFunction = `pop([${parameters}])`;
-    } else if (operator === `node.operator.last`) {
+    } else if (operator === `liveNode.operator.last`) {
         returnFunction = `shift( ${parameters} )`;
-    } else if (operator === `node.operator.max`) {
+    } else if (operator === `liveNode.operator.max`) {
         returnFunction = `max(${parameters}) `;
-    } else if (operator === `node.operator.min`) {
+    } else if (operator === `liveNode.operator.min`) {
         returnFunction = `min(${parameters})`;
-    } else if (operator === `node.operator.sum`) {
+    } else if (operator === `liveNode.operator.sum`) {
         returnFunction = `sum(${parameters})`;
-    } else if (operator === `node.operator.avg`) {
+    } else if (operator === `liveNode.operator.avg`) {
         returnFunction = `avg(${parameters})`;
-    } else if (operator === `node.operator.union`) {
+    } else if (operator === `liveNode.operator.union`) {
         returnFunction = `union(${parameters})`;
-    } else if (operator === `node.operator.intersection`) {
+    } else if (operator === `liveNode.operator.intersection`) {
         returnFunction = `int(${parameters})`;
-    } else if (operator === `node.operator.convert`) {
+    } else if (operator === `liveNode.operator.convert`) {
         returnFunction = `convert(${parameters}, $conversionFn)`;
-    } else if (operator === `node.operator.inverse`) {
+    } else if (operator === `liveNode.operator.inverse`) {
         returnFunction = `inv(${parameters})`;
-    } else if (operator === `node.operator.negate`) {
+    } else if (operator === `liveNode.operator.negate`) {
         returnFunction = `neg(${parameters})`;
-    } else if (operator === `node.operator.abs`) {
+    } else if (operator === `liveNode.operator.abs`) {
         returnFunction = `abs(${parameters})`;
-    } else if (operator === `node.operator.not`) {
+    } else if (operator === `liveNode.operator.not`) {
         returnFunction = `not(${parameters})`;
     }
     returnFunction = `ASSIGN( \${returnValue} , ${returnFunction} )`;

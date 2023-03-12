@@ -1,5 +1,5 @@
 // /**
-//  * @file Node properties panel.
+//  * @file LiveNode properties panel.
 //  *
 //  * @author cwilber
 //  * @author mvignati

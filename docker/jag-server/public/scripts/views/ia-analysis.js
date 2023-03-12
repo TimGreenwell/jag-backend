@@ -178,16 +178,16 @@ class AnalysisView extends HTMLElement {
     }
 
     // Get (orCreate) the JagCell from the analysis generic id-view map.  If not there, create it, map it, return it.
-    getMappedActivityCell(node, parent) {
-        let jagCell = this._idToTableCellMap.get(node.id);
+    getMappedActivityCell(cellModel, parent) {
+        let jagCell = this._idToTableCellMap.get(cellModel.id);
         if (jagCell == undefined) {
-            jagCell = new JagCell(node, parent);
-            this._idToTableCellMap.set(node.id, jagCell);
+            jagCell = new JagCell(cellModel, parent);
+            this._idToTableCellMap.set(cellModel.id, jagCell);
         }
         return jagCell;
     }
 
-    attach({targetNode, targetNodeParent, reference = null, layout = true, select = true} = {}) {
+    attach({targetCellModel, targetNodeParent, reference = null, layout = true, select = true} = {}) {
         // When would there ever be a different 'reference'
         // Ideally, layout only on last call.
         // select isnt working.. range error.
@@ -195,9 +195,9 @@ class AnalysisView extends HTMLElement {
 
         // Finds the element representing the table's bottom row (succession of youngest children)
         if (reference == null) {
-            reference = this.findTableBottomNode(targetNode);
+            reference = this.findTableBottomNode(targetCellModel);
         }
-        const $targetCell = this.getMappedActivityCell(targetNode, targetNodeParent);
+        const $targetCell = this.getMappedActivityCell(targetCellModel, targetNodeParent);
         const $referenceCell = this.getMappedActivityCell(reference);
         this.insertBefore($targetCell, $referenceCell.nextSibling);
         if (select) {
@@ -226,7 +226,7 @@ class AnalysisView extends HTMLElement {
     }
 
     selectElementNameText(child) {              // called once by attach - and that gives an error @todo
-        DOMUtils.selectNodeText(child.nameElement);
+        DOMUtils.selectNodeText(child.nameElement);    // @TODO - vague node reference - find a rename
     }
 
     /**
@@ -281,22 +281,22 @@ class AnalysisView extends HTMLElement {
     }
 
 
-    _layoutJAG(node, row, col) {
-        const $view = this.getMappedActivityCell(node);
+    _layoutJAG(cellModel, row, col) {
+        const $view = this.getMappedActivityCell(cellModel);
 
-        if (node.hasChildren() && !node.collapsed) {
+        if (cellModel.hasChildren() && !cellModel.collapsed) {
             let local_row = row;
-            this._showChildNodes(node, false);
+            this._showChildNodes(cellModel, false);
 
-            for (const child of node._children) {
+            for (const child of cellModel._children) {
                 this._layoutJAG(child, local_row, col + 1);
                 local_row = local_row + child.leafCount;
             }
 
             $view.style.setProperty(`--col-end`, `1 span`);
         } else {
-            this._leafArray.push(node);
-            this._hideChildNodes(node);
+            this._leafArray.push(cellModel);
+            this._hideChildNodes(cellModel);
             $view.style.setProperty(`--col-end`, AnalysisView.JAG_SECTION_COLUMN_END);
             // $view.style.setProperty('--col-end', '1 span');
         }
@@ -304,31 +304,31 @@ class AnalysisView extends HTMLElement {
         // Position the item properly
         $view.style.setProperty(`--col-start`, col + 1);
         $view.style.setProperty(`--row-start`, row + 1);
-        $view.style.setProperty(`--row-end`, `${node.leafCount} span`);
+        $view.style.setProperty(`--row-end`, `${cellModel.leafCount} span`);
     }
 
     _makeHeader(id, name, col, row, col_span, row_span) {
         this._columnHeaderMap.set(id, new ColumnHeader(name, col, row, col_span, row_span));
     }
 
-    _showChildNodes(node, recurse = true) {
-        for (const child of node.children) {
-            const $view = this.getMappedActivityCell(child);
+    _showChildNodes(cellModel, recurse = true) {
+        for (const childCell of cellModel.children) {
+            const $view = this.getMappedActivityCell(childCell);
             $view.show();
 
             if (recurse) {
-                this._showChildNodes(child);
+                this._showChildNodes(childCell);
             }
         }
     }
 
-    _hideChildNodes(node, recurse = true) {
-        for (const child of node.children) {
-            const $view = this.getMappedActivityCell(child);
+    _hideChildNodes(cellModel, recurse = true) {
+        for (const childCell of cellModel.children) {
+            const $view = this.getMappedActivityCell(childCell);
             $view.hide();
 
             if (recurse) {
-                this._hideChildNodes(child);
+                this._hideChildNodes(childCell);
             }
         }
     }

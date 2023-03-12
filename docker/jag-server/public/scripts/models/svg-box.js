@@ -1,5 +1,5 @@
 /**
- * @file Node model for a specific analysis' JAG.
+ * @file SvgBox model for a specific analysis' JAG.
  *
  * @author mvignati
  * @version 1.65
@@ -7,7 +7,7 @@
 
 'use strict';
 
-export default class Node extends EventTarget {
+export default class SvgBox extends EventTarget {
 
     constructor({
         id,

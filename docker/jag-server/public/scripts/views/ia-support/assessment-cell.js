@@ -15,11 +15,11 @@ import AnalysisCell from './analysis-cell.js';
 
 class AssessmentView extends AnalysisCell {
 
-    constructor(agent, node, context_menu) {
+    constructor(agent, activity, context_menu) {
         super(context_menu);
         this._id = uuidV4();
         this._agent = agent;
-        this._node = node;
+        this.activity = activity;
 
         this._init();
     }
@@ -29,7 +29,7 @@ class AssessmentView extends AnalysisCell {
     }
 
     _init() {
-        this._setFillColorToAssessmentValue(this._agent.assessment(this._node));
+        this._setFillColorToAssessmentValue(this._agent.assessment(this._activity));
         // this._agent.addEventListener(`update`, this._handleAgentUpdate.bind(this));
         this.addEventListener(`contextmenu`, (_) => {
             this.addContextMenuListener(ContextMenu.SELECT_EVENT, this._processContextMenuChoice.bind(this));
@@ -39,7 +39,7 @@ class AssessmentView extends AnalysisCell {
     _handleAgentUpdate(e) {
         if (e.detail.property === `assessment`) {
             const {urn, assessment} = e.detail.extra;
-            if (urn === this._node.urn) {
+            if (urn === this._activity.urn) {
                 this._setAssessment(assessment);
             }
         }
@@ -47,7 +47,7 @@ class AssessmentView extends AnalysisCell {
 
     _processContextMenuChoice(event) {
         const result = event.detail[AssessmentView.ASSESSMENT_SYMBOL];
-        this._agent.setAssessment(this._node.urn, result);
+        this._agent.setAssessment(this._activity.urn, result);
     }
 
     _setFillColorToAssessmentValue(assessment) {

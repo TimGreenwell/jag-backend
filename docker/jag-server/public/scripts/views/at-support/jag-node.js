@@ -10,7 +10,7 @@
 //  */
 //
 //
-// //  This is the playground Jag Node -
+// //  This is the playground Jag LiveNode -
 //
 // import Activity from '../../models/activity.js';
 //
@@ -363,7 +363,7 @@
 //         this.dispatchEvent(new CustomEvent(`drag`));
 //         this.removeEventListener(`mousemove`, this._boundNodeDrag);
 //         //    this.parentNode.removeEventListener('mousemove', this._boundDrag);                // tlg I took this out -- being annoying -- what is parentNode..never defined
-//         this.dispatchEvent(new CustomEvent(`event-node-repositioned`, {
+//         this.dispatchEvent(new CustomEvent(`event-livenode-repositioned`, {
 //             bubbles: true,
 //             detail: {
 //                 nodeModel: this._nodeModel,
@@ -396,7 +396,7 @@
 //             //    this._nodeModel.isExpanded = !this._nodeModel.isExpanded;
 //             this.isExpanded = !this.isExpanded;
 //             const updateNode = (this._nodeModel.isRoot()) ? this._nodeModel : this._nodeModel.parent;
-//             this.dispatchEvent(new CustomEvent(`event-node-updated`, {
+//             this.dispatchEvent(new CustomEvent(`event-livenode-updated`, {
 //                 bubbles: true,
 //                 composed: true,
 //                 detail: {nodeModel: updateNode}
