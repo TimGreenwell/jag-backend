@@ -106,7 +106,7 @@ document.addEventListener(`DOMContentLoaded`, async () => {
         if (!iaTable.style.height) {
             iaTable.style.height = `50%`;
         }
-        const selectedNodes = iaTable.selectedNodes;
+        const selectedNodes = iaTable.selectedNodes;   // < overlooking these nodes for now - find better renames
         timeview.refreshTimeview(selectedNodes[0]);
     }
     iaMenu.addEventListener(`event-toggle-timeview`, eventToggleTimeviewHandler);

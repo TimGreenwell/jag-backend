@@ -350,13 +350,13 @@ export default class Controller extends EventTarget {
         return removedActivityChildren;
     }
 
-    searchTreeForId(liveNode, id) {
+    searchTreeForId(rootliveNode, liveNodeId) {
         const findIdCallback = (liveNode) => {
-            if (liveNode.id === id) {
+            if (liveNode.id === liveNodeId) {
                 return liveNode;
             }
         };
-        const foundLiveNodes = Traversal.iterate(liveNode, findIdCallback);
+        const foundLiveNodes = Traversal.iterate(rootliveNode, findIdCallback);
         if ((foundLiveNodes) && (foundLiveNodes.length > 0)) {
             return foundLiveNodes[0];
         }

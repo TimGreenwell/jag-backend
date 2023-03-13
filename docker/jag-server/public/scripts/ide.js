@@ -56,6 +56,7 @@ customElements.define(`jag-ide`, class extends HTMLElement {
         this._updateActorOptions();
     }
 
+    // Does not llook used - no local caller.  No listeners being handled by this.
     handleSelectionUpdate(selection) {
         this._instance_inputs.clear();
 

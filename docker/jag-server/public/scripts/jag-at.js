@@ -8,15 +8,15 @@
  *
  */
 
-import Playground from './views/at-playground.js';                     // AT - Center graphic view of JAG Nodes // ?? - seems unused currently
+import Playground from './views/at-playground.js';           // AT - Center graphic view of liveNodes // ?? - seems unused currently
 import TimeView from "./views/at-timeview.js";
-import Library from './views/at-activity-library.js';                     // AT - Left view of available Activities
-import ProjectLibrary from './views/at-node-library.js';         // AT - Left view(2) of current JAGs
-import Menu from './views/at-menu.js';                           // AT - Top view of user actions (plus title/logo)
-import Properties from './views/at-properties.js';               // AT - Right view of JAG LiveNode data entry fields
-import StorageService from './services/storage-service.js';   // Interface services with JAG in storage(s)
-import IndexedDBStorage from './storages/indexed-db.js';      // Available storage option (IndexedDB)
-import RESTStorage from './storages/rest.js';                 // Available storage option (tested with Postgres)
+import Library from './views/at-activity-library.js';        // AT - Left view of available Activities
+import ProjectLibrary from './views/at-livenode-library.js';     // AT - Left view(2) of current JAGs
+import Menu from './views/at-menu.js';                       // AT - Top view of user actions (plus title/logo)
+import Properties from './views/at-properties.js';           // AT - Right view of JAG LiveNode data entry fields
+import StorageService from './services/storage-service.js';  // Interface services with JAG in storage(s)
+import IndexedDBStorage from './storages/indexed-db.js';     // Available storage option (IndexedDB)
+import RESTStorage from './storages/rest.js';                // Available storage option (tested with Postgres)
 import ControllerAT from "./controllers/controllerAT.js";
 import UserPrefs from "./utils/user-prefs.js";     // Controller - injection point
 
@@ -115,8 +115,8 @@ document.addEventListener(`DOMContentLoaded`, async () => {
         if (!playground.style.height) {
             playground.style.height = `50%`;
         }
-        const selectedNodes = playground.selectedNodes;
-        timeview.refreshTimeview(selectedNodes[0]);
+        const selectedLiveNodes = playground.selectedLiveNodes;
+        timeview.refreshTimeview(selectedLiveNodes[0]);
     }
     menu.addEventListener(`event-toggle-timeview`, eventToggleTimeviewHandler);
 

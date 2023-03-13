@@ -108,9 +108,9 @@ jag-library .locked, analysis-library .locked, node-library .locked, agent-libra
 }
 
 jag-library .lock-button, analysis-library .lock-button, node-library .lock-button, agent-library .lock-button {
-    background-image: url('/jag/icons/lock-20.png');
+    background-image: url('./icons/lock-20.png');
 }
 
 jag-library .delete-button, analysis-library .delete-button, node-library .delete-button, agent-library .delete-button {
-    background-image: url('/jag/icons/ic_delete_black_18dp_1x.png');
+    background-image: url('../icons/ic_delete_black_18dp_1x.png');
 }

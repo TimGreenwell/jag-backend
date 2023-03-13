@@ -2,7 +2,7 @@
  *
  */
 
-import Definition from './views/def-definition.js';                       // AT - Center graphic view of JAG Nodes
+import Definition from './views/def-definition.js';                       // AT - Center graphic view of liveNodes
 import Menu from './views/def-menu.js';                             // AT - Top view of user actions (plus title/logo)
 import ControllerDEF from "./controllers/controllerDEF.js";
 import StorageService from './services/storage-service.js';         // Interface services with JAG in storage(s)
@@ -15,7 +15,7 @@ document.addEventListener(`DOMContentLoaded`, async () => {
     const QueryString = window.location.search;
     const urlParams = new URLSearchParams(QueryString);
     const startProjectId = urlParams.get(`project`);
-    const startNodeId = urlParams.get(`node`);
+    const startLiveNodeId = urlParams.get(`livenode`);
 
 
     // Initializes local storage
@@ -33,7 +33,7 @@ document.addEventListener(`DOMContentLoaded`, async () => {
     StorageService.setStoragesSynced(false);                    // write to all storages or just preferred
     StorageService.senderId = `jag-def`;
 
-    const controller = new ControllerDEF(startProjectId, startNodeId);
+    const controller = new ControllerDEF(startProjectId, startLiveNodeId);
 
     // Load DOM outer skeleton for Authoring Tool
     const body = document.querySelector(`body`);

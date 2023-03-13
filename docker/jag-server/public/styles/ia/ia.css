@@ -173,12 +173,12 @@ jag-controls .jag-button {
 
 jag-controls .add-child-button {
     order: 0;
-    background-image: url('/jag/icons/ic_add_black_18dp_1x.png');
+    background-image: url('./jag/icons/ic_add_black_18dp_1x.png');
 }
 
 jag-controls .remove-button {
     order: 1;
-    background-image: url('/jag/icons/ic_delete_black_18dp_1x.png');
+    background-image: url('./jag/icons/ic_delete_black_18dp_1x.png');
 }
 
 ia-assessment {

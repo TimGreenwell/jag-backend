@@ -160,8 +160,8 @@ export default class ControllerIA extends Controller {
         this._iaTable.addEventListener(`event-analysis-created`, this.eventAnalysisCreatedHandler.bind(this));  // popup create
         this._iaTable.addEventListener(`event-analysis-updated`, this.eventAnalysisUpdatedHandler.bind(this));  // jag structure updates
         // this._iaTable.addEventListener('event-analysis-deleted', this.eventAnalysisDeletedHandler.bind(this));  // jag structure updates
-        this._iaTable.addEventListener(`event-cell-addchild`, this.eventNodeAddChildHandler.bind(this));  // '+' clicked on jag cell (technically undefined jag)         // does that really need to come up this far?
-        this._iaTable.addEventListener(`event-cell-prunechild`, this.eventNodePruneChildHandler.bind(this));
+        this._iaTable.addEventListener(`event-cell-addchild`, this.eventCellAddChildHandler.bind(this));  // '+' clicked on jag cell (technically undefined jag)         // does that really need to come up this far?
+        this._iaTable.addEventListener(`event-cell-prunechild`, this.eventCellPruneChildHandler.bind(this));
         this._iaTable.addEventListener(`event-collapse-toggled`, this.eventCollapseToggledHandler.bind(this));
         this._iaTable.addEventListener(`event-urn-changed`, this.eventUrnChangedHandler.bind(this));
         this._iaTable.addEventListener(`event-activity-created`, this.eventActivityCreatedHandler.bind(this));
@@ -279,8 +279,8 @@ export default class ControllerIA extends Controller {
      * eventAnalysisCreatedHandler - requires createStandardAnalysis, displayAnalysis
      * eventAnalysisUpdatedHandler
      * eventAnalysisDeletedHandler  *
-     * eventNodeAddChildHandler
-     * eventNodePruneChildHandler  - this is a disconnect (not a delete) of a chilid activity from its parent
+     * eventCellAddChildHandler
+     * eventCellPruneChildHandler  - this is a disconnect (not a delete) of a chilid activity from its parent
      * eventCollapseToggledHandler
      * eventUrnChangedHandler      (C)
      * eventActivityCreatedHandler (C)
@@ -316,7 +316,7 @@ export default class ControllerIA extends Controller {
         await StorageService.update(event.detail.analysis, `analysis`);
     }
 
-    eventNodeAddChildHandler(event) {      // if not working - check why this->._currentAnalysis is not being updated (just passed)
+    eventCellAddChildHandler(event) {      // if not working - check why this->._currentAnalysis is not being updated (just passed)
         // This will not be permanent until a valid URN is set.  Not-persistent.
         // @TODO push this back down into iaTable (from there - to there)
         const parentCell = event.detail.cell;
@@ -339,9 +339,9 @@ export default class ControllerIA extends Controller {
         }
     }
 
-    async eventNodePruneChildHandler(event) {
+    async eventCellPruneChildHandler(event) {
         // A Prune (or any delete) is a potentially significant change.
-        // Going to just update parent.  Actually prune node?
+        // Going to just update parent.  Actually prune cell?
         // After a quick check we are not pruning the head.
 
         const parentActivityUrn = event.detail.cell.parent.urn;
@@ -396,7 +396,7 @@ export default class ControllerIA extends Controller {
     async commandActivityCreatedHandler(createdActivity, createdActivityUrn) {
         this.cacheActivity(createdActivity);
         UserPrefs.setDefaultUrnPrefixFromUrn(createdActivityUrn);
-        // thought below is to surgically add it to the node tree - if its in the currentAnalysis
+        // thought below is to surgically add it to the cell tree - if its in the currentAnalysis
         // until then, just drawing the whole thing.
         if (this._currentAnalysis) {
             // @TODO CHECK IF THIS URN IS RELEVANT TO THE ANALYSIS
@@ -464,9 +464,9 @@ export default class ControllerIA extends Controller {
      * displayAnalysis -         redraws the analysis table
      *                           required by 1) eventAnalysisCreatedHandler
      *
-     * buildCellTreeFromActivityUrn   Build node tree given root URN
+     * buildCellTreeFromActivityUrn   Build cell tree given root URN
      *                           required by: eventAnalysisSelected
-     *                           @TODO same nodes as Project nodes? similar / non-permanent
+     *                           @TODO  compare cells to -live-n-o-d-e-s similar / non-permanent
      *
      */
 
@@ -543,13 +543,13 @@ export default class ControllerIA extends Controller {
     // blending these two together --- update the projectModel to the existing activityModels.
 
     // possible common area contender
-
+    // NO CALLERS
     async saveCellModel(newCellModel) {
-        if (await StorageService.has(newCellModel, `node`)) {
-            await StorageService.update(newCellModel, `node`);
+        if (await StorageService.has(newCellModel, `node`)) {       // <--- Not a node
+            await StorageService.update(newCellModel, `node`);      // <--- Not a node
         } else {
             if (newCellModel.isValid()) {
-                await StorageService.create(newCellModel, `node`);
+                await StorageService.create(newCellModel, `node`);  // <--- Not a node
             } else {
                 window.alert(`Invalid URN`);
             }

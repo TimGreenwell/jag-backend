@@ -15,15 +15,15 @@ import Controller from "./controller.js";
 // noinspection DuplicatedCode,JSUnusedGlobalSymbols,JSUnresolvedFunction,JSUnresolvedVariable
 export default class ControllerDEF extends Controller {
 
-    constructor(startProjectId = null, startNodeId = null) {
+    constructor(startProjectId = null, startLiveNodeId = null) {
         super();
         this._currentProjectId = startProjectId;
-        this._currentNodeId = startNodeId;
+        this._currentLiveNodeId = startLiveNodeId;
         this._menu = null;
         this._definition = null;
 
-        StorageService.subscribe(`command-node-updated`, this.commandNodeUpdatedHandler.bind(this)); // }
-        StorageService.subscribe(`command-node-deleted`, this.commandNodeDeletedHandler.bind(this)); // }
+        StorageService.subscribe(`command-livenode-updated`, this.commandLiveNodeUpdatedHandler.bind(this)); // }
+        StorageService.subscribe(`command-livenode-deleted`, this.commandLiveNodeDeletedHandler.bind(this)); // }
     }
 
     // Panel Setters
@@ -47,7 +47,7 @@ export default class ControllerDEF extends Controller {
             this.cacheActivity(activity);
         });
 
-        const allProjects = await StorageService.all(`node`);
+        const allProjects = await StorageService.all(`livenode`);
         allProjects.forEach((project) => {
             if (this._currentProjectId === project.id) {
                 this.addDerivedProjectData(project);
@@ -62,8 +62,8 @@ export default class ControllerDEF extends Controller {
 
     initializePanels() {
         const project = this.fetchProject(this._currentProjectId);
-        const node = this.searchTreeForId(project, this._currentNodeId);
-        this._definition.definingNode = node;
+        const liveNode = this.searchTreeForId(project, this._currentLiveNodeId);
+        this._definition.definingLiveNode = liveNode;
         this._definition.buildTestBank();
     }
 
@@ -111,55 +111,55 @@ export default class ControllerDEF extends Controller {
      * the appropriate changes are made to the views.  Its entirely possible (and common) that the events were
      * initiated locally but that is transparent to the logic.  The origin of commands is irrelevant to the logic.
      *
-     * commandNodeUpdatedHandler
-     * commandNodeDeletedHandler
+     * commandLiveNodeUpdatedHandler
+     * commandLiveNodeDeletedHandler
      *
      */
 
-    commandNodeUpdatedHandler(updatedProject, updatedProjectId) {
-        console.log(`((COMMAND INCOMING) >>  Node Updated`);
+    commandLiveNodeUpdatedHandler(updatedProject, updatedProjectId) {
+        console.log(`((COMMAND INCOMING) >>  liveNode Updated`);
         if (this._currentProjectId === updatedProjectId) {
             this.addDerivedProjectData(updatedProject);
-            const node = this.searchTreeForId(updatedProject, this._currentNodeId);
-            this._definition.reset(node);
+            const liveNode = this.searchTreeForId(updatedProject, this._currentLiveNodeId);
+            this._definition.reset(liveNode);
         }
     }
 
-    commandNodeDeletedHandler(deletedNodeId) {
-        console.log(`((COMMAND INCOMING) >>  Node Deleted`);
-        this.uncacheProject(deletedNodeId);
+    commandLiveNodeDeletedHandler(deletedLiveNodeId) {
+        console.log(`((COMMAND INCOMING) >>  liveNode Deleted`);
+        this.uncacheProject(deletedLiveNodeId);
     }
 
     /**
      *                                  Support Functions
      *
-     * searchTreeForId
+     * searchProjectForLiveNodeId
      *
      */
 
-    searchTreeForId(treeNode, id) {
-        const workStack = [];
-        workStack.push(treeNode);
-        while (workStack.length > 0) {
-            const checkNode = workStack.pop();
-            if (checkNode.id === id) {
-                return checkNode;
+    searchTreeForId(rootLiveNode, liveNodeId) {
+        const liveNodeStack = [];
+        liveNodeStack.push(rootLiveNode);
+        while (liveNodeStack.length > 0) {
+            const checkLiveNode = liveNodeStack.pop();
+            if (checkLiveNode.id === liveNodeId) {
+                return checkLiveNode;
             }
-            checkNode.children.forEach((child) => {
-                return workStack.push(child);
+            checkLiveNode.children.forEach((checkLiveNodeChild) => {
+                return liveNodeStack.push(checkLiveNodeChild);
             });
         }
         return null;
     }
 
     // marked for death
-    // searchTreeForChildId(treeNode,childId) {
-    //     let workStack = []
-    //     workStack.push(treeNode)
-    //     while(workStack.length>0){
-    //         let checkNode = workStack.pop();
-    //         if (checkNode.childId === childId) {return checkNode}
-    //         checkNode.children.forEach(child => workStack.push(child))
+    // searchTreeForChildId(rootLiveNode,liveNodeId) {
+    //     let liveNodeStack = []
+    //     liveNodeStack.push(rootLiveNode)
+    //     while(liveNodeStack.length>0){
+    //         let checkLiveNode = liveNodeStack.pop();
+    //         if (checkLiveNode.id === liveNodeId) {return checkLiveNode}
+    //         checkLiveNode.children.forEach(child => liveNodeStack.push(child))
     //     }
     //     return null
     // }
