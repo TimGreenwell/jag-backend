@@ -7,6 +7,7 @@
  *
  * https://medium.com/devops-dudes/securing-node-js-express-rest-apis-with-keycloak-a4946083be51
  * Delete after dev -- morgan(HTTP logger)
+ * api-server-postgres-jag
  */
 
 'use strict';
@@ -73,7 +74,7 @@ const fetchPublicRsaKey = async ({realm, authServerUrl, useCache}) => {
 const opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = `long_secret-here`;
-opts.issuer = `https://jag.baby/auth/realms/realm1`;
+opts.issuer = `https://jag.baby/auth/realms/jag`;
 // opts.algorithms = ["HS256", "HS384"];
 // opts.audience = 'client1';
 
@@ -92,7 +93,7 @@ passport.use(new Strategy(opts, async (token, done) => {
 const checkAuthenticated = async (req, res, next) => {
     const token = req.headers.authorization.split(` `)[1];
     console.log(`Pulling Public Keys - RSA`);
-    const rsaKey = await fetchPublicRsaKey({realm: `realm1`,
+    const rsaKey = await fetchPublicRsaKey({realm: `jag`,
         authServerUrl: `http://auth-keycloak:8080`});
     jwt.verify(token, rsaKey, {algorithms: [`RS256`]}, (err, decodedToken) => {
         if (err) {

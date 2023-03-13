@@ -40,9 +40,9 @@ const session = {
 
 // Authorization flow
 // get instantiated Issuer/IdP/Auth Server (keycloak)
-const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/realm1`);
+const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/jag`);
 const client = new keycloakIssuer.Client({
-    client_id: `client1`,
+    client_id: `nodejs-jag-app`,
     client_secret: `NmU3WVp8WdZFG5MSQS1DcC3aGXE4Y1tx`,
     redirect_uris: [`https://jag.baby/jag/auth/callback`],
     post_logout_redirect_uris: [`https://jag.baby/jag/logout/callback`],

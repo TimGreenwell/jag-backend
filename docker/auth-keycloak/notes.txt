@@ -21,7 +21,8 @@ done) This json will then be used to rebuild the keycloak realm if not in the db
 ----------------------------------------------------------------------------------------------------
 ***!!  If errors occur after clicking the Google OAuth button - then good chance (pretty certainly) that the
 import messed up the google identity provider secret got messed up.  Go to:
-https://console.cloud.google.com/apis/credentials/oauthclient
+
+     ---->>  https://console.cloud.google.com/apis/credentials/oauthclient
 and 'reset secret' and update it in the jag.baby/auth - realm - identity providers - client secret.
 
 Error is:
