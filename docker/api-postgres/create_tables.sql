@@ -1,19 +1,19 @@
-CREATE TABLE IF NOT EXISTS "activity"
+CREATE TABLE IF NOT EXISTS "jag"
 (
-    "activity_urn" VARCHAR(255) NOT NULL,
-    "activity_author" VARCHAR(255),
-    "activity_collapsed" boolean,
+    "jag_urn" VARCHAR(255) NOT NULL,
+    "jag_author" VARCHAR(255),
+    "jag_collapsed" boolean,
     "connector_exec" VARCHAR(255) NOT NULL,
     "connector_oper" VARCHAR(255) NOT NULL,
     "connector_rtns" VARCHAR(255),
-    "activity_created_date" timestamp without time zone,
-    "activity_description" VARCHAR(255),
-    "activity_expected_duration" VARCHAR(255),
-    "activity_is_locked" boolean,
-    "activity_locked_by" VARCHAR(255),
-    "activity_modified_date" timestamp without time zone,
-    "activity_name" VARCHAR(255) NOT NULL,
-    CONSTRAINT "PK_activity" PRIMARY KEY ("activity_urn")
+    "jag_created_date" timestamp without time zone,
+    "jag_description" VARCHAR(255),
+    "jag_expected_duration" VARCHAR(255),
+    "jag_is_locked" boolean,
+    "jag_locked_by" VARCHAR(255),
+    "jag_modified_date" timestamp without time zone,
+    "jag_name" VARCHAR(255) NOT NULL,
+    CONSTRAINT "PK_jag" PRIMARY KEY ("jag_urn")
 );
 
 
@@ -44,24 +44,24 @@ CREATE TABLE IF NOT EXISTS "endpoint"
     "endpoint_exchange_name" VARCHAR(255) NOT NULL,
     "endpoint_exchange_source_urn" VARCHAR(255) NOT NULL,
     "endpoint_exchange_type" VARCHAR(255) NOT NULL,
-    "endpoint_activity_fk" VARCHAR(255) NOT NULL,
+    "endpoint_jag_fk" VARCHAR(255) NOT NULL,
     CONSTRAINT "PK_endpoint" PRIMARY KEY ("endpoint_id"),
-    CONSTRAINT "FK_activity_urn" FOREIGN KEY ("endpoint_activity_fk")
-        REFERENCES activity ("activity_urn") MATCH SIMPLE
+    CONSTRAINT "FK_jag_urn" FOREIGN KEY ("endpoint_jag_fk")
+        REFERENCES jag ("jag_urn") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
 
 
 
-CREATE TABLE IF NOT EXISTS "subactivity"
+CREATE TABLE IF NOT EXISTS "innerjag"
 (
-    "subactivity_id" VARCHAR(255) NOT NULL,
-    "subactivity_urn" VARCHAR(255) NOT NULL,
-    "subactivity_parent_fk" VARCHAR(255),
-    CONSTRAINT "PK_subactivity" PRIMARY KEY ("subactivity_id"),
-    CONSTRAINT "FK_subactivity_parent" FOREIGN KEY ("subactivity_parent_fk")
-        REFERENCES activity ("activity_urn") MATCH SIMPLE
+    "innerjag_id" VARCHAR(255) NOT NULL,
+    "innerjag_urn" VARCHAR(255) NOT NULL,
+    "innerjag_parent_fk" VARCHAR(255),
+    CONSTRAINT "PK_innerjag" PRIMARY KEY ("innerjag_id"),
+    CONSTRAINT "FK_innerjag_parent" FOREIGN KEY ("innerjag_parent_fk")
+        REFERENCES jag ("jag_urn") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS "binding"
     "binding_id" VARCHAR(255) NOT NULL,
     "binding_from" VARCHAR(255) NOT NULL,
     "binding_to" VARCHAR(255) NOT NULL,
-    "binding_activity_fk" VARCHAR(255) NOT NULL,
+    "binding_jag_fk" VARCHAR(255) NOT NULL,
     CONSTRAINT "PK_binding" PRIMARY KEY ("binding_id"),
     CONSTRAINT "FK_binding_from" FOREIGN KEY ("binding_from")
         REFERENCES endpoint ("endpoint_id") MATCH SIMPLE
@@ -82,35 +82,35 @@ CREATE TABLE IF NOT EXISTS "binding"
         REFERENCES endpoint ("endpoint_id") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE,
-    CONSTRAINT "FK_activity_id" FOREIGN KEY ("binding_activity_fk")
-        REFERENCES activity ("activity_urn") MATCH SIMPLE
+    CONSTRAINT "FK_jag_id" FOREIGN KEY ("binding_jag_fk")
+        REFERENCES jag ("jag_urn") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
 
 
 
-CREATE TABLE IF NOT EXISTS "node"
+CREATE TABLE IF NOT EXISTS "livenode"
 (
-    "node_id" VARCHAR(255) NOT NULL,
-    "node_child_id" VARCHAR(255),
-    "node_con_desc" VARCHAR(255),
-    "node_contextual_expected_duration" VARCHAR(255),
-    "node_con_name" VARCHAR(255),
-    "node_is_expanded" boolean,
-    "node_is_locked" boolean,
-    "node_project_id" VARCHAR(255),
-    "node_return_state" VARCHAR(255),
-    "node_return_value" VARCHAR(255),
-    "node_test_return_state" VARCHAR(255),
-    "node_test_return_value" VARCHAR(255),
-    "node_urn" VARCHAR(255),
-    "node_x" integer,
-    "node_y" integer,
-    "node_parent_id_fk" VARCHAR(255),
-    CONSTRAINT "PK_node" PRIMARY KEY ("node_id"),
-    CONSTRAINT "FK_node_child_parent" FOREIGN KEY ("node_parent_id_fk")
-        REFERENCES node ("node_id") MATCH SIMPLE
+    "livenode_id" VARCHAR(255) NOT NULL,
+    "livenode_child_id" VARCHAR(255),
+    "livenode_con_desc" VARCHAR(255),
+    "livenode_contextual_expected_duration" VARCHAR(255),
+    "livenode_con_name" VARCHAR(255),
+    "livenode_is_expanded" boolean,
+    "livenode_is_locked" boolean,
+    "livenode_project_id" VARCHAR(255),
+    "livenode_return_state" VARCHAR(255),
+    "livenode_return_value" VARCHAR(255),
+    "livenode_test_return_state" VARCHAR(255),
+    "livenode_test_return_value" VARCHAR(255),
+    "livenode_urn" VARCHAR(255),
+    "livenode_x" integer,
+    "livenode_y" integer,
+    "livenode_parent_id_fk" VARCHAR(255),
+    CONSTRAINT "PK_livenode" PRIMARY KEY ("livenode_id"),
+    CONSTRAINT "FK_livenode_child_parent" FOREIGN KEY ("livenode_parent_id_fk")
+        REFERENCES livenode ("livenode_id") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
@@ -122,10 +122,10 @@ CREATE TABLE IF NOT EXISTS "subscription"
     "subscription_id" VARCHAR(255) NOT NULL,
     "subscription_data" VARCHAR(255),
     "subscription_lrt" timestamp without time zone,
-    "subscription_node_fk" VARCHAR(255) NOT NULL,
+    "subscription_livenode_fk" VARCHAR(255) NOT NULL,
     CONSTRAINT "PK_subscription" PRIMARY KEY ("subscription_id"),
-    CONSTRAINT "FK_node_id" FOREIGN KEY ("subscription_node_fk")
-        REFERENCES node ("node_id") MATCH SIMPLE
+    CONSTRAINT "FK_livenode_id" FOREIGN KEY ("subscription_livenode_fk")
+        REFERENCES livenode ("livenode_id") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
@@ -168,8 +168,8 @@ CREATE TABLE IF NOT EXISTS "agent_assessment"
 (
     "agent_id" VARCHAR(255) NOT NULL,
     "assessment" integer,
-    "activity" VARCHAR(255) NOT NULL,
-    CONSTRAINT "PK_agent_assessment" PRIMARY KEY ("agent_id", "activity"),
+    "jag" VARCHAR(255) NOT NULL,
+    CONSTRAINT "PK_agent_assessment" PRIMARY KEY ("agent_id", "jag"),
     CONSTRAINT "FK_agent_id" FOREIGN KEY ("agent_id")
         REFERENCES agent ("agent_id") MATCH SIMPLE
         ON UPDATE CASCADE

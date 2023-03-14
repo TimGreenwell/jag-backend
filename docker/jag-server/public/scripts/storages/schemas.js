@@ -25,7 +25,7 @@ export default class Schemas {
             name: `activity`,
             key: `urn`,
             deserialize: Activity.fromJSON,
-            rest: `activities`,
+            rest: `jags`,
             indexList: [
                 {
                     name: `urn-index`,

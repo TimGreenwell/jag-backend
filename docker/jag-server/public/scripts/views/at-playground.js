@@ -66,8 +66,9 @@ class AtPlayground extends Popupable {
         this._boundDragView = this.dragView.bind(this);                                              // pan svg
         this._boundStopDragView = this.stopDragView.bind(this);                                      // cease panning
         this._boundFinalizeEdge = this.finalizeEdge.bind(this);
-        this._boundDragEdgeDestination = this.dragEdgeDestination().bind(this);
+
         this._boundSignalPossibleChild = this.signalPossibleChild.bind(this);
+        this._boundDragEdgeDestination = this.dragEdgeDestination.bind(this);
         this._boundRestoreNormalColor = this.restoreNormalColor.bind(this);
         this._boundDragLiveNode = this.dragLiveNode.bind(this);
         this._boundStopDraggingLiveNode = this.stopDraggingLiveNode.bind(this);
@@ -196,10 +197,15 @@ class AtPlayground extends Popupable {
             this.svgSelectedItems.svgNodeGroupMap.set(key, svgNodeGroup);
         });
 
-        const selectedLiveNodeArray = Array.from(this._selectedLiveNodesMap.values());
+        const selectedLiveNodesArray = Array.from(this._selectedLiveNodesMap.values());
+        console.log("selectedLiveNodeArray - good?? looks like it")
+        console.log(selectedLiveNodesArray)
         this.dispatchEvent(new CustomEvent(`event-livenodes-selected`, {
-            selectedLiveNodeArray: {selectedLiveNodeArray}
+            detail: {
+                selectedLiveNodesArray: selectedLiveNodesArray
+            }
         }));
+
 
         this._playgroundWrapperDiv.addEventListener(`mousemove`, this._boundDragLiveNode);
         this._playgroundWrapperDiv.addEventListener(`mouseup`, this._boundStopDraggingLiveNode);
@@ -239,7 +245,9 @@ class AtPlayground extends Popupable {
      */
 
     dragEdgeDestination(e) {
+        console.log(e)
         e.stopPropagation();
+        console.log("stopping propagation")
         const edge = this.svg.fetchEdgeToCursor();
         const cursorPoint = this.screenToSVGCoords(e);
         this.svg.followCursor(edge, cursorPoint);
@@ -904,7 +912,7 @@ class AtPlayground extends Popupable {
         const svgNodeGroup = this.svg.createSvgNodeGroup(liveNode.id);
         this.svg.positionItem(svgNodeGroup, liveNode.x, liveNode.y);
         parentGroup.appendChild(svgSubGroup);
-        svgSubGroup.insertBefore(svgNodeGroup, svgSubGroup);
+        svgSubGroup.insertBefore(svgNodeGroup, svgSubGroupTop);
 
         const labelElement = this.svg.createTextElement(liveNode.name, liveNode.id);
         const svgText = this.svg.positionItem(labelElement, this.svg.horizontalLeftMargin, this.svg.standardBoxHeight / 4);

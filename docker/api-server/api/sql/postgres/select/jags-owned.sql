@@ -13,5 +13,5 @@ SELECT
     a.jag_modified_date AS "modifiedDate",
     a.jag_name AS "name"
 FROM jag a
-WHERE a.jag_urn = $1
+WHERE a.jag_author = $1
 ORDER BY a.jag_urn

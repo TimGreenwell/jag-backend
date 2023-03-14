@@ -20,7 +20,7 @@ jag-library .library-search, analysis-library .library-search, node-library .lib
     flex-basis: 30px;
     /*height: 30px;*/
     font-size: 15px;
-    background-image: url('/jag/icons/search_mag_20.png');
+    background-image: url('/jag/styles/icons/search_mag_20.png');
     background-repeat: no-repeat;
     background-position: left center;
     padding-left: 40px;
@@ -112,5 +112,5 @@ jag-library .lock-button, analysis-library .lock-button, node-library .lock-butt
 }
 
 jag-library .delete-button, analysis-library .delete-button, node-library .delete-button, agent-library .delete-button {
-    background-image: url('../icons/ic_delete_black_18dp_1x.png');
+    background-image: url('./icons/ic_delete_black_18dp_1x.png');
 }

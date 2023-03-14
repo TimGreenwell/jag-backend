@@ -1,27 +1,22 @@
 import * as queries from "../sql/postgres/queries.js";
 
-const updateActivity = async (request, response) => {
-    const activity = request.body;
-    console.log(`IN Update Activity`);
-    console.log(`request body type = ${typeof activity}`);
-    console.log(`request body  = ${activity}`);
-    console.log(`stringify request body -- ${JSON.stringify(activity)}`);
-    console.log(`request.user = ${request.user}`);
+const updateJag = async (request, response) => {
+    const jag = request.body;
     if (request.user) {
-        await queries.updateActivity(activity, request.user.email);
-        const children = activity.children;
+        await queries.updateJag(jag, request.user.email);
+        const children = jag.children;
         for (const child of children) {
-            await queries.updateSubactivity(child, activity.urn);
+            await queries.updateInnerJag(child, jag.urn);
         }
 
-        const endpoints = activity.endpoints;
+        const endpoints = jag.endpoints;
         for (const endpoint of endpoints) {
-            await queries.updateEndpoint(endpoint, activity.urn);
+            await queries.updateEndpoint(endpoint, jag.urn);
         }
 
-        const bindings = activity.bindings;
+        const bindings = jag.bindings;
         for (const binding of bindings) {
-            await queries.updateBinding(binding, activity.urn);
+            await queries.updateBinding(binding, jag.urn);
         }
         console.log(`1`);
         response.status(200).json(`{"Message":"completed"}`);
@@ -31,15 +26,15 @@ const updateActivity = async (request, response) => {
     }
 };
 
-const updateJag = async (request, response) => {
-    const jag = request.body;
-    const workStack = [];
-    workStack.push(jag);
-    while (workStack.length > 0) {
-        const currentNode = workStack.pop();
-        await queries.updateJag(currentNode);
-        currentNode.children.forEach((child) => {
-            workStack.push(child);
+const updateLiveNodes = async (request, response) => {
+    const liveNode = request.body;
+    const liveNodeStack = [];
+    liveNodeStack.push(liveNode);
+    while (liveNodeStack.length > 0) {
+        const currentLiveNode = liveNodeStack.pop();
+        await queries.updateLiveNodes(currentLiveNode);
+        currentLiveNode.children.forEach((childLiveNode) => {
+            liveNodeStack.push(childLiveNode);
         });
     }
     response.status(200).json(`{"Message":"completed"}`);
@@ -66,14 +61,14 @@ const updateAnalysis = async (request, response) => {
 };
 
 
-const getAllActivities = async (request, response) => {
+const getAllJags = async (request, response) => {
     let includeShared;
     if (request.query.includeShared) {
         includeShared = request.query.includeShared.toLowerCase() === `true`;
     } else {
         includeShared = false;
     }
-    console.log(`getAllActivities  getAllActivities getAllActivities getAllActivities`);
+    console.log(`getAllJags  getAllJags getAllJags getAllJags`);
 
     let ownerFilter = ``;
     if (request.user) {
@@ -82,15 +77,15 @@ const getAllActivities = async (request, response) => {
         ownerFilter = ``;
     }
 
-    const activitiesReply = await queries.getAllActivities(includeShared, ownerFilter);
-    const activities = activitiesReply.rows;
+    const jagsReply = await queries.getAllJags(includeShared, ownerFilter);
+    const jags = jagsReply.rows;
 
-    for (const activity of activities) {
-        const endpointsForReply = await queries.getEndpointsFor(activity.urn);
+    for (const jag of jags) {
+        const endpointsForReply = await queries.getEndpointsFor(jag.urn);
         const endpointsFor = endpointsForReply.rows;
-        activity.endpoints = endpointsFor;
+        jag.endpoints = endpointsFor;
 
-        const bindingsForReply = await queries.getBindingsFor(activity.urn);
+        const bindingsForReply = await queries.getBindingsFor(jag.urn);
         const bindingsFor = bindingsForReply.rows;
 
         for (const bindingFor of bindingsFor) {
@@ -99,26 +94,26 @@ const getAllActivities = async (request, response) => {
             bindingFor.from = fromEndpointReply.rows[0];
             bindingFor.to = toEndpointReply.rows[0];
         }
-        activity.bindings = bindingsFor;
+        jag.bindings = bindingsFor;
 
-        const subactivitiesForReply = await queries.getSubActivitiesFor(activity.urn);
-        const subactivitiesFor = subactivitiesForReply.rows;
-        activity.children = subactivitiesFor;
+        const innerJagsForReply = await queries.getInnerJagsFor(jag.urn);
+        const innerJagsFor = innerJagsForReply.rows;
+        jag.children = innerJagsFor;
     }
 
-    response.status(200).json(activities);
+    response.status(200).json(jags);
 };
 
 
-const getActivityById = async (request, response) => {
-    const activitiesReply = await queries.getActivityById(request.params.activityId);
-    const activity = activitiesReply.rows;
+const getJagById = async (request, response) => {
+    const jagsReply = await queries.getJagById(request.params.jagId);
+    const jag = jagsReply.rows;
 
-    const endpointsForReply = await queries.getEndpointsFor(request.params.activityId);
+    const endpointsForReply = await queries.getEndpointsFor(request.params.jagId);
     const endpointsFor = endpointsForReply.rows;
-    activity.endpoints = endpointsFor;
+    jag.endpoints = endpointsFor;
 
-    const bindingsForReply = await queries.getBindingsFor(request.params.activityId);
+    const bindingsForReply = await queries.getBindingsFor(request.params.jagId);
     const bindingsFor = bindingsForReply.rows;
     for (const bindingFor of bindingsFor) {
         const fromEndpointReply = await queries.getEndpointById(bindingFor.from);
@@ -126,60 +121,60 @@ const getActivityById = async (request, response) => {
         bindingFor.from = fromEndpointReply.rows[0];
         bindingFor.to = toEndpointReply.rows[0];
     }
-    activity.bindings = bindingsFor;
+    jag.bindings = bindingsFor;
 
-    const subactivitiesForReply = await queries.getSubActivitiesFor(request.params.activityId);
-    const subactivitiesFor = subactivitiesForReply.rows;
-    activity.children = subactivitiesFor;
+    const innerJagsForReply = await queries.getInnerJagsFor(request.params.jagId);
+    const innerJagsFor = innerJagsForReply.rows;
+    jag.children = innerJagsFor;
 
-    response.status(200).json(activity);
+    response.status(200).json(jag);
 };
 
-const getAllJags = async (request, response) => {
-    const jagList = [];
-    const jagsReply = await queries.getAllJags();
-    const jags = jagsReply.rows;
-    jags.forEach((jag) => {
-        if (jag.projectId === jag.id) {
-            jagList.push(jag);
+const getAllLiveNodes = async (request, response) => {
+    const liveNodeList = [];
+    const liveNodesReply = await queries.getAllLiveNodes();
+    const liveNodes = liveNodesReply.rows;
+    liveNodes.forEach((liveNode) => {
+        if (liveNode.projectId === liveNode.id) {
+            liveNodeList.push(liveNode);
         }
     });
-    jagList.forEach((jag) => {
-        const workStack = [];
-        workStack.push(jag);
-        while (workStack.length > 0) {
-            const workJag = workStack.pop();
-            workJag.children = [];
-            jags.forEach((jag) => {
-                if (jag.parentId === workJag.id) {
-                    workJag.children.push(jag);
-                    workStack.push(jag);
+    liveNodeList.forEach((liveNode) => {
+        const liveNodeStack = [];
+        liveNodeStack.push(liveNode);
+        while (liveNodeStack.length > 0) {
+            const workLiveNode = liveNodeStack.pop();
+            workLiveNode.children = [];
+            liveNodes.forEach((liveNode) => {
+                if (liveNode.parentId === workLiveNode.id) {
+                    workLiveNode.children.push(liveNode);
+                    liveNodeStack.push(liveNode);
                 }
             });
         }
     });
-    response.status(200).json(jagList);
+    response.status(200).json(liveNodeList);
 };
 
-const getJagByProjectId = async (request, response) => {
+const getLiveNodesByProjectId = async (request, response) => {
     let projectHead;
-    const jagsReply = await queries.getJagByProjectId(request.params.projectId);
-    const jags = jagsReply.rows;
-    jags.forEach((jag) => {
-        if (jag.projectId === jag.id) {
-            projectHead = jag;
+    const liveNodeReply = await queries.getLiveNodesByProjectId(request.params.projectId);
+    const liveNodes = liveNodeReply.rows;
+    liveNodes.forEach((liveNode) => {
+        if (liveNode.projectId === liveNode.id) {
+            projectHead = liveNode;
         }
     });
 
-    const workStack = [];
-    workStack.push(projectHead);
-    while (workStack.length > 0) {
-        const workJag = workStack.pop();
-        workJag.children = [];
-        jags.forEach((jag) => {
-            if (jag.parentId === workJag.id) {
-                workJag.children.push(jag);
-                workStack.push(jag);
+    const liveNodeStack = [];
+    liveNodeStack.push(projectHead);
+    while (liveNodeStack.length > 0) {
+        const workLiveNode = liveNodeStack.pop();
+        workLiveNode.children = [];
+        liveNodes.forEach((liveNode) => {
+            if (liveNode.parentId === workLiveNode.id) {
+                workLiveNode.children.push(liveNode);
+                liveNodeStack.push(liveNode);
             }
         });
     }
@@ -210,13 +205,13 @@ const getAllAnalyses = async (request, response) => {
 };
 
 
-const deleteJagByProjectId = async (request, response) => {
-    await queries.deleteJagByProjectId(request.params.projectId);
+const deleteLiveNodeProjectById = async (request, response) => {
+    await queries.deleteLiveNodeProjectById(request.params.projectId);
     response.status(200).json(`{"Message":"completed"}`);
 };
 
-const deleteActivityById = async (request, response) => {
-    await queries.deleteActivityById(request.params.activityId);
+const deleteJagById = async (request, response) => {
+    await queries.deleteJagById(request.params.jagId);
     response.status(200).json(`{"Message":"completed"}`);
 };
 
@@ -236,20 +231,20 @@ const healthCheck = async (request, response) => {
 };
 
 export {
-    updateActivity,
     updateJag,
-    getAllActivities,
-    getActivityById,
+    updateLiveNodes,
     getAllJags,
+    getJagById,
+    getAllLiveNodes,
     getAllAgents,
     getAllTeams,
     getAllAnalyses,
     updateAgent,
     updateTeam,
     updateAnalysis,
-    getJagByProjectId,
-    deleteActivityById,
-    deleteJagByProjectId,
+    getLiveNodesByProjectId,
+    deleteJagById,
+    deleteLiveNodeProjectById,
     createTables,
     dropTables,
     healthCheck

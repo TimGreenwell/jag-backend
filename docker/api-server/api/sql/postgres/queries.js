@@ -1,13 +1,13 @@
 import * as pool from "../../db/postgres-config.js";
 import fs from "fs";
 
-const getAllActivities = async (includeShared = false, author) => {
-    console.log(`Query> getAllActivities`);
+const getAllJags = async (includeShared = false, author) => {
+    console.log(`Query> getAllJags`);
     let queryResult;
     if (includeShared) {
         console.log(`Get em all`);
-        const selectActivities = fs.readFileSync(`api/sql/postgres/select/activities-shared.sql`).toString();
-        queryResult = await pool.query(selectActivities).
+        const selectJags = fs.readFileSync(`api/sql/postgres/select/jags-shared.sql`).toString();
+        queryResult = await pool.query(selectJags).
             then((result) => {
                 return result;
             }).catch((e) => {
@@ -15,8 +15,8 @@ const getAllActivities = async (includeShared = false, author) => {
             });
     } else {
         console.log(`Just get the owned ones`);
-        const selectActivities = fs.readFileSync(`api/sql/postgres/select/activities-owned.sql`).toString();
-        queryResult = await pool.query(selectActivities, [author]).
+        const selectJags = fs.readFileSync(`api/sql/postgres/select/jags-owned.sql`).toString();
+        queryResult = await pool.query(selectJags, [author]).
             then((result) => {
                 return result;
             }).catch((e) => {
@@ -26,10 +26,10 @@ const getAllActivities = async (includeShared = false, author) => {
     return queryResult;
 };
 
-const getActivityById = async (id) => {
-    console.log(`Query> getActivityById`);
-    const selectActivitiesById = fs.readFileSync(`api/sql/postgres/select/activity-by-id.sql`).toString();
-    const queryResult = await pool.query(selectActivitiesById, [id]).
+const getJagById = async (id) => {
+    console.log(`Query> getJagById`);
+    const selectJagById = fs.readFileSync(`api/sql/postgres/select/jag-by-id.sql`).toString();
+    const queryResult = await pool.query(selectJagById, [id]).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -90,7 +90,7 @@ const getAllEndpoints = async () => {
 
 const getEndpointsFor = async (urn) => {
     console.log(`Query> getEndpointsFor`);
-    const selectEndpointsFor = fs.readFileSync(`api/sql/postgres/select/endpoints-for-activity.sql`).toString();
+    const selectEndpointsFor = fs.readFileSync(`api/sql/postgres/select/endpoints-for-jag.sql`).toString();
     const queryResult = await pool.query(selectEndpointsFor, [urn]).
         then((result) => {
             return result;
@@ -127,7 +127,7 @@ const getAllBindings = async () => {
 
 const getBindingsFor = async (urn) => {
     console.log(`Query> getBindingsFor`);
-    const selectBindingsFor = fs.readFileSync(`api/sql/postgres/select/bindings-for-activity.sql`).toString();
+    const selectBindingsFor = fs.readFileSync(`api/sql/postgres/select/bindings-for-jag.sql`).toString();
     const queryResult = await pool.query(selectBindingsFor, [urn]).
         then((result) => {
             return result;
@@ -137,10 +137,10 @@ const getBindingsFor = async (urn) => {
     return queryResult;
 };
 
-const getAllSubActivities = async () => {
-    console.log(`Query> getAllSubActivities`);
-    const selectSubactivities = fs.readFileSync(`api/sql/postgres/select/subactivities.sql`).toString();
-    const queryResult = await pool.query(selectSubactivities).
+const getAllInnerJags = async () => {
+    console.log(`Query> getAllInnerJags`);
+    const selectInnerJags = fs.readFileSync(`api/sql/postgres/select/innerjags.sql`).toString();
+    const queryResult = await pool.query(selectInnerJags).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -149,10 +149,10 @@ const getAllSubActivities = async () => {
     return queryResult;
 };
 
-const getSubActivitiesFor = async (urn) => {
-    console.log(`Query> getSubActivitiesFor`);
-    const selectSubactivitiesFor = fs.readFileSync(`api/sql/postgres/select/subactivities-for-activity.sql`).toString();
-    const queryResult = await pool.query(selectSubactivitiesFor, [urn]).
+const getInnerJagsFor = async (urn) => {
+    console.log(`Query> getInnerJagsFor`);
+    const selectInnerJagsFor = fs.readFileSync(`api/sql/postgres/select/innerjags-for-jag.sql`).toString();
+    const queryResult = await pool.query(selectInnerJagsFor, [urn]).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -161,10 +161,10 @@ const getSubActivitiesFor = async (urn) => {
     return queryResult;
 };
 
-const getAllJags = async () => {
-    console.log(`Query> getAllJags`);
-    const selectJags = fs.readFileSync(`api/sql/postgres/select/jags.sql`).toString();
-    const queryResult = await pool.query(selectJags).
+const getAllLiveNodes = async () => {
+    console.log(`Query> getAllLiveNodes`);
+    const selectLiveNodes = fs.readFileSync(`api/sql/postgres/select/livenodes.sql`).toString();
+    const queryResult = await pool.query(selectLiveNodes).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -173,10 +173,10 @@ const getAllJags = async () => {
     return queryResult;
 };
 
-const getJagByProjectId = async (id) => {
-    console.log(`Query> getJagByProjectId`);
-    const selectJagsByProjectId = fs.readFileSync(`api/sql/postgres/select/jags-by-project-id.sql`).toString();
-    const queryResult = await pool.query(selectJagsByProjectId, [id]).
+const getLiveNodesByProjectId = async (id) => {
+    console.log(`Query> getLiveNodesByProjectId`);
+    const selectLiveNodesByProjectId = fs.readFileSync(`api/sql/postgres/select/livenodes-by-project-id.sql`).toString();
+    const queryResult = await pool.query(selectLiveNodesByProjectId, [id]).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -185,10 +185,10 @@ const getJagByProjectId = async (id) => {
     return queryResult;
 };
 
-const getJagById = async (id) => {
-    console.log(`Query> getJagById`);
-    const selectJagById = fs.readFileSync(`api/sql/postgres/select/jag-by-id.sql`).toString();
-    const queryResult = await pool.query(selectJagById, [id]).
+const getLiveNodeById = async (id) => {
+    console.log(`Query> getLiveNodeById`);
+    const selectLiveNodeById = fs.readFileSync(`api/sql/postgres/select/livenode-by-id.sql`).toString();
+    const queryResult = await pool.query(selectLiveNodeById, [id]).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -197,10 +197,10 @@ const getJagById = async (id) => {
     return queryResult;
 };
 
-const deleteActivityById = async (id) => {
-    console.log(`Query> deleteActivityById`);
-    const deleteActivityById = fs.readFileSync(`api/sql/postgres/delete/activity-by-id.sql`).toString();
-    const queryResult = await pool.query(deleteActivityById, [id]).
+const deleteJagById = async (id) => {
+    console.log(`Query> deleteJagById`);
+    const deleteJagById = fs.readFileSync(`api/sql/postgres/delete/jags-by-id.sql`).toString();
+    const queryResult = await pool.query(deleteJagById, [id]).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -209,10 +209,10 @@ const deleteActivityById = async (id) => {
     return queryResult;
 };
 
-const deleteJagByProjectId = async (id) => {
-    console.log(`Query> deleteJagByProjectId`);
-    const deleteJagsByProjectId = fs.readFileSync(`api/sql/postgres/delete/jags-by-project-id.sql`).toString();
-    const queryResult = await pool.query(deleteJagsByProjectId, [id]).
+const deleteLiveNodeProjectById = async (id) => {
+    console.log(`Query> deleteLiveNodeByProjectId`);
+    const deleteLiveNodessByProjectId = fs.readFileSync(`api/sql/postgres/delete/livenodes-by-project-id.sql`).toString();
+    const queryResult = await pool.query(deleteLiveNodessByProjectId, [id]).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -221,25 +221,25 @@ const deleteJagByProjectId = async (id) => {
     return queryResult;
 };
 
-const updateActivity = async (activity, author) => {
-    console.log(`Query> updateActivity`);
-    const upsertActivity = fs.readFileSync(`api/sql/postgres/upsert/activity.sql`).toString();
+const updateJag = async (jag, author) => {
+    console.log(`Query> updateJag`);
+    const upsertJag = fs.readFileSync(`api/sql/postgres/upsert/jag.sql`).toString();
     const values = [
-        activity.urn,
-        activity.author = author,
-        activity.collapsed,
-        activity.connector.execution,
-        activity.connector.operator,
-        activity.connector.returns,
-        activity.createdDate,
-        activity.description,
-        activity.expectedDuration,
-        activity.isLocked,
-        activity.lockedBy,
-        activity.modifiedDate,
-        activity.name
+        jag.urn,
+        jag.author = author,
+        jag.collapsed,
+        jag.connector.execution,
+        jag.connector.operator,
+        jag.connector.returns,
+        jag.createdDate,
+        jag.description,
+        jag.expectedDuration,
+        jag.isLocked,
+        jag.lockedBy,
+        jag.modifiedDate,
+        jag.name
     ];
-    const queryResult = await pool.query(upsertActivity, values).
+    const queryResult = await pool.query(upsertJag, values).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -269,15 +269,15 @@ const updateEndpoint = async (endpoint, owner_id) => {
     return queryResult;
 };
 
-const updateSubactivity = async (subactivity, owner_id) => {
-    console.log(`Query> updateSubactivity`);
-    const upsertSubactivity = fs.readFileSync(`api/sql/postgres/upsert/subactivity.sql`).toString();
+const updateInnerJag = async (innerJag, owner_id) => {
+    console.log(`Query> updateInnerJag`);
+    const upsertInnerJag = fs.readFileSync(`api/sql/postgres/upsert/innerjag.sql`).toString();
     const values = [
-        subactivity.id,
-        subactivity.urn,
+        innerJag.id,
+        innerJag.urn,
         owner_id
     ];
-    const queryResult = await pool.query(upsertSubactivity, values).
+    const queryResult = await pool.query(upsertInnerJag, values).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -365,28 +365,28 @@ const updateAnalysis = async (analysis) => {
 };
 
 
-const updateJag = async (node) => {
-    console.log(`Query> updateJag`);
-    const upsertJag = fs.readFileSync(`api/sql/postgres/upsert/jag.sql`).toString();
+const updateLiveNodes = async (liveNode) => {
+    console.log(`Query> updateLiveNode`);
+    const upsertLiveNode = fs.readFileSync(`api/sql/postgres/upsert/livenode.sql`).toString();
     const values = [
-        node.id,
-        node.childId,
-        node.contextualDescription,
-        node.contextualName,
-        node.contextualExpectedDuration,
-        node.isExpanded,
-        node.isLocked,
-        node.parentId,
-        node.projectId,
-        node.returnState,
-        node.returnValue,
-        node.testReturnState,
-        node.testReturnValue,
-        node.urn,
-        node.x,
-        node.y
+        liveNode.id,
+        liveNode.childId,
+        liveNode.contextualDescription,
+        liveNode.contextualName,
+        liveNode.contextualExpectedDuration,
+        liveNode.isExpanded,
+        liveNode.isLocked,
+        liveNode.parentId,
+        liveNode.projectId,
+        liveNode.returnState,
+        liveNode.returnValue,
+        liveNode.testReturnState,
+        liveNode.testReturnValue,
+        liveNode.urn,
+        liveNode.x,
+        liveNode.y
     ];
-    const queryResult = await pool.query(upsertJag, values).
+    const queryResult = await pool.query(upsertLiveNode, values).
         then((result) => {
             return result;
         }).catch((e) => {
@@ -405,53 +405,6 @@ const createTable = async (tableDefinition) => {
         });
     return queryResult;
 };
-
-
-// const assembleTables = () => {
-//     const activityCreateTable = fs.readFileSync(`sql/postgres/create-table/activity.sql`).toString();
-//     const agentCreateTable = fs.readFileSync(`sql/postgres/create-table/agents.sql`).toString();
-//     const agent_assessmentCreateTable = fs.readFileSync(`sql/postgres/create-table/agent_assessment.sql`).toString();
-//     const analysisCreateTable = fs.readFileSync(`sql/postgres/create-table/analysis.sql`).toString();
-//     const assessmentCreateTable = fs.readFileSync(`sql/postgres/create-table/assessment.sql`).toString();
-//     const bindingCreateTable = fs.readFileSync(`sql/postgres/create-table/binding.sql`).toString();
-//     const endpointCreateTable = fs.readFileSync(`sql/postgres/create-table/endpoint.sql`).toString();
-//     const nodeCreateTable = fs.readFileSync(`sql/postgres/create-table/node.sql`).toString();
-//     const performerCreateTable = fs.readFileSync(`sql/postgres/create-table/performer.sql`).toString();
-//     const subactivityCreateTable = fs.readFileSync(`sql/postgres/create-table/subactivity.sql`).toString();
-//     const subscriptionCreateTable = fs.readFileSync(`sql/postgres/create-table/subscription.sql`).toString();
-//     const teamCreateTable = fs.readFileSync(`sql/postgres/create-table/team.sql`).toString();
-//     const dbCreateTables = [];
-//     dbCreateTables.push(activityCreateTable);
-//     dbCreateTables.push(analysisCreateTable);
-//     dbCreateTables.push(teamCreateTable);
-//     dbCreateTables.push(endpointCreateTable);          // ref: activity
-//     dbCreateTables.push(subactivityCreateTable);       // ref: activity
-//     dbCreateTables.push(bindingCreateTable);           // ref: endpoint and activity
-//     dbCreateTables.push(nodeCreateTable);              // ref: itself
-//     dbCreateTables.push(subscriptionCreateTable);      // ref: node
-//     dbCreateTables.push(performerCreateTable);         // ref: team
-//     dbCreateTables.push(agentCreateTable);             // ref: team
-//     dbCreateTables.push(agent_assessmentCreateTable); // ref: agent
-//     dbCreateTables.push(assessmentCreateTable);        // ref: agent
-//     return dbCreateTables;
-// };
-
-
-// const createTables = async () => {
-//     console.log(`Query> createTables`);
-//     const dbCreateTables = assembleTables();
-//     const queryResultArray = [];
-//     for (const dbCreateTable of dbCreateTables) {
-//         const queryResult = await createTable(dbCreateTable).
-//             then((result) => {
-//                 return result;
-//             }).catch((e) => {
-//                 console.log(`bad: ${e}`);
-//             });
-//         queryResultArray.push(queryResult);
-//     }
-//     return queryResultArray;
-// };
 
 const createTables = async () => {
     console.log(`Query> dropTables`);
@@ -477,45 +430,29 @@ const dropTables = async () => {
     return queryResult;
 };
 
-//
-// (async () => {
-//     const testConnection = fs.readFileSync(`api/sql/postgres/other/test-connection.sql`).toString();
-//     const showTables = fs.readFileSync(`sql/postgres/other/show-tables.sql`).toString();
-//     let queryResult = await pool.query(testConnection, [`Connection to postgres successful!`]);
-//     console.log(`Checking connection to DB`);
-//     console.log(queryResult.rows[0].connected);
-//     console.log(`Create tables (if necessary)`);
-//     await createTables();
-//     queryResult = await pool.query({text: showTables,
-//         rowMode: `array`});
-//     const tableArray = queryResult.rows;
-//     console.log(`Existing tables include: ${tableArray}`);
-// })();
-
-
 export {
+    getAllLiveNodes,
+    getLiveNodeById,
+    getLiveNodesByProjectId,
     getAllJags,
     getJagById,
-    getJagByProjectId,
-    getAllActivities,
-    getActivityById,
     getAllEndpoints,
     getEndpointsFor,
     getEndpointById,
     getAllBindings,
     getBindingsFor,
-    getAllSubActivities,
-    getSubActivitiesFor,
-    updateActivity,
-    updateEndpoint,
-    updateSubactivity,
-    updateBinding,
+    getAllInnerJags,
+    getInnerJagsFor,
     updateJag,
+    updateEndpoint,
+    updateInnerJag,
+    updateBinding,
+    updateLiveNodes,
     updateAgent,
     updateTeam,
     updateAnalysis,
-    deleteActivityById,
-    deleteJagByProjectId,
+    deleteJagById,
+    deleteLiveNodeProjectById,
     createTables,
     dropTables,
     getAllAgents,

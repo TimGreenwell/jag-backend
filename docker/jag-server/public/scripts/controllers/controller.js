@@ -73,6 +73,8 @@ export default class Controller extends EventTarget {
     }
 
     fetchProject(projectId) {
+        console.log("Fetching Project from this Map")
+        console.log(this._projectMap)
         const cachedProject = this._projectMap.get(projectId);
         if (!cachedProject) {
             console.log(`Could not find the node ${projectId}. Expect some issues.  We should be going to DB at this point`);
@@ -223,10 +225,10 @@ export default class Controller extends EventTarget {
                 if (changedActivity.urn === undefined) {
                     console.log(`Not bad - this happens when the URN of change is not known.  For example, a rebuild from an archive or fresh pull`);
                 }
-                const changingLiveNodeChildren = currentLiveNode.children.map((child) => {
+                const changingLiveNodeChildren = currentLiveNode.children.map((liveNodeChild) => {
                     return {
-                        urn: child.urn,
-                        id: child.childId
+                        urn: liveNodeChild.urn,
+                        id: liveNodeChild.childId
                     };
                 });
                 const changedActivityChildren = changedActivity.children;
@@ -251,8 +253,8 @@ export default class Controller extends EventTarget {
                     orphanedChildProjectNodeStack.push(childLiveNode);
                 });
             }
-            for (const child of currentLiveNode.children) {
-                liveNodeStack.push(child);
+            for (const childLiveNode of currentLiveNode.children) {
+                liveNodeStack.push(childLiveNode);
             }
         }
         for (const orphanedChildProjectNode of orphanedChildProjectNodeStack) {
@@ -350,25 +352,28 @@ export default class Controller extends EventTarget {
         return removedActivityChildren;
     }
 
-    searchTreeForId(rootliveNode, liveNodeId) {
-        const findIdCallback = (liveNode) => {
-            if (liveNode.id === liveNodeId) {
-                return liveNode;
+    searchTreeForId(rootLiveNode, liveNodeId) {
+        const findIdCallback = (rootLiveNode) => {
+            if (rootLiveNode.id === liveNodeId) {
+                return rootLiveNode;
             }
         };
-        const foundLiveNodes = Traversal.iterate(rootliveNode, findIdCallback);
+        console.log("In searchTreeForId,  incoming rootLiveNode = ")
+        console.log(rootLiveNode)
+        console.log(rootLiveNode)
+        const foundLiveNodes = Traversal.iterate(rootLiveNode, findIdCallback);
         if ((foundLiveNodes) && (foundLiveNodes.length > 0)) {
             return foundLiveNodes[0];
         }
     }
 
-    searchTreeForChildId(liveNode, childId) {
+    searchTreeForChildId(rootLiveNode, childId) {
         const findChildIdCallback = (liveNode) => {
-            if (liveNode.childId === childId) {
-                return liveNode;
+            if (rootLiveNode.childId === childId) {
+                return rootLiveNode;
             }
         };
-        const foundLiveNodes = Traversal.iterate(liveNode, findChildIdCallback);
+        const foundLiveNodes = Traversal.iterate(rootLiveNode, findChildIdCallback);
         if ((foundLiveNodes) && (foundLiveNodes.length > 0)) {
             return foundLiveNodes[0];
         }

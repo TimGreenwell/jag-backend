@@ -20,12 +20,8 @@ export default class RESTUtils {
             }
 
             try {
-                const gg = await response.json();
-                console.log(`Final Response Type GG = ${typeof gg}`);
-                console.log(`Final Response GG = ${gg}`);
-                console.log(gg);
-                console.log(`GG stringified - ${JSON.stringify(gg)}`)
-                return gg;
+                const fetchResponse = await response.json();
+                return fetchResponse;
             } catch {
                 throw new Error(`${error_prefix}: Response was not a valid JSON object.`);
             }

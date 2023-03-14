@@ -389,12 +389,14 @@ class AtPlayground extends Popupable {
         }
 
         const selectedActivityNodeElementArray = [...this._selectedActivityNodeElementSet];
-        const selectedNodeArray = selectedActivityNodeElementArray.map((jagNodeElement) => {
+        const selectedLiveNodesArray = selectedActivityNodeElementArray.map((jagNodeElement) => {
             return jagNodeElement.nodeModel;
         });
+console.log("handlePlaygroundSelectedNodes - ?")
+        console.log(selectedLiveNodesArray)
 
         this.dispatchEvent(new CustomEvent(`event-livenodes-selected`, {
-            detail: {selectedNodeArray}
+            selectedLiveNodesArray: {selectedLiveNodesArray}
         }));
         e.stopPropagation();  // Don't let it bubble up to the playgroundClicker handler.
     }

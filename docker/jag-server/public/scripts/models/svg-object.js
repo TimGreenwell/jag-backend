@@ -725,7 +725,9 @@ export default class SvgObject {
     changeSource(svgSelectedItems, edge) {
         const origPath = edge.getAttributeNS(null, `d`);
         const sourceLiveNodeId = this.fetchEdgeSourceId(edge);
-        const sourceLiveNode = svgSelectedItems.nodes.get(sourceLiveNodeId);
+        console.log("Selected ithems accordingt to changeSource")
+        console.log(svgSelectedItems)
+        const sourceLiveNode = svgSelectedItems.svgNodeGroupMap.get(sourceLiveNodeId);
         const id = this.fetchTargetId(sourceLiveNode);
         const rect = this.fetchRectangle(id);
         const width = rect.getAttributeNS(null, `width`);

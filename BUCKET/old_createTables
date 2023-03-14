@@ -1,19 +1,19 @@
-CREATE TABLE IF NOT EXISTS "jag"
+CREATE TABLE IF NOT EXISTS "activity"
 (
-    "jag_urn" VARCHAR(255) NOT NULL,
-    "jag_author" VARCHAR(255),
-    "jag_collapsed" boolean,
+    "activity_urn" VARCHAR(255) NOT NULL,
+    "activity_author" VARCHAR(255),
+    "activity_collapsed" boolean,
     "connector_exec" VARCHAR(255) NOT NULL,
     "connector_oper" VARCHAR(255) NOT NULL,
     "connector_rtns" VARCHAR(255),
-    "jag_created_date" timestamp without time zone,
-    "jag_description" VARCHAR(255),
-    "jag_expected_duration" VARCHAR(255),
-    "jag_is_locked" boolean,
-    "jag_locked_by" VARCHAR(255),
-    "jag_modified_date" timestamp without time zone,
-    "jag_name" VARCHAR(255) NOT NULL,
-    CONSTRAINT "PK_jag" PRIMARY KEY ("jag_urn")
+    "activity_created_date" timestamp without time zone,
+    "activity_description" VARCHAR(255),
+    "activity_expected_duration" VARCHAR(255),
+    "activity_is_locked" boolean,
+    "activity_locked_by" VARCHAR(255),
+    "activity_modified_date" timestamp without time zone,
+    "activity_name" VARCHAR(255) NOT NULL,
+    CONSTRAINT "PK_activity" PRIMARY KEY ("activity_urn")
 );
 
 
@@ -90,27 +90,27 @@ CREATE TABLE IF NOT EXISTS "binding"
 
 
 
-CREATE TABLE IF NOT EXISTS "livenode"
+CREATE TABLE IF NOT EXISTS "node"
 (
-    "livenode_id" VARCHAR(255) NOT NULL,
-    "livenode_child_id" VARCHAR(255),
-    "livenode_con_desc" VARCHAR(255),
-    "livenode_contextual_expected_duration" VARCHAR(255),
-    "livenode_con_name" VARCHAR(255),
-    "livenode_is_expanded" boolean,
-    "livenode_is_locked" boolean,
-    "livenode_project_id" VARCHAR(255),
-    "livenode_return_state" VARCHAR(255),
-    "livenode_return_value" VARCHAR(255),
-    "livenode_test_return_state" VARCHAR(255),
-    "livenode_test_return_value" VARCHAR(255),
-    "livenode_urn" VARCHAR(255),
-    "livenode_x" integer,
-    "livenode_y" integer,
-    "livenode_parent_id_fk" VARCHAR(255),
-    CONSTRAINT "PK_livenode" PRIMARY KEY ("livenode_id"),
-    CONSTRAINT "FK_livenode_child_parent" FOREIGN KEY ("livenode_parent_id_fk")
-        REFERENCES livenode ("livenode_id") MATCH SIMPLE
+    "node_id" VARCHAR(255) NOT NULL,
+    "node_child_id" VARCHAR(255),
+    "node_con_desc" VARCHAR(255),
+    "node_contextual_expected_duration" VARCHAR(255),
+    "node_con_name" VARCHAR(255),
+    "node_is_expanded" boolean,
+    "node_is_locked" boolean,
+    "node_project_id" VARCHAR(255),
+    "node_return_state" VARCHAR(255),
+    "node_return_value" VARCHAR(255),
+    "node_test_return_state" VARCHAR(255),
+    "node_test_return_value" VARCHAR(255),
+    "node_urn" VARCHAR(255),
+    "node_x" integer,
+    "node_y" integer,
+    "node_parent_id_fk" VARCHAR(255),
+    CONSTRAINT "PK_node" PRIMARY KEY ("node_id"),
+    CONSTRAINT "FK_node_child_parent" FOREIGN KEY ("node_parent_id_fk")
+        REFERENCES node ("node_id") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );
@@ -122,10 +122,10 @@ CREATE TABLE IF NOT EXISTS "subscription"
     "subscription_id" VARCHAR(255) NOT NULL,
     "subscription_data" VARCHAR(255),
     "subscription_lrt" timestamp without time zone,
-    "subscription_livenode_fk" VARCHAR(255) NOT NULL,
+    "subscription_node_fk" VARCHAR(255) NOT NULL,
     CONSTRAINT "PK_subscription" PRIMARY KEY ("subscription_id"),
-    CONSTRAINT "FK_livenode_id" FOREIGN KEY ("subscription_livenode_fk")
-        REFERENCES livenode ("livenode_id") MATCH SIMPLE
+    CONSTRAINT "FK_node_id" FOREIGN KEY ("subscription_node_fk")
+        REFERENCES node ("node_id") MATCH SIMPLE
         ON UPDATE CASCADE
         ON DELETE CASCADE
 );

@@ -1,5 +1,12 @@
 /**
  *
+ * The basic structure is here - as an idea gen.
+ * However, there is no cross-tab communication going.
+ * The fetchProject does not have the cache data the original tab has.
+ * The subscribes are not doing anything,
+ *
+ * @ TODO - almost everything needed here.
+ *
  * JAG - Authoring Tool
  *
  *
@@ -22,9 +29,11 @@ export default class ControllerDEF extends Controller {
         this._menu = null;
         this._definition = null;
 
-        StorageService.subscribe(`command-livenode-updated`, this.commandLiveNodeUpdatedHandler.bind(this)); // }
+        StorageService.subscribe(`command-livenode-updated`, this.commandLiveNodeUpdatedHandler.bind(this)); // Noone dispatches this.
         StorageService.subscribe(`command-livenode-deleted`, this.commandLiveNodeDeletedHandler.bind(this)); // }
-    }
+    }//@TODO -- do livenodes update across the command path? Or just Event path.
+     // It looks like maybe they should..
+    // commandLiveNodeUpdatedHandler is trying to read in parameters.
 
     // Panel Setters
     set menu(value) {
@@ -61,7 +70,11 @@ export default class ControllerDEF extends Controller {
     }
 
     initializePanels() {
+        console.log("_currentProjectId")
+        console.log(this._currentProjectId)
         const project = this.fetchProject(this._currentProjectId);
+        console.log("initializeProject")
+        console.log(project)
         const liveNode = this.searchTreeForId(project, this._currentLiveNodeId);
         this._definition.definingLiveNode = liveNode;
         this._definition.buildTestBank();
@@ -120,6 +133,8 @@ export default class ControllerDEF extends Controller {
         console.log(`((COMMAND INCOMING) >>  liveNode Updated`);
         if (this._currentProjectId === updatedProjectId) {
             this.addDerivedProjectData(updatedProject);
+            console.log("in commandLiveNodeUpdatedHandler")
+            console.log(updatedProject)
             const liveNode = this.searchTreeForId(updatedProject, this._currentLiveNodeId);
             this._definition.reset(liveNode);
         }
@@ -136,21 +151,23 @@ export default class ControllerDEF extends Controller {
      * searchProjectForLiveNodeId
      *
      */
-
-    searchTreeForId(rootLiveNode, liveNodeId) {
-        const liveNodeStack = [];
-        liveNodeStack.push(rootLiveNode);
-        while (liveNodeStack.length > 0) {
-            const checkLiveNode = liveNodeStack.pop();
-            if (checkLiveNode.id === liveNodeId) {
-                return checkLiveNode;
-            }
-            checkLiveNode.children.forEach((checkLiveNodeChild) => {
-                return liveNodeStack.push(checkLiveNodeChild);
-            });
-        }
-        return null;
-    }
+    //
+    // searchTreeForId(rootLiveNode, liveNodeId) {
+    //     console.log("searchTreeForId sees rootLiveNode as...")
+    //     console.log(rootLiveNode)
+    //     const liveNodeStack = [];
+    //     liveNodeStack.push(rootLiveNode);
+    //     while (liveNodeStack.length > 0) {
+    //         const checkLiveNode = liveNodeStack.pop();
+    //         if (checkLiveNode.id === liveNodeId) {
+    //             return checkLiveNode;
+    //         }
+    //         checkLiveNode.children.forEach((checkLiveNodeChild) => {
+    //             return liveNodeStack.push(checkLiveNodeChild);
+    //         });
+    //     }
+    //     return null;
+    // }
 
     // marked for death
     // searchTreeForChildId(rootLiveNode,liveNodeId) {

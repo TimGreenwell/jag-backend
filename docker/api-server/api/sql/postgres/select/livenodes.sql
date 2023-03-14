@@ -16,4 +16,3 @@ SELECT
     n.livenode_test_return_state AS "testReturnState",
     n.livenode_contextual_expected_duration AS "contextualExpectedDuration"
 FROM livenode n
-WHERE n.livenode_project_id = $1

@@ -35,7 +35,7 @@ export default class ControllerAT extends Controller {
         StorageService.subscribe(`command-activity-cloned`, this.commandActivityClonedHandler.bind(this));     //    } Cross-tab communications
         StorageService.subscribe(`command-activity-replaced`, this.commandActivityReplacedHandler.bind(this)); //    }
         StorageService.subscribe(`command-livenode-created`, this.commandLiveNodeCreatedHandler.bind(this));           // }
-        StorageService.subscribe(`command-livenode-updated`, this.commandLiveNodeUpdatedHandler.bind(this));           // }
+        StorageService.subscribe(`command-livenode-updated`, this.commandLiveNodeUpdatedHandler.bind(this));           // Noone dispatches this
         StorageService.subscribe(`command-livenode-deleted`, this.commandLiveNodeDeletedHandler.bind(this));           // }
     }
 
@@ -203,8 +203,8 @@ export default class ControllerAT extends Controller {
     }
 
     eventLiveNodesSelectedHandler(event) {
-        const selectedLiveNodeArray = event.detail.selectedLiveNodeArray;
-        this._properties.handleSelectionUpdate(selectedLiveNodeArray);
+        const selectedLiveNodesArray = event.detail.selectedLiveNodesArray;
+        this._properties.handleSelectionUpdate(selectedLiveNodesArray);
         // this._timeview.refreshTimeview(selectedNodeArray[0]);    // Selecting a node also updates it. Need to look into that
         // ide.handleSelectionUpdate(e.detail);
     }

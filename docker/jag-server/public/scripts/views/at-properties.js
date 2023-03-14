@@ -441,10 +441,10 @@ customElements.define(`jag-properties`, class extends HTMLElement {
         }
     }
 
-    handleSelectionUpdate(selection) {       // <== Called by ControllerAT    (selectedLiveNodeArray)
+    handleSelectionUpdate(selectedLiveNodesArray) {       // <== Called by ControllerAT    (selectedLiveNodeArray)
         this._clearProperties();
-        if (selection.length > 0) {
-            const selectedLiveNodeModel = selection[0];
+        if (selectedLiveNodesArray.length > 0) {
+            const selectedLiveNodeModel = selectedLiveNodesArray[0];
             this._focusLiveNode = selectedLiveNodeModel;
             this._populatePropertyFields(this._focusLiveNode);
         } else {

@@ -43,7 +43,7 @@ const session = {
 const keycloakIssuer = await Issuer.discover(`http://auth-keycloak:8080/auth/realms/jag`);
 const client = new keycloakIssuer.Client({
     client_id: `nodejs-jag-app`,
-    client_secret: `NmU3WVp8WdZFG5MSQS1DcC3aGXE4Y1tx`,
+    client_secret: `QZyc6i36b4RmctuM0rTK11wnSin7iap9`,
     redirect_uris: [`https://jag.baby/jag/auth/callback`],
     post_logout_redirect_uris: [`https://jag.baby/jag/logout/callback`],
     response_types: [`code`]
@@ -95,7 +95,7 @@ app.get(`/jag/auth/callback`, (req, res, next) => {
     // Two kinds of passport.authenticate.  This authenticates and routes.
     passport.authenticate(`oidc`, {
         successRedirect: `/jag`,
-        failureRedirect: `https://www.greenwell.de`
+        failureRedirect: `https://work.greenwell.de`
     })(req, res, next);
 });
 

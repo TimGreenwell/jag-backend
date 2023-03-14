@@ -115,7 +115,7 @@ customElements.define(`jag-ide`, class extends HTMLElement {
 
     stop() {
         const icon = this._run.querySelector(`.button-icon`);
-        icon.style.backgroundImage = `url("/jag/icons/ic_play_arrow_black_24dp.png")`;
+        icon.style.backgroundImage = `url("/jag/styles/icons/ic_play_arrow_black_24dp.png")`;
     }
 
 
@@ -162,7 +162,7 @@ customElements.define(`jag-ide`, class extends HTMLElement {
         this._run = this._container.querySelector(`#run`);
         this._run.addEventListener(`click`, () => {
             // const icon = this._run.querySelector('.button-icon');
-            // icon.style.backgroundImage = 'url("icons/ic_pause_black_24dp.png")';
+            // icon.style.backgroundImage = 'url("styles/icons/ic_pause_black_24dp.png")';
             const provider = this._createInstanceProvider();
             const actor = this._getInstanceActor();
             const instance_data = {
@@ -179,7 +179,7 @@ customElements.define(`jag-ide`, class extends HTMLElement {
     _handleNewConnection() {
         const progress = this._connect.querySelector(`.button-progress`);
         const icon = this._connect.querySelector(`.button-icon`);
-        icon.style.backgroundImage = `url('/jag/icons/ic_engine_black_24dp.png')`;
+        icon.style.backgroundImage = `url('/jag/styles/icons/ic_engine_black_24dp.png')`;
         progress.style.transform = `translateY(-120%) scaleX(1.0)`;
         setTimeout(this._resetButtonProgress.bind(this, progress), 1500);
         this._setFeedback(`Connection successfull`);

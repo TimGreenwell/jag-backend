@@ -267,23 +267,23 @@ jag-playground .cardinal.visible {
 jag-playground .cardinal.left {
     top: 50%;
     left: 12px;
-    background-image: url('../icons/ic_cardinal_left.png');
+    background-image: url('../styles/icons/ic_cardinal_left.png');
 }
 
 jag-playground .cardinal.right {
     top: 50%;
     right: -12px;
-    background-image: url('../icons/ic_cardinal_right.png');
+    background-image: url('../styles/icons/ic_cardinal_right.png');
 }
 
 jag-playground .cardinal.up {
     top: 12px;
     left: 50%;
-    background-image: url('../icons/ic_cardinal_up.png');
+    background-image: url('../styles/icons/ic_cardinal_up.png');
 }
 
 jag-playground .cardinal.down {
     bottom: -12px;
     left: 50%;
-    background-image: url('../icons/ic_cardinal_down.png');
+    background-image: url('../styles/icons/ic_cardinal_down.png');
 }

@@ -1287,9 +1287,9 @@ Random - also from playground.. look through and wipe.
 // syncSizes(nodeModel) {  // attempt to size all boxes to maximum.
 //     const box = this.boxMap.get(nodeModel.id);
 //     if (!nodeModel.isRoot()) {
-//         if ((nodeModel.parent._activity.connector.execution === `node.execution.parallel`) ||
-//         (nodeModel.parent._activity.connector.execution === `node.execution.none`) ||
-//         (nodeModel.parent._activity.connector.execution !== `node.execution.sequential`)) {
+//         if ((nodeModel.parent._activity.connector.execution === `livenode.execution.parallel`) ||
+//         (nodeModel.parent._activity.connector.execution === `livenode.execution.none`) ||
+//         (nodeModel.parent._activity.connector.execution !== `livenode.execution.sequential`)) {
 //             nodeModel.parent.children.forEach((sibling) => {
 //                 if ((this.boxMap.has(sibling.id))) {    // (nodeModel.id !== sibling.id) &&
 //                     const boxOfSibling = this.boxMap.get(sibling.id);
@@ -1312,9 +1312,9 @@ Random - also from playground.. look through and wipe.
 //         }
 //     }
 //     nodeModel.children.forEach((child) => {
-//         if ((nodeModel._activity.connector.execution === `node.execution.parallel`) ||
-//             (nodeModel._activity.connector.execution === `node.execution.none`) ||
-//             (nodeModel._activity.connector.execution !== `node.execution.sequential`)) {
+//         if ((nodeModel._activity.connector.execution === `livenode.execution.parallel`) ||
+//             (nodeModel._activity.connector.execution === `livenode.execution.none`) ||
+//             (nodeModel._activity.connector.execution !== `livenode.execution.sequential`)) {
 //             if (this.boxMap.has(child.id)) {
 //                 const boxOfChild = this.boxMap.get(child.id);
 //                 if (boxOfChild.width < box.width - (2 * this.svgParameters.HORIZONTAL_MARGIN)) {

@@ -30,6 +30,7 @@ services:
       - type: volume
         source: api-postgres-config
         target: /etc/postgresql
+  # not sure we need 'config'
 
   auth-postgres:
     image: postgres:15.1-alpine3.17
@@ -58,6 +59,7 @@ services:
       - type: volume
         source: auth-postgres-config
         target: /etc/postgresql
+ # not sure we need 'config'
 
   auth-keycloak:
     container_name: auth-keycloak

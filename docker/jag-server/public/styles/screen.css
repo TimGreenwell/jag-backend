@@ -124,7 +124,7 @@ input:focus, select:focus {
 }
 
 select {
-    background-image:url('/jag/icons/arrow-select.png');
+    background-image:url('/jag/styles/icons/arrow-select.png');
     background-repeat: no-repeat;
     background-position: 100% 50%;
 }

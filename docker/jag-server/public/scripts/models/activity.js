@@ -680,7 +680,7 @@ export default class Activity extends EventTarget {
             name: this._name,
             expectedDuration: this._expectedDuration,
             description: this._description,
-            type: `node.type.plan`,
+            type: `livenode.type.plan`,
             connector: {
                 execution: this.connector.execution,
                 returns: this.connector.returns,
@@ -841,38 +841,38 @@ export default class Activity extends EventTarget {
 
 Activity.EXECUTION = {
     NONE: {
-        name: `node.execution.none`,
+        name: `livenode.execution.none`,
         text: `none`,
         description: `No reporting sub-activities`
     },
     PARALLEL: {
-        name: `node.execution.parallel`,
+        name: `livenode.execution.parallel`,
         text: `parallel`,
         description: `Sub-activities execute simultaneously`
     },
     SEQUENTIAL:
         {
-            name: `node.execution.sequential`,
+            name: `livenode.execution.sequential`,
             text: `sequential`,
             description: `Sub-activities execute in order`
         },
     RETRY: {
-        name: `node.execution.retry`,
+        name: `livenode.execution.retry`,
         text: `sequential w/retry`,
         description: `Recover and retry all if one sub-activity fails`
     },
     LOOP: {
-        name: `node.execution.loop`,
+        name: `livenode.execution.loop`,
         text: `sequential loop`,
         description: `First sub-activity resumes after last finishes`
     },
     OVERLAP: {
-        name: `node.execution.overlap`,
+        name: `livenode.execution.overlap`,
         text: `sequential w/overlap`,
         description: `Following sub-activity begins before the previous ends`
     },
     PARALLELX: {
-        name: `node.execution.parallelx`,
+        name: `livenode.execution.parallelx`,
         text: `parallel subset`,
         description: `Some sub-activities execute simultaneously`
     }
@@ -881,52 +881,52 @@ Activity.EXECUTION = {
 
 Activity.ONFAIL = {
     NONE: {
-        name: `node.onfail.none`,
+        name: `livenode.onfail.none`,
         text: `none`,
         description: `No action on fail notice`,
-        condition: [`node.execution.parallel`, `node.execution.sequential`, `node.execution.loop`, `node.execution.overlap`, `node.execution.parallelx`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.sequential`, `livenode.execution.loop`, `livenode.execution.overlap`, `livenode.execution.parallelx`]
     },
     RETRY: {
-        name: `node.onfail.retry`,
+        name: `livenode.onfail.retry`,
         text: `repeat this action`,
         description: `Continue to repeat this action`,
-        condition: [`node.execution.parallel`, `node.execution.sequential`, `node.execution.loop`, `node.execution.overlap`, `node.execution.parallelx`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.sequential`, `livenode.execution.loop`, `livenode.execution.overlap`, `livenode.execution.parallelx`]
     },
     RESTART: {
-        name: `node.onfail.restart`,
+        name: `livenode.onfail.restart`,
         text: `return to beginning`,
         description: `Start over from first step`,
-        condition: [`node.execution.sequential`, `node.execution.loop`, `node.execution.overlap`]
+        condition: [`livenode.execution.sequential`, `livenode.execution.loop`, `livenode.execution.overlap`]
     },
     PREVIOUS: {
-        name: `node.onfail.previous`,
+        name: `livenode.onfail.previous`,
         text: `return to previous`,
         description: `restart previous action`,
-        condition: [`node.execution.sequential`, `node.execution.loop`, `node.execution.overlap`]
+        condition: [`livenode.execution.sequential`, `livenode.execution.loop`, `livenode.execution.overlap`]
     },
     SKIP: {
-        name: `node.onfail.skip`,
+        name: `livenode.onfail.skip`,
         text: `skip next`,
         description: `Skip the next action`,
-        condition: [`node.execution.sequential`, `node.execution.loop`, `node.execution.overlap`]
+        condition: [`livenode.execution.sequential`, `livenode.execution.loop`, `livenode.execution.overlap`]
     },
     RETURN: {
-        name: `node.onfail.return`,
+        name: `livenode.onfail.return`,
         text: `skip remaining`,
         description: `Skip the remaining actions`,
-        condition: [`node.execution.sequential`, `node.execution.loop`, `node.execution.overlap`]
+        condition: [`livenode.execution.sequential`, `livenode.execution.loop`, `livenode.execution.overlap`]
     },
     RECOVER: {
-        name: `node.onfail.recover`,
+        name: `livenode.onfail.recover`,
         text: `"Recover"`,
         description: `Run the "Recover" function`,
-        condition: [`node.execution.parallel`, `node.execution.sequential`, `node.execution.loop`, `node.execution.overlap`, `node.execution.parallelx`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.sequential`, `livenode.execution.loop`, `livenode.execution.overlap`, `livenode.execution.parallelx`]
     },
     ABORT: {
-        name: `node.onfail.abort`,
+        name: `livenode.onfail.abort`,
         text: `"Abort"`,
         description: `Run the "Abort" function`,
-        condition: [`node.execution.parallel`, `node.execution.sequential`, `node.execution.loop`, `node.execution.overlap`, `node.execution.parallelx`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.sequential`, `livenode.execution.loop`, `livenode.execution.overlap`, `livenode.execution.parallelx`]
     }
 
 };
@@ -934,146 +934,146 @@ Activity.ONFAIL = {
 
 Activity.RETURNS = {
     NONE: {
-        name: `node.returns.none`,
+        name: `livenode.returns.none`,
         text: `none`,
         description: `No data is returned`,
-        condition: [`node.execution.parallel`, `node.execution.sequential`, `node.execution.retry`, `node.execution.loop`, `node.execution.overlap`, `node.execution.parallelx`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.sequential`, `livenode.execution.retry`, `livenode.execution.loop`, `livenode.execution.overlap`, `livenode.execution.parallelx`]
     },
     ACTIVE: {
-        name: `node.returns.active`,
+        name: `livenode.returns.active`,
         text: `active mode`,
         description: `All children in an ACTIVE mode`,
-        condition: [`node.execution.parallel`, `node.execution.sequential`, `node.execution.retry`, `node.execution.loop`, `node.execution.overlap`, `node.execution.parallelx`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.sequential`, `livenode.execution.retry`, `livenode.execution.loop`, `livenode.execution.overlap`, `livenode.execution.parallelx`]
     },
     AVAILABLE: {
-        name: `node.returns.available`,
+        name: `livenode.returns.available`,
         text: `all available`,
         description: `All children with currently available output`,
-        condition: [`node.execution.parallel`, `node.execution.sequential`, `node.execution.retry`, `node.execution.loop`, `node.execution.overlap`, `node.execution.parallelx`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.sequential`, `livenode.execution.retry`, `livenode.execution.loop`, `livenode.execution.overlap`, `livenode.execution.parallelx`]
     },
     ALL: {
-        name: `node.returns.all`,
+        name: `livenode.returns.all`,
         text: `all (or none)`,
         description: `All children data when all become available`,
-        condition: [`node.execution.parallel`, `node.execution.parallelx`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.parallelx`]
     },
     LATEST: {
-        name: `node.returns.latest`,
+        name: `livenode.returns.latest`,
         text: `most recent`,
         description: `Only data from most recently reporting child`,
-        condition: [`node.execution.parallel`, `node.execution.sequential`, `node.execution.retry`, `node.execution.loop`, `node.execution.overlap`]
+        condition: [`livenode.execution.parallel`, `livenode.execution.sequential`, `livenode.execution.retry`, `livenode.execution.loop`, `livenode.execution.overlap`]
     },
     PRIORITY: {
-        name: `node.returns.priority`,
+        name: `livenode.returns.priority`,
         text: `highest priority`,
         description: `Child with highest priority available input`,
-        condition: [`node.execution.parallel`]
+        condition: [`livenode.execution.parallel`]
     },
     FINAL: {
-        name: `node.returns.final`,
+        name: `livenode.returns.final`,
         text: `final output`,
         description: `Final result from last child in sequence`,
-        condition: [`node.execution.sequential`, `node.execution.retry`, `node.execution.loop`, `node.execution.overlap`]
+        condition: [`livenode.execution.sequential`, `livenode.execution.retry`, `livenode.execution.loop`, `livenode.execution.overlap`]
     }
 };
 
 
 Activity.OPERATOR = {
     NONE: {
-        name: `node.operator.none`,                  // does not return a value    (maybe just a state?) (maybe nada)
+        name: `livenode.operator.none`,                  // does not return a value    (maybe just a state?) (maybe nada)
         text: `none`,
         symbol: ``,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`, `node.returns.latest`, `node.returns.priority`, `node.returns.final`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`, `livenode.returns.latest`, `livenode.returns.priority`, `livenode.returns.final`]
     },
     AND: {
-        name: `node.operator.and`,                    // AND(boolean,boolean,...)
+        name: `livenode.operator.and`,                    // AND(boolean,boolean,...)
         text: `and`,
         symbol: `and`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     OR: {
-        name: `node.operator.or`,                      // OR(boolean,boolean,...)        @TODO  XOR?!    NAND NOR
+        name: `livenode.operator.or`,                      // OR(boolean,boolean,...)        @TODO  XOR?!    NAND NOR
         text: `or`,
         symbol: `or`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     FIRST: {
-        name: `node.operator.first`,
+        name: `livenode.operator.first`,
         text: `first reporting`,
         symbol: `1st`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     LAST: {
-        name: `node.operator.last`,
+        name: `livenode.operator.last`,
         text: `last reporting`,
         symbol: `nth`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     MAX: {
-        name: `node.operator.max`,
+        name: `livenode.operator.max`,
         text: `largest`,
         symbol: `max`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     MIN: {
-        name: `node.operator.min`,
+        name: `livenode.operator.min`,
         text: `smallest`,
         symbol: `min`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     SUM: {
-        name: `node.operator.sum`,
+        name: `livenode.operator.sum`,
         text: `sum`,
         symbol: `sum`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     AVG: {
-        name: `node.operator.avg`,
+        name: `livenode.operator.avg`,
         text: `average`,
         symbol: `avg`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     UNION: {
-        name: `node.operator.union`,
+        name: `livenode.operator.union`,
         text: `union`,
         symbol: `U`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     INT: {
-        name: `node.operator.intersection`,
+        name: `livenode.operator.intersection`,
         text: `intersection`,
         symbol: `\uD83D\uDE00`,
-        condition: [`node.returns.active`, `node.returns.available`, `node.returns.all`]
+        condition: [`livenode.returns.active`, `livenode.returns.available`, `livenode.returns.all`]
     },
     CONVERT: {
-        name: `node.operator.convert`,
+        name: `livenode.operator.convert`,
         text: `convert`,
         symbol: `><`,
-        condition: [`node.returns.active`, `node.returns.latest`, `node.returns.priority`, `node.returns.final`]
+        condition: [`livenode.returns.active`, `livenode.returns.latest`, `livenode.returns.priority`, `livenode.returns.final`]
     },
     INVERSE: {
-        name: `node.operator.inverse`,
+        name: `livenode.operator.inverse`,
         text: `inverse`,
         symbol: `1/x`,
-        condition: [`node.returns.active`, `node.returns.latest`, `node.returns.priority`, `node.returns.final`]
+        condition: [`livenode.returns.active`, `livenode.returns.latest`, `livenode.returns.priority`, `livenode.returns.final`]
     },
     NEGATE: {
-        name: `node.operator.negate`,
+        name: `livenode.operator.negate`,
         text: `negate`,
         symbol: `-x`,
-        condition: [`node.returns.active`, `node.returns.latest`, `node.returns.priority`, `node.returns.final`]
+        condition: [`livenode.returns.active`, `livenode.returns.latest`, `livenode.returns.priority`, `livenode.returns.final`]
     },
     ABS: {
-        name: `node.operator.absolute`,
+        name: `livenode.operator.absolute`,
         text: `absolute`,
         symbol: `|x|`,
-        condition: [`node.returns.active`, `node.returns.latest`, `node.returns.priority`, `node.returns.final`]
+        condition: [`livenode.returns.active`, `livenode.returns.latest`, `livenode.returns.priority`, `livenode.returns.final`]
     },
     NOT: {
-        name: `node.operator.not`,
+        name: `livenode.operator.not`,
         text: `not`,
         symbol: `!`,
-        condition: [`node.returns.active`, `node.returns.latest`, `node.returns.priority`, `node.returns.final`]
+        condition: [`livenode.returns.active`, `livenode.returns.latest`, `livenode.returns.priority`, `livenode.returns.final`]
     }
 
 };

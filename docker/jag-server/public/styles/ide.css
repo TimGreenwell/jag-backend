@@ -77,15 +77,15 @@ side#ide div.ide-button div.button-progress.progress-reset {
 }
 
 side#ide div.ide-button#connect div.button-icon {
-    background-image: url('/jag/icons/ic_engine_outline_black_24dp.png');
+    background-image: url('/jag/styles/icons/ic_engine_outline_black_24dp.png');
 }
 
 side#ide div.ide-button#upload div.button-icon {
-    background-image: url('/jag/icons/ic_publish_black_24dp.png');
+    background-image: url('/jag/styles/icons/ic_publish_black_24dp.png');
 }
 
 side#ide div.ide-button#run div.button-icon {
-    background-image: url('/jag/icons/ic_play_arrow_black_24dp.png');
+    background-image: url('/jag/styles/icons/ic_play_arrow_black_24dp.png');
 }
 
 @keyframes progress-reset {

@@ -585,46 +585,45 @@ class AtTimeview extends HTMLElement {
         return liveNodeSvgBox;
     }
 
-    buildTimelineDiagram(parentGroup, liveNode, boxCornerPoint) {
-        const svgNodeGroup = this.svg.createSvgNodeGroup(liveNode.id);          // svgNodeGroup for this liveNode
+    buildTimelineDiagram(parentGroup, currentRootLiveNode, boxCornerPoint) {
+        const svgNodeGroup = this.svg.createSvgNodeGroup(currentRootLiveNode.id);          // svgNodeGroup for this liveNode
         parentGroup.appendChild(svgNodeGroup);
         this.svg.positionItem(svgNodeGroup, boxCornerPoint.x, boxCornerPoint.y);
-
 
         let liveNodeSvgBox;
         // const childOriginPoint = new Point({x: boxCornerPoint.x + this.svg.horizontalLeftMargin,
         //     y: boxCornerPoint.y + this.svg.verticalLabelShift});
-        if (liveNode.isExpanded) {
-            if ((liveNode.hasChildren())) {
-                liveNode.children.forEach((childLiveNode) => {
+        if (currentRootLiveNode.isExpanded) {
+            if ((currentRootLiveNode.hasChildren())) {
+                currentRootLiveNode.children.forEach((childLiveNode) => {
                     const newBox = this.buildTimelineDiagram(svgNodeGroup, childLiveNode, new Point());       // !!!
                     this.childLiveNodeSvgBoxsMap.set(childLiveNode.id, newBox);
                 });
 
                 //  const childLiveNodeSvgBoxsMap = this.buildChildNodeDescriptorMap(liveNode, svgNodeGroup);  // at this point i have all children and heading up the recursion
 
-                if (liveNode._activity.connector.execution === `livenode.execution.parallel`) {               // Catch-all @TODO -> need smarter control
-                    liveNodeSvgBox = this.getInnerParallelBox(liveNode, this.childLiveNodeSvgBoxsMap);
+                if (currentRootLiveNode._activity.connector.execution === `livenode.execution.parallel`) {               // Catch-all @TODO -> need smarter control
+                    liveNodeSvgBox = this.getInnerParallelBox(currentRootLiveNode, this.childLiveNodeSvgBoxsMap);
                 }
-                if (liveNode._activity.connector.execution === `livenode.execution.sequential`) {
-                    liveNodeSvgBox = this.getInnerSequentialBox(liveNode, this.childLiveNodeSvgBoxsMap);
+                if (currentRootLiveNode._activity.connector.execution === `livenode.execution.sequential`) {
+                    liveNodeSvgBox = this.getInnerSequentialBox(currentRootLiveNode, this.childLiveNodeSvgBoxsMap);
                 }
-                if (liveNode._activity.connector.execution === `livenode.execution.none`) {
-                    liveNodeSvgBox = this.getInnerNoneBox(liveNode, this.childLiveNodeSvgBoxsMap);
+                if (currentRootLiveNode._activity.connector.execution === `livenode.execution.none`) {
+                    liveNodeSvgBox = this.getInnerNoneBox(currentRootLiveNode, this.childLiveNodeSvgBoxsMap);
                 }
             } else {
-                liveNodeSvgBox = this.getInnerLeafBox(liveNode);  // Actual leaf
+                liveNodeSvgBox = this.getInnerLeafBox(currentRootLiveNode);  // Actual leaf
             }
         } else {
-            liveNodeSvgBox = this.getInnerLeafBox(liveNode);  // Virtual leaf (isExpanded)
+            liveNodeSvgBox = this.getInnerLeafBox(currentRootLiveNode);  // Virtual leaf (isExpanded)
         }
         // this.svg.positionItem(svgNodeGroup, liveNodeSvgBox.topLeftX, liveNodeSvgBox.topLeftY);
         // this.liveNodeSvgBoxMap.set(liveNodeSvgBox.id, liveNodeSvgBox);
-        const svgBox = this.svg.createRectangle(liveNodeSvgBox.width, liveNodeSvgBox.height, liveNode.id);
+        const svgBox = this.svg.createRectangle(liveNodeSvgBox.width, liveNodeSvgBox.height, currentRootLiveNode.id);
         this.svg.applyFilter(svgBox, this.svg.chosenFilter);
-        this.svg.applyLightnessDepthEffect(svgBox, liveNode.treeDepth, this.treeHeight);
+        this.svg.applyLightnessDepthEffect(svgBox, currentRootLiveNode.treeDepth, this.treeHeight);
         if (this.hasColor) {
-            this.svg.applyColorDepthEffect(svgBox, liveNode.treeDepth, this.treeHeight);
+            this.svg.applyColorDepthEffect(svgBox, currentRootLiveNode.treeDepth, this.treeHeight);
         }
         svgNodeGroup.insertBefore(svgBox, svgNodeGroup.firstChild);
 
@@ -745,14 +744,8 @@ class AtTimeview extends HTMLElement {
                 }
             }
         });
-        console.log(maxWidthAtDepth);
 
-
-        // console.log(`kkkk`)
-        // console.log(routes)
-        // console.log(`ooo`)
         // routes.forEach((route) => {
-        //     console.log(route.length);
         //     for (let i = 0; i < route.length; i++) {
         //         if (route[i]) {
         //             console.log(route[i]);
@@ -760,7 +753,6 @@ class AtTimeview extends HTMLElement {
         //             console.log(`bloop`);
         //         }
         //     };
-        //     console.log(`---`);
         // });
     }
 
